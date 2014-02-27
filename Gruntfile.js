@@ -36,7 +36,7 @@ module.exports = function(grunt) {
       },
       build: {
         src: ['js/w5.js'],
-        dest: 'dist/js/<%= pkg.name %>.min.js'
+        dest: 'dist/js/<%= pkg.name %>.min.<%= pkg.version %>.js'
       }
     },
     copy: {

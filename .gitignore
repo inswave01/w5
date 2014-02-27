@@ -2,7 +2,7 @@
 .DS_Store
 *.db
 .idea/
-dist/
+# dist/ provide minified version
 js/
 node_modules/
 www-root/
