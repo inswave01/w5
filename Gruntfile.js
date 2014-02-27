@@ -78,7 +78,7 @@ module.exports = function(grunt) {
         }
       }
     },
-    clean: ['js/w5.js', 'dist/js', 'www-root/javascripts']
+    clean: ['js/w5.js', 'www-root/javascripts']
   });
 
   grunt.registerTask('default', ['clean', 'concat:basic', 'jshint:js', 'uglify', 'copy']);
