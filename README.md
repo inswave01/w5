@@ -278,6 +278,7 @@ supported! -->
 * Internet Explorer 9+
 
 * Opera
+
 <!--
 ### Updating packages
 
