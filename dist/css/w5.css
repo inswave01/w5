@@ -1,0 +1,397 @@
+@charset "UTF-8";
+/*@row-hover-color					: softlight(@row-even-color, @header-label-bg);*/
+.clearfix {
+  display: block;
+}
+.clearfix:after {
+  content: ".";
+  display: block;
+  clear: both;
+  visibility: hidden;
+  line-height: 0;
+  height: 0;
+}
+.hide {
+  opacity: 0;
+  display: none;
+}
+.show {
+  opacity: 1;
+  display: block;
+  -webkit-transition: opacity 1s ease-in;
+}
+.float-left {
+  float: left;
+}
+.float-right {
+  float: right;
+}
+.dragging {
+  cursor: pointer;
+}
+.sizingH {
+  cursor: col-resize;
+}
+.gGrid {
+  margin: 0 auto;
+  padding: 9px 10px;
+  font-size: 12px;
+  border: 1px solid #bebebe;
+  position: relative;
+}
+.gGrid .gGrid-setTable {
+  padding-bottom: 10px;
+  width: 100%;
+  height: 100%;
+  position: relative;
+  overflow: hidden;
+}
+.gGrid-caption {
+  text-align: left;
+  font-size: 17px;
+  line-height: 25px;
+}
+.adjustCol-handle {
+  margin: 0;
+  padding: 0;
+  width: 3px;
+  background: transparent;
+  border: none;
+  display: block;
+  position: absolute;
+  top: -3px;
+  right: 0px;
+  bottom: -3px;
+  text-indent: -9999px;
+}
+.adjustCol-handle:focus {
+  background: #000;
+  cursor: col-resize;
+}
+.adjustCol-handle:hover {
+  background: #000;
+  cursor: col-resize;
+}
+.adjustCol-handle:active {
+  background: #000;
+  cursor: col-resize;
+}
+.gGrid-table {
+  table-layout: fixed;
+  border-collapse: collapse;
+  border-spacing: 0;
+}
+.gGrid-headerLabel {
+  height: 25px;
+  background-color: #f4f6f7;
+  border-top-width: 1px;
+  border-top-style: solid;
+  border-top-color: #636363;
+  border-right-width: 1px;
+  border-right-style: solid;
+  border-right-color: #b1bcc6;
+  border-bottom-width: 1px;
+  border-bottom-style: solid;
+  border-bottom-color: #b1bcc6;
+  border-left-width: 1px;
+  border-left-style: solid;
+  border-left-color: #b1bcc6;
+  vertical-align: middle;
+  overflow-y: visible;
+}
+.gGrid-headerLabel .gGrid-headerLabelWrap {
+  text-align: center;
+  font-size: 12px;
+  font-weight: bold;
+  color: #333333;
+  position: relative;
+  box-sizing: content-box;
+}
+.gGrid-headerLabel .gGrid-colMenu {
+  height: 18.5px;
+  background-color: #f4f6f7;
+  position: absolute;
+  top: 0;
+}
+.gGrid-headerLabel .gGrid-colMenu.display-left {
+  left: 0;
+}
+.gGrid-headerLabel .gGrid-colMenu.display-right {
+  right: 0;
+}
+.gGrid-headerLabel .gGrid-colMenu.display-right .dropdown-menu {
+  margin-top: 4.16666667px;
+  text-align: left;
+  color: #333;
+  float: none;
+  left: initial;
+  left: 0;
+}
+.gGrid-headerLabel .gGrid-colMenu.display-right .dropdown-menu > li {
+  display: block;
+}
+.gGrid-headerLabel .gGrid-colMenu.display-right .dropdown-menu > li:after {
+  content: ".";
+  display: block;
+  clear: both;
+  visibility: hidden;
+  line-height: 0;
+  height: 0;
+}
+.gGrid-headerLabel .gGrid-colMenu.display-right .dropdown-menu > li > a {
+  padding: 3px 12px;
+  font-weight: bold;
+}
+.gGrid-headerLabel .gGrid-colMenu.display-right .dropdown-menu > li .form-group label {
+  display: block;
+}
+.gGrid-headerLabel .gGrid-colMenu.display-right .dropdown-menu > li .form-group .btn-group {
+  margin-top: 5px;
+  text-align: right;
+  display: block;
+  clear: both;
+}
+.gGrid-headerLabel .gGrid-colMenu.display-right .dropdown-menu > li .form-group .btn {
+  margin-left: 3px;
+  display: inline;
+  float: none;
+}
+.gGrid-headerLabel .gGrid-colMenu.display-right .dropdown-menu > li .form-control {
+  margin: 0 3px 3px 0;
+  float: left;
+}
+.gGrid-headerLabel .gGrid-colMenu.display-right .dropdown-menu > li input.form-control {
+  margin-right: 0;
+}
+.gGrid-headerLabel .gGrid-colMenu.display-right .dropdown-menu .divider {
+  height: auto;
+  margin: 0;
+  padding: 3px 12px;
+  background: none;
+  border-top: 1px solid #e5e5e5;
+}
+.gGrid-headerLabel .gGrid-colMenu .glyphicon {
+  margin-right: 5px;
+  cursor: pointer;
+}
+.gGrid-row {
+  height: 25px;
+  background-color: #ffffff;
+  border-bottom-width: 1px;
+  border-bottom-style: solid;
+  border-bottom-color: #d7e3f0;
+}
+.gGrid-row:nth-child(odd) {
+  background-color: #ffffff;
+}
+.gGrid-row:nth-child(even) {
+  background-color: #f5f7f8;
+}
+.gGrid-row:hover {
+  background-color: #e5fcf8;
+}
+.gGrid-row > td {
+  padding: 3px 5px;
+  height: 25px;
+  border-left-width: 1px;
+  border-left-style: solid;
+  border-left-color: #d7e3f0;
+  border-right-width: 1px;
+  border-right-style: solid;
+  border-right-color: #d7e3f0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: pre;
+}
+.gGrid-row > td > input[type=text] {
+  width: 93%;
+  background-color: #ffffff;
+  border-width: 1px;
+  border-style: solid;
+  border-color: #808080;
+}
+.gGrid-row > td > input[type=text][readonly] {
+  background-color: #faebd7;
+}
+.gGrid-row > td > select {
+  width: 93%;
+}
+.gGrid-row > td > input[type=radio],
+.gGrid-row > td > input[type=checkbox] {
+  margin: 0 3px 0 5px;
+}
+.gGrid-row > td > input[type=radio]:first-child,
+.gGrid-row > td > input[type=checkbox]:first-child {
+  margin-left: 0px;
+}
+.gGrid-row > td > label {
+  cursor: pointer;
+}
+.gGrid-row > td > input[type=range] {
+  width: 93%;
+}
+.gGrid-row > td:hover {
+  background-color: #dfe9f8 !important;
+}
+.gGrid-row .gGrid-cell-selected {
+  background-color: #fafbfb !important;
+}
+.w5_grid_editbox {
+  position: absolute;
+  background: white;
+  overflow: hidden;
+  padding: 3px 5px;
+}
+.separateCol {
+  margin: 0;
+  padding: 0;
+  width: 2px;
+  background: gray;
+  border: none;
+  text-indent: -9999px;
+  position: absolute;
+  top: 25px;
+  left: 100px;
+  bottom: 0px;
+  cursor: col-resize;
+}
+.frozenCol {
+  margin: 0;
+  padding: 0;
+  width: 2px;
+  background: #636363;
+  border: none;
+  text-indent: -9999px;
+  position: absolute;
+  top: 25px;
+  left: 200px;
+  bottom: 0px;
+  cursor: col-resize;
+}
+.columnMove {
+  margin: 0;
+  padding: 0;
+  width: 2px;
+  background: lime;
+  border: none;
+  text-indent: -9999px;
+  position: absolute;
+  z-index: 10;
+}
+.gScroll-v button,
+.gScroll-h button {
+  margin: 0;
+  padding: 0;
+  border: none;
+  background-color: rgba(0, 0, 0, 0.2);
+  box-shadow: inset 0px 0px 0.5px 0.5px rgba(0, 0, 0, 0.1);
+}
+.gScroll-v button:hover,
+.gScroll-h button:hover {
+  cursor: default;
+  outline: none;
+  background-color: rgba(104, 104, 104, 0.6);
+  box-shadow: inset 0px 0px 0.5px 0.5px rgba(104, 104, 104, 0.5);
+}
+.gScroll-v button:active,
+.gScroll-h button:active {
+  cursor: default;
+  outline: none;
+  background-color: rgba(104, 104, 104, 0.9);
+  box-shadow: inset 0px 0px 0.5px 0.5px rgba(104, 104, 104, 0.7);
+}
+.gScroll-v:hover,
+.gScroll-h:hover {
+  box-shadow: .5px 0px 1px 0.5px #999 inset;
+  background-color: #f7f7f7;
+}
+.gScroll-v:active,
+.gScroll-h:active {
+  box-shadow: .5px 0px 1px 0.75px #888 inset;
+  background-color: #f1f1f1;
+}
+.gScroll-v {
+  width: 10px;
+  background: #eeeeee;
+  position: absolute;
+  top: 52px;
+  right: 0px;
+  bottom: 10px;
+}
+.gScroll-v .scrollHandler {
+  padding: 0px;
+  width: 8px;
+  min-height: 28px;
+  background: #bdbdbd;
+  border: none;
+  text-indent: -9999px;
+  position: absolute;
+  top: 0;
+  right: 1px;
+}
+.gScroll-h {
+  height: 10px;
+  background: #eeeeee;
+  position: absolute;
+  left: 0px;
+  right: 10px;
+  bottom: 0px;
+}
+.gScroll-h .scrollHandler {
+  padding: 0px;
+  min-width: 28px;
+  height: 8px;
+  background: #bdbdbd;
+  border: none;
+  text-indent: -9999px;
+  position: absolute;
+  top: 1px;
+}
+.noselect {
+  -moz-user-select: -moz-none;
+  -khtml-user-select: none;
+  -webkit-user-select: none;
+  /*
+     Introduced in IE 10.
+     See http://ie.microsoft.com/testdrive/HTML5/msUserSelect/
+   */
+  -ms-user-select: none;
+  user-select: none;
+}
+.toggleButton_button {
+  display: inline-block;
+  float: left;
+}
+.bg#ff0000 {
+  background-color: #e11d21;
+}
+.bg#ffa500 {
+  background-color: #eb6420;
+}
+.bg#ffff00 {
+  background-color: #fbca04;
+}
+.bg#008000 {
+  background-color: #009800;
+}
+.bg#0000ff {
+  background-color: #207de5;
+}
+.bg#000080 {
+  background-color: #0052cc;
+}
+.bg#800080 {
+  background-color: #5319e7;
+}
+.bd1 {
+  border: 1px solid #000;
+}
+.f-bold {
+  font-weight: bold;
+}
+.f-underLine {
+  text-decoration: underline;
+}
+.f-italic {
+  font-style: italic;
+}

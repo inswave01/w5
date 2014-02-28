@@ -40,11 +40,24 @@ module.exports = function(grunt) {
       }
     },
     copy: {
-      dist_js: {
-        expand: true,
-        cwd: 'dist/js',
-        src: ['**'],
-        dest: 'www-root/javascripts/'
+      js: {
+        files: [
+          {
+            expand: true,
+            cwd: 'js',
+            src: ['*.js'],
+            dest: 'dist/js',
+            rename: function ( dest, src ) {
+              return dest + '/' + src.substring( 0, src.indexOf('.js') ) + '.<%= pkg.version %>.js';
+            }
+          },
+          {
+            expand: true,
+            cwd: 'dist/js',
+            src: ['*.js'],
+            dest: 'www-root/javascripts/'
+          }
+        ]
       }
     },
     connect: {
@@ -78,10 +91,25 @@ module.exports = function(grunt) {
         }
       }
     },
+    less: {
+      miniCss: {
+        options: {
+          cleancss: true
+        },
+        files: {
+          "dist/css/w5.min.css": "src/grid.less"
+        }
+      },
+      css: {
+        files: {
+          "dist/css/w5.css": "src/grid.less"
+        }
+      }
+    },
     clean: ['js/w5.js', 'www-root/javascripts']
   });
 
-  grunt.registerTask('default', ['clean', 'concat:basic', 'jshint:js', 'uglify', 'copy']);
+  grunt.registerTask('default', ['clean', 'concat:basic', 'jshint:js', 'uglify', 'copy:js', 'less']);
   grunt.registerTask('startup', ['connect:server']);
   grunt.registerTask('clear', ['clean']);
 };
