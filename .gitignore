@@ -1,0 +1,7 @@
+.project
+.DS_Store
+*.db
+.idea/
+js/
+node_modules/
+www-root/
