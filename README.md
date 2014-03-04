@@ -162,7 +162,9 @@ The grid object is returned if the `new w5.Grid()` constructor function is execu
 
 and basic grid information as parameters. 
 
-The CSS selector of table is assigned to the value of the `el` property.
+'el' property takes a value of CSS Selector(Table ID)
+
+Set 'parseTable' property value to 'ture' to convert the table to a grid.
 
 `render()` from grid instance renders a grid on the screen.
 
@@ -170,15 +172,21 @@ The table header label will be used as grid column ID by default.
 
 	var grid = new w5.Grid({
 	
-					el: "tblMain"
+					el: "#tblMain",
+					
+					parseTable : true,
 	
-					width: "650px",
+					option: {
+
+					  width: "650px",
 			
-					height: "400px",
+					  height: "400px",
 			
-					caption: "Table to Grid",
+					  caption: "Table to Grid",
 			
-					rowNum: 10
+					  rowNum: 10
+					  
+					}
 		
 				}).render();
 
@@ -189,9 +197,9 @@ The data can be fetched by accessing the cell at the position.
 	// Gets the data of the first cell using the get() function.
 	
 	var name = grid.cell(0, 0).get("data") // "James"
-<!--
-[LIVE PREVIEW](http://jsbin.com/)
--->
+
+<a href="http://codepen.io/w5/pen/rjkIn" target="_blank">LIVE PREVIEW</a>
+
 #### Creates a grid using JSON or two-dimensional array as data.
 
 The div of the grid position is defined in a body tag, or an element is created.
@@ -212,21 +220,27 @@ Use the basic information if the column information is omitted.
 	
 	// A string having the same structure as the JSON array can be used as collection property value instead of the JSON array. (Automatic conversion into the JSON array)
 	
-	var grid = new w5.Grid( "#gridMain", {
+	var grid = new w5.Grid( {
 	
-	 width: "650px",
+	 el: "#gridMain",
+	 
+	 option{
 	
-	 height: "400px",
+	 	width: "650px",
 	
-	 caption: "JSON to Grid",
+		height: "400px",
 	
-	 rowNum: 10,
+	 	caption: "Array to Grid",
 	
-	 colModel: [{ "colWidth": 100, "headerLabel": "first-name" }, { "colWidth": 
+		rowNum: 10
+		
+	 },
 	
-	80, "headerLabel": "last-name" }],
+	 colModel: [{ "colWidth": 100, "headerLabel": "first-name" },  
+                { "colWidth": 80, "headerLabel": "last-name" }],
 	
-	 collection: [{"first-name": "James", "last-name": "Butt"}, {"first-name": "Josephine", "last-name": "Darakjy"}]
+	 collection: [{"first-name": "James", "last-name": "Butt"},  
+                  {"first-name": "Josephine", "last-name": "Darakjy"}]
 	
 	 });
 
@@ -247,9 +261,8 @@ Chaining can be used.
 	// Changes the first cell data and adds the class.
 	
 	grid.cell(0, 0).set("data", "Art").set("class", "bgYellow"); // .bgYellow { background-color: #fbca04; }
-<!--
-[LIVE PREVIEW](http://jsbin.com/)
--->
+
+<a href="http://codepen.io/w5/pen/xFhqK" target="_blank">LIVE PREVIEW</a>
  
 <!--
 #### Customize
