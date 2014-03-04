@@ -636,7 +636,7 @@ var GridProto = {
       this.drawTbody(idx, idx);
     } else if ( model.type === "column" ) {
       idx = model.get('id');
-      for ( i = this.rowTop; i < this.rowTop + this.rowNum; i++ ) {
+      for ( i = this.rowTop; i < this.rowTop + this.viewModel.getOption("rowNum"); i++ ) {
         this.drawCell( i, idx );
       }
     } else {
