@@ -232,6 +232,7 @@ var GridProto = {
 
     this.sortColumn.grid = this;
     this.columnMove.grid = this;
+    _(this.columnMove).bindAll("downEvent", "moveEvent", "upEvent");
     this.frozenColumn.grid = this;
     this.frozenColumn.$frozenHandle = this.$el.find(".frozenCol");
     this.frozenColumn.$seperateCol = this.$el.find(".separateCol");
@@ -291,16 +292,10 @@ var GridProto = {
       }
     },
     downEvent : function(e) {
-      var moveEvent = function(e){ this.moveEvent(e); },
-          upEvent = function(e){ this.upEvent(e); };
-
       this._downEvent(e.target);
 
-      moveEvent = _.bind(moveEvent, this);
-      upEvent = _.bind(upEvent, this);
-
-      document.addEventListener('mousemove', moveEvent, true);
-      document.addEventListener('mouseup', upEvent, true);
+      document.addEventListener('mousemove', this.moveEvent, true);
+      document.addEventListener('mouseup', this.upEvent, true);
     },
     _moveEvent : function(el) {
       var $th = $(el).closest("th"),
