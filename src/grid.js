@@ -283,12 +283,18 @@ var GridProto = {
     draggedColumn : null,
     _downEvent : function(th) {
       var $th = $(th).closest("th"),
+          colOrder = this.grid.viewModel.getOption("colOrder"),
+          visibleCol = this.grid.viewModel.getVisibleCol(),
           thIndex, frozenColumn;
       $("body").addClass("noselect");
       if($th.length > 0) {
         thIndex = $th.index();
         frozenColumn = this.grid.viewModel.getOption("frozenColumn");
         this.draggedColumn = thIndex < frozenColumn ? thIndex : thIndex + this.grid.startCol - frozenColumn;
+      }
+
+      if(colOrder[this.draggedColumn]!==visibleCol[this.draggedColumn]){
+        this.draggedColumn = _(colOrder).indexOf(this.draggedColumn);
       }
     },
     downEvent : function(e) {
@@ -300,11 +306,18 @@ var GridProto = {
     _moveEvent : function(el) {
       var $th = $(el).closest("th"),
           $indicator = this.grid.$el.find(".columnMove"),
+          colOrder = this.grid.viewModel.getOption("colOrder"),
+          visibleCol = this.grid.viewModel.getVisibleCol(),
           thIndex, frozenColumn, targetIndex;
       if($th.length > 0) {
         thIndex = $th.index();
         frozenColumn = this.grid.viewModel.getOption("frozenColumn");
         targetIndex = thIndex < frozenColumn ? thIndex : thIndex + this.grid.startCol - frozenColumn;
+        
+        if(colOrder[this.targetIndex]!==visibleCol[this.targetIndex]){
+          this.targetIndex = _(colOrder).indexOf(this.draggedColumn);
+        }
+
         if(targetIndex === this.draggedColumn) {
           $indicator.addClass("hide").removeClass("show");
         } else {
@@ -324,11 +337,17 @@ var GridProto = {
     _upEvent : function(el) {
       var $th = $(el).closest("th"),
           $indicator = this.grid.$el.find(".columnMove"),
+          colOrder = this.grid.viewModel.getOption("colOrder"),
+          visibleCol = this.grid.viewModel.getVisibleCol(),
           thIndex, frozenColumn, targetIndex;
       if($th.length > 0) {
         thIndex = $th.index();
         frozenColumn = this.grid.viewModel.getOption("frozenColumn");
         targetIndex = thIndex < frozenColumn ? thIndex : thIndex + this.grid.startCol - frozenColumn;
+
+        if(colOrder[this.targetIndex]!==visibleCol[this.targetIndex]){
+          this.targetIndex = _(colOrder).indexOf(this.draggedColumn);
+        }
         if( this.draggedColumn!==targetIndex ){
           this.grid.moveColumn(this.draggedColumn, targetIndex);
         }
@@ -1179,12 +1198,26 @@ var GridProto = {
   getCollection: function() {
     return this.viewModel.collection;
   },
-  setColumnVisible: function(idx, value){
-    this.viewModel.setMeta(["*", idx], "hidden", value, {inorder:true});
+  setColumnVisible: function(col, visibility){
+    if ( _.isNumber(col) ){
+      this.viewModel.setMeta(["*", col], "hidden", !visibility, {inorder:true});   
+    }
+    if ( _.isArray(col) ){
+      _(col).each(function(item){
+        this.viewModel.setMeta(["*", item], "hidden", !visibility, {inorder:true});   
+      }, this);
+    }
     return this;
   },
-  getColumnVisible: function(){
-    return this.viewModel.visibleCol;
+  getColumnVisibility: function(visibility){
+    var colOrder = this.viewModel.getOption("colOrder"),
+        visibleCol = this.viewModel.getVisibleCol();
+
+    if ( visibility==="hidden" ){
+      return _(colOrder).difference(visibleCol);
+    } else { 
+      return visibleCol;
+    }
   },
   _cell: function (row, col) {
     return new GridSelector(this, [row, this.viewModel.getColID(col, true)]);
