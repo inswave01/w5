@@ -1,9 +1,9 @@
 /*!
  * w5 @VERSION
- * [homepage url]
+ * [@HOMEPAGE]
  *
  * Copyright 2013 Inswave Foundation and other contributors
- * Released under the MIT license
+ * Released under the LGPLv3.0 license
  *
  * Date: @DATE
  */

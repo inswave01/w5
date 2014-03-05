@@ -8,6 +8,9 @@ module.exports = function(grunt) {
       // Embed version
       .replace( /@VERSION/g, grunt.config( "pkg" ).version )
 
+      // Embed homepage url
+      .replace( /@HOMEPAGE/g, grunt.config( "pkg" ).homepage )
+
       // Embed date (yyyy-mm-ddThh:mmZ)
       .replace( /@DATE/g, ( new Date() ).toISOString().substr(0, 10) );
   }

@@ -1,9 +1,9 @@
 /*!
  * w5 0.5.4
- * [homepage url]
+ * [http://w5.io]
  *
  * Copyright 2013 Inswave Foundation and other contributors
- * Released under the MIT license
+ * Released under the LGPLv3.0 license
  *
  * Date: 2014-03-05
  */
