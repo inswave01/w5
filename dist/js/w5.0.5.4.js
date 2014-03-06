@@ -5,7 +5,7 @@
  * Copyright 2013 Inswave Foundation and other contributors
  * Released under the LGPLv3.0 license
  *
- * Date: 2014-03-05
+ * Date: 2014-03-06
  */
 
 /* global jQuery */
@@ -1131,10 +1131,12 @@ var GridProto = {
       }
     },
     downEvent : function(e) {
-      this._downEvent(e.target);
+      if ( e.target.className.indexOf('glyphicon') < 0 && e.target.tagName !== 'A' ) {
+        this._downEvent(e.target);
 
-      document.addEventListener('mousemove', this.moveEvent, true);
-      document.addEventListener('mouseup', this.upEvent, true);
+        document.addEventListener('mousemove', this.moveEvent, true);
+        document.addEventListener('mouseup', this.upEvent, true);
+      }
     },
     _moveEvent : function(el) {
       var $th = $(el).closest("th"),
@@ -1824,7 +1826,7 @@ var GridProto = {
         $leftMenu = $(this.colLeftMenu()),
         $rightMenu = $(this.colRightMenu());
 
-    var leftMenu ={
+    var leftMenu = {
       _showCol : function () {
         var colOrder = grid.viewModel.getOption("colOrder"),
             visibleCol = grid.viewModel.getVisibleCol(),
@@ -1835,14 +1837,14 @@ var GridProto = {
         for( i = from; i >= to && i >= 0 ; i-- ) {
           grid.viewModel.setMeta(["*", colOrder[i]], "hidden", false);
         }
-      }, 
+      },
       showCol : function(e) {
         this._showCol(e.target);
       }
     };
 
     _(leftMenu).bindAll("showCol");
-    $leftMenu.find(".glyphicon-step-backward").on("click", leftMenu.showCol); 
+    $leftMenu.find(".glyphicon-step-backward").on("click", leftMenu.showCol);
     $colMenu.append($leftMenu);
 
     var rightMenu = {
