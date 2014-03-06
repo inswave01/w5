@@ -380,7 +380,16 @@ Full-Width Styles
 #footer_wrap {
   background: #212121;
 }
-
+#footer_wrap .twitter-share-button{
+    margin: 12px 10px;
+    width: 80px !important; height: 20px !important;
+    float: left;
+}
+#footer_wrap .twitter-follow-button{
+    margin: 12px 0px;
+    width: 103px !important; height: 20px !important;
+    float: left;
+}
 .ar {
 	text-align : right;
 }
