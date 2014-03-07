@@ -5,7 +5,7 @@
  * Copyright 2013 Inswave Foundation and other contributors
  * Released under the LGPLv3.0 license
  *
- * Date: 2014-03-06
+ * Date: 2014-03-07
  */
 
 /* global jQuery */
@@ -796,7 +796,11 @@ var w5DataCollectionProto = {
       });
 
       if ( !col ) {
-        return 0;
+        var collection1 = item1.collection.__originalCollection || item1.collection,
+            collection2 = item2.collection.__originalCollection || item2.collection,
+            idx1 = collection1.indexOf(item1),
+            idx2 = collection2.indexOf(item2);
+        return idx1 > idx2 ? 1 : -1;
       }
 
       if ( ( dirs[_.indexOf( cols, col )] || 'asc' ).toLowerCase() === 'asc' ) {
