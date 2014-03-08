@@ -719,10 +719,9 @@ var w5DataCollectionProto = {
       });
 
       if ( !col ) {
-        var collection1 = item1.collection.__originalCollection || item1.collection,
-            collection2 = item2.collection.__originalCollection || item2.collection,
-            idx1 = collection1.indexOf(item1),
-            idx2 = collection2.indexOf(item2);
+        var compCollection = item1.collection.__originalCollection || item1.collection,
+            idx1 = compCollection.indexOf(item1),
+            idx2 = compCollection.indexOf(item2);
         return idx1 > idx2 ? 1 : -1;
       }
 
