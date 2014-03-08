@@ -616,9 +616,11 @@ var GridProto = {
     this.drawTbody( index );
   },
   onReset: function () {
-    this.viewModel.setOption("scrollLeft", 0, {silent:true});
-    this.viewModel.setOption("scrollTop", 0, {silent:true});
-    this.setResize();
+    if ( this.$wrapper_div ) {
+      this.viewModel.setOption("scrollLeft", 0, {silent:true});
+      this.viewModel.setOption("scrollTop", 0, {silent:true});
+      this.setResize();
+    }
   },
   drawWhole: function ( model ) {
     if ( model instanceof Collection ) {
