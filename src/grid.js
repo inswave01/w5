@@ -51,8 +51,8 @@ var GridProto = {
     }
     if( options.collection instanceof Collection ) {
       this.collection.grid = this;
-      this.collection.keys = keys;
-      this.collection.defaults = defaults;
+      this.collection.keys = options.collection.keys ? options.collection.keys : keys;
+      this.collection.defaults = options.collection.defaults ? options.collection.defaults : defaults;
     } else {
       this.collection = new Collection(options.collection, {
         grid: this,
