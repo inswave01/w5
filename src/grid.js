@@ -86,16 +86,14 @@ var GridProto = {
   },
   render: function() {
     var $el,
-        $wrapper_div,
-        visibleCol;
+        $wrapper_div;
 
     this.viewModel.updateVisibleCol();
-    visibleCol = this.viewModel.getVisibleCol();
 
     $el = $(this.template({
       tagName: this.tagName || "div",
       id: this.id,
-      className: " "+this.className || "",
+      className: " " + ( this.className || "" ),
       width: this.viewModel.getOption("width"),
       caption : this.viewModel.getOption("caption")
     }));
