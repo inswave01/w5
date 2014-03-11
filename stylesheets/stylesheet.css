@@ -97,7 +97,7 @@ h6 {
 }
 
 p {
-  margin: 10px 0 15px 0;
+  margin: 10px 0 10px 0;
 }
 
 footer p {
@@ -289,12 +289,12 @@ Full-Width Styles
 }
 
 #header_wrap {
-  background: #212121;
-  background: -moz-linear-gradient(top, #373737, #212121);
-  background: -webkit-linear-gradient(top, #373737, #212121);
-  background: -ms-linear-gradient(top, #373737, #212121);
-  background: -o-linear-gradient(top, #373737, #212121);
-  background: linear-gradient(top, #373737, #212121);
+  background: #2450B4;
+  /*background: -moz-linear-gradient(top, #373737, #2355b5);
+  background: -webkit-linear-gradient(top, #373737, #2355b5);
+  background: -ms-linear-gradient(top, #373737, #2355b5);
+  background: -o-linear-gradient(top, #373737, #2355b5);
+  background: linear-gradient(top, #373737, #2355b5);*/
 }
 
 #header_wrap .inner {
@@ -308,13 +308,23 @@ Full-Width Styles
   font-weight: 700;
   text-shadow: #111 0px 0px 10px;
 }
-
+img.logo {
+  margin: 15px 0 5px 0;
+  padding : 0px;
+  border : 0px;
+  box-shadow : none;
+  -webkit-box-shadow : none;
+  -moz-box-shadow: none;
+  -o-box-shadow: none;
+  -ms-box-shadow: none;
+}
 .project_tagline {
   color: #fff;
-  font-size: 20px;
-  font-weight: 300;
+  font-size: 16px;
+  /*font-weight: 300;*/
+  line-height : 1.7em;
   background: none;
-  text-shadow: #111 0px 0px 10px;
+  /*text-shadow: #111 0px 0px 10px;*/
 }
 
 #downloads {
