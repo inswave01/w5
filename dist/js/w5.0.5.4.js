@@ -5,7 +5,7 @@
  * Copyright 2013 Inswave Foundation and other contributors
  * Released under the LGPLv3.0 license
  *
- * Date: 2014-03-07
+ * Date: 2014-03-12
  */
 
 /* global jQuery */
@@ -796,10 +796,9 @@ var w5DataCollectionProto = {
       });
 
       if ( !col ) {
-        var collection1 = item1.collection.__originalCollection || item1.collection,
-            collection2 = item2.collection.__originalCollection || item2.collection,
-            idx1 = collection1.indexOf(item1),
-            idx2 = collection2.indexOf(item2);
+        var compCollection = item1.collection.__originalCollection || item1.collection,
+            idx1 = compCollection.indexOf(item1),
+            idx2 = compCollection.indexOf(item2);
         return idx1 > idx2 ? 1 : -1;
       }
 
@@ -858,16 +857,16 @@ var GridProto = {
     "</<%= tagName %>>"
   ),
   events: {
-    "dblclick .gGrid-table thead" : function(e) { this.sortColumn.dblClickEvent(e); },
-    "mousedown .gGrid-table thead" : function(e){ this.columnMove.downEvent(e); },
-    "click .gGrid-table tbody" : function(e){ this.clickCell.clickEvent(e); },
-    "dblclick .gGrid-table tbody" : function(e){ this.clickCell.clickEvent(e); },
-    "mousedown .frozenCol" : function(e){ this.frozenColumn.downEvent(e); },
-    "mousedown .gScroll-v" : function(e) { this.verticalScroll.areaDownEvent(e); },
-    "mousedown .gScroll-v .scrollHandler" : function(e) { this.verticalScroll.handleDownEvent(e); },
-    "mousedown .gScroll-h" : function(e) { this.horizontalScroll.areaDownEvent(e); },
-    "mousedown .gScroll-h .scrollHandler" : function(e) { this.horizontalScroll.handleDownEvent(e); },
-    "mousewheel" : function(e) { this.scrollByWheel.wheelEvent(e); }
+    "dblclick .gGrid-table thead" : function(e) { this.sortColumn.dblClickEvent.call( this, e ); },
+    "mousedown .gGrid-table thead" : function(e){ this.columnMove.downEvent.call( this, e ); },
+    "click .gGrid-table tbody" : function(e){ this.clickCell.clickEvent.call( this, e ); },
+    "dblclick .gGrid-table tbody" : function(e){ this.clickCell.clickEvent.call( this, e ); },
+    "mousedown .frozenCol" : function(e){ this.frozenColumn.downEvent.call( this, e ); },
+    "mousedown .gScroll-v" : function(e) { this.verticalScroll.areaDownEvent.call( this, e ); },
+    "mousedown .gScroll-v .scrollHandler" : function(e) { this.verticalScroll.handleDownEvent.call( this, e ); },
+    "mousedown .gScroll-h" : function(e) { this.horizontalScroll.areaDownEvent.call( this, e ); },
+    "mousedown .gScroll-h .scrollHandler" : function(e) { this.horizontalScroll.handleDownEvent.call( this, e ); },
+    "mousewheel" : function(e) { this.scrollByWheel.wheelEvent.call( this, e ); }
   },
   initialize: function(options) {
     if(options.parseTable) {
@@ -888,8 +887,8 @@ var GridProto = {
     }
     if( options.collection instanceof Collection ) {
       this.collection.grid = this;
-      this.collection.keys = keys;
-      this.collection.defaults = defaults;
+      this.collection.keys = options.collection.keys ? options.collection.keys : keys;
+      this.collection.defaults = options.collection.defaults ? options.collection.defaults : defaults;
     } else {
       this.collection = new Collection(options.collection, {
         grid: this,
@@ -923,16 +922,14 @@ var GridProto = {
   },
   render: function() {
     var $el,
-        $wrapper_div,
-        visibleCol;
+        $wrapper_div;
 
     this.viewModel.updateVisibleCol();
-    visibleCol = this.viewModel.getVisibleCol();
 
     $el = $(this.template({
       tagName: this.tagName || "div",
       id: this.id,
-      className: " "+this.className || "",
+      className: " " + ( this.className || "" ),
       width: this.viewModel.getOption("width"),
       caption : this.viewModel.getOption("caption")
     }));
@@ -1065,20 +1062,6 @@ var GridProto = {
     this.$wrapper_div.find("thead").append($tr);
   },
   addEvents: function() {
-    //var grid = this;
-
-    this.sortColumn.grid = this;
-    this.columnMove.grid = this;
-    _(this.columnMove).bindAll("downEvent", "moveEvent", "upEvent");
-    this.frozenColumn.grid = this;
-    this.frozenColumn.$frozenHandle = this.$el.find(".frozenCol");
-    this.frozenColumn.$seperateCol = this.$el.find(".separateCol");
-    this.frozenColumn.$indicator = this.$el.find(".columnMove");
-    this.horizontalScroll.grid = this;
-    this.verticalScroll.grid = this;
-    this.scrollByWheel.grid = this;
-    this.clickCell.grid = this;
-
     this.delegateEvents();
 
     resizeChecker.add(this);
@@ -1087,30 +1070,30 @@ var GridProto = {
     dblClickEvent : function(e) {
       var $th = $(e.target).closest("th"),
           tdCol = $th.index(),
-          frozenColumn = this.grid.viewModel.getOption("frozenColumn"),
-          col = tdCol < frozenColumn ? tdCol : tdCol+this.grid.startCol-frozenColumn;
-      this.sortColumn(col, $th);
+          frozenColumn = this.viewModel.getOption("frozenColumn"),
+          col = tdCol < frozenColumn ? tdCol : tdCol + this.startCol - frozenColumn;
+      this.sortColumn.sortColumn.call( this, col, $th );
     },
     sortColumn : function( col, $th ) {
-      var column = this.grid.collection.sortInfo.column || [],
-          direction = this.grid.collection.sortInfo.direction || [],
+      var column = this.collection.sortInfo.column || [],
+          direction = this.collection.sortInfo.direction || [],
           btnClass = ["hide", "glyphicon-sort-by-order", "glyphicon-sort-by-order-alt"],
-          colID = this.grid.viewModel.getColID(col),
-          index = _.indexOf(column, colID),
+          colID = this.viewModel.getColID(col),
+          index = _.indexOf( column, colID ),
           sortState = index === -1 ? 0 : (direction[index] === "asc" ? 1 : 2);
       sortState = ( sortState + 1 ) % 3;
-      if(sortState === 0) {
+      if ( sortState === 0 ) {
         column.splice(index, 1);
         direction.splice(index, 1);
       } else {
-        if(index === -1) {
+        if ( index === -1 ) {
           column.push(colID);
           direction.push(sortState === 1 ? "asc" : "desc");
         } else {
           direction[index] = sortState === 1 ? "asc" : "desc";
         }
       }
-      this.grid.sort(column, direction);
+      this.sort(column, direction);
       $th.find(".sortStatus").addClass(btnClass[sortState])
           .removeClass(btnClass[(sortState + 1) % 3])
           .removeClass(btnClass[(sortState + 2) % 3]);
@@ -1118,289 +1101,311 @@ var GridProto = {
   },
   columnMove : {
     draggedColumn : null,
+    _wrapMoveEvent: null,
+    _wrapUpEvent: null,
+
     _downEvent : function(th) {
       var $th = $(th).closest("th"),
-          colOrder = this.grid.viewModel.getOption("colOrder"),
-          visibleCol = this.grid.viewModel.getVisibleCol(),
-          thIndex, frozenColumn;
+        colOrder = this.viewModel.getOption("colOrder"),
+        visibleCol = this.viewModel.getVisibleCol(),
+        thIndex, frozenColumn;
       $("body").addClass("noselect");
-      if($th.length > 0) {
+      if ( $th.length > 0 ) {
         thIndex = $th.index();
-        frozenColumn = this.grid.viewModel.getOption("frozenColumn");
-        this.draggedColumn = thIndex < frozenColumn ? thIndex : thIndex + this.grid.startCol - frozenColumn;
+        frozenColumn = this.viewModel.getOption("frozenColumn");
+        this.columnMove.draggedColumn = thIndex < frozenColumn ? thIndex : thIndex + this.startCol - frozenColumn;
       }
 
-      if(colOrder[this.draggedColumn]!==visibleCol[this.draggedColumn]){
-        this.draggedColumn = _(colOrder).indexOf(this.draggedColumn);
+      if ( colOrder[this.columnMove.draggedColumn] !== visibleCol[this.columnMove.draggedColumn] ) {
+        this.columnMove.draggedColumn = _(colOrder).indexOf(this.columnMove.draggedColumn);
       }
     },
     downEvent : function(e) {
       if ( e.target.className.indexOf('glyphicon') < 0 && e.target.tagName !== 'A' ) {
-        this._downEvent(e.target);
+        this.columnMove._downEvent.call( this, e.target);
 
-        document.addEventListener('mousemove', this.moveEvent, true);
-        document.addEventListener('mouseup', this.upEvent, true);
+        this.columnMove._wrapMoveEvent = function(e) { this.columnMove.moveEvent.call( this, e ); };
+        this.columnMove._wrapUpEvent = function(e) { this.columnMove.upEvent.call( this, e ); };
+
+        this.columnMove._wrapMoveEvent = _.bind(this.columnMove._wrapMoveEvent, this);
+        this.columnMove._wrapUpEvent = _.bind(this.columnMove._wrapUpEvent, this);
+
+        document.addEventListener('mousemove', this.columnMove._wrapMoveEvent, true);
+        document.addEventListener('mouseup', this.columnMove._wrapUpEvent, true);
       }
     },
     _moveEvent : function(el) {
       var $th = $(el).closest("th"),
-          $indicator = this.grid.$el.find(".columnMove"),
-          colOrder = this.grid.viewModel.getOption("colOrder"),
-          visibleCol = this.grid.viewModel.getVisibleCol(),
-          thIndex, frozenColumn, targetIndex;
-      if($th.length > 0) {
+        $indicator = this.$el.find(".columnMove"),
+        colOrder = this.viewModel.getOption("colOrder"),
+        visibleCol = this.viewModel.getVisibleCol(),
+        thIndex, frozenColumn, targetIndex;
+      if ( $th.length > 0 ) {
         thIndex = $th.index();
-        frozenColumn = this.grid.viewModel.getOption("frozenColumn");
-        targetIndex = thIndex < frozenColumn ? thIndex : thIndex + this.grid.startCol - frozenColumn;
-        
-        if(colOrder[this.targetIndex]!==visibleCol[this.targetIndex]){
-          this.targetIndex = _(colOrder).indexOf(this.draggedColumn);
+        frozenColumn = this.viewModel.getOption("frozenColumn");
+        targetIndex = thIndex < frozenColumn ? thIndex : thIndex + this.startCol - frozenColumn;
+
+        if ( colOrder[this.columnMove.targetIndex] !== visibleCol[this.columnMove.targetIndex] ) {
+          this.columnMove.targetIndex = _(colOrder).indexOf(this.columnMove.draggedColumn);
         }
 
-        if(targetIndex === this.draggedColumn) {
+        if ( targetIndex === this.columnMove.draggedColumn ) {
           $indicator.addClass("hide").removeClass("show");
         } else {
           $indicator.addClass("show").removeClass("hide").css({
             top : $th.position().top,
             height : $th.outerHeight(),
-            left : $th.position().left + (targetIndex < this.draggedColumn ? 0 : $th.outerWidth())
+            left : $th.position().left + (targetIndex < this.columnMove.draggedColumn ? 0 : $th.outerWidth())
           });
         }
       }
     },
     moveEvent : function(e) {
-      if(this.draggedColumn) {
-        this._moveEvent(e.target);
+      if(this.columnMove.draggedColumn) {
+        this.columnMove._moveEvent.call( this, e.target );
       }
     },
     _upEvent : function(el) {
       var $th = $(el).closest("th"),
-          $indicator = this.grid.$el.find(".columnMove"),
-          colOrder = this.grid.viewModel.getOption("colOrder"),
-          visibleCol = this.grid.viewModel.getVisibleCol(),
-          thIndex, frozenColumn, targetIndex;
-      if($th.length > 0) {
+        $indicator = this.$el.find(".columnMove"),
+        colOrder = this.viewModel.getOption("colOrder"),
+        visibleCol = this.viewModel.getVisibleCol(),
+        thIndex, frozenColumn, targetIndex;
+      if ( $th.length > 0 ) {
         thIndex = $th.index();
-        frozenColumn = this.grid.viewModel.getOption("frozenColumn");
-        targetIndex = thIndex < frozenColumn ? thIndex : thIndex + this.grid.startCol - frozenColumn;
+        frozenColumn = this.viewModel.getOption("frozenColumn");
+        targetIndex = thIndex < frozenColumn ? thIndex : thIndex + this.startCol - frozenColumn;
 
-        if(colOrder[this.targetIndex]!==visibleCol[this.targetIndex]){
-          this.targetIndex = _(colOrder).indexOf(this.draggedColumn);
+        if ( colOrder[this.columnMove.targetIndex] !== visibleCol[this.columnMove.targetIndex] ) {
+          this.columnMove.targetIndex = _(colOrder).indexOf(this.columnMove.draggedColumn);
         }
-        if( this.draggedColumn!==targetIndex ){
-          this.grid.moveColumn(this.draggedColumn, targetIndex);
+        if ( this.columnMove.draggedColumn!==targetIndex ) {
+          this.moveColumn(this.columnMove.draggedColumn, targetIndex);
         }
       }
       $("body").removeClass("noselect");
       $indicator.addClass("hide").removeClass("show");
-      this.draggedColumn = null;
+      this.columnMove.draggedColumn = null;
     },
     upEvent : function(e) {
-      this._upEvent(e.target);
-      document.removeEventListener('mousemove', this.moveEvent, true);
-      document.removeEventListener('mouseup', this.upEvent, true);
+      this.columnMove._upEvent.call( this, e.target );
+      document.removeEventListener('mousemove', this.columnMove._wrapMoveEvent, true);
+      document.removeEventListener('mouseup', this.columnMove._wrapUpEvent, true);
     }
   },
   frozenColumn : {
     frozenColumnIdx : null,
     newFrozenCol : -1,
     dragInfo : {},
+    _wrapMoveEvent: null,
+    _wrapUpEvent: null,
 
     _downEvent : function(clientX) {
-      this.frozenColumnIdx = this.grid.viewModel.getOption("frozenColumn");
+      this.frozenColumn.frozenColumnIdx = this.viewModel.getOption("frozenColumn");
 
-      this.dragInfo = {
-        startX : clientX - this.grid.$wrapper_div.offset().left,
+      this.frozenColumn.dragInfo = {
+        startX : clientX - this.$wrapper_div.offset().left,
         endX : 0
       };
     },
     downEvent : function(e) {
-      var moveEvent = function(e){ this.moveEvent(e); },
-          upEvent = function(e){ this.upEvent(e); };
+      this.frozenColumn._downEvent.call( this, e.clientX );
 
-      this._downEvent(e.clientX);
+      this.frozenColumn.$frozenHandle = this.$el.find(".frozenCol");
+      this.frozenColumn.$seperateCol = this.$el.find(".separateCol");
+      this.frozenColumn.$indicator = this.$el.find(".columnMove");
 
-      moveEvent = _.bind(moveEvent, this);
-      upEvent = _.bind(upEvent, this);
+      this.frozenColumn._wrapMoveEvent = function(e){ this.frozenColumn.moveEvent.call( this, e ); };
+      this.frozenColumn._wrapUpEvent = function(e){ this.frozenColumn.upEvent.call( this, e ); };
 
-      document.addEventListener('mousemove', moveEvent, true);
-      document.addEventListener('mouseup', upEvent, true);
+      this.frozenColumn._wrapMoveEvent = _.bind(this.frozenColumn._wrapMoveEvent, this);
+      this.frozenColumn._wrapUpEvent = _.bind(this.frozenColumn._wrapUpEvent, this);
+
+      document.addEventListener('mousemove', this.frozenColumn._wrapMoveEvent, true);
+      document.addEventListener('mouseup', this.frozenColumn._wrapUpEvent, true);
     },
     _moveEvent : function(clientX) {
       var i,
           endCol = -1,
           colWidth = 0,
           widthSum = 0,
-          visibleCol = this.grid.viewModel.getVisibleCol();
+          visibleCol = this.viewModel.getVisibleCol();
 
-      this.dragInfo.endX = clientX - this.grid.$wrapper_div.offset().left;
-      this.$seperateCol.css("left", this.dragInfo.endX);
-      this.$seperateCol.removeClass("hide").addClass("show");
+      this.frozenColumn.dragInfo.endX = clientX - this.$wrapper_div.offset().left;
+      this.frozenColumn.$seperateCol.css("left", this.frozenColumn.dragInfo.endX);
+      this.frozenColumn.$seperateCol.removeClass("hide").addClass("show");
 
-      this.newFrozenCol = -1;
+      this.frozenColumn.newFrozenCol = -1;
       for ( i = 0; i < visibleCol.length; i++ ) {
-        colWidth = this.grid.viewModel.getMeta( ["*", i], "width" );
+        colWidth = this.viewModel.getMeta( ["*", i], "width" );
         widthSum += colWidth;
 
-        if ( this.newFrozenCol === -1 ) {
+        if ( this.frozenColumn.newFrozenCol === -1 ) {
           if ( widthSum - colWidth / 2 >= this.dragInfo.endX ) {
-            this.newFrozenCol = endCol = i;
+            this.frozenColumn.newFrozenCol = endCol = i;
             widthSum = colWidth;
           }
         } else {
           endCol = i;
-          if ( widthSum > this.grid.$wrapper_div.width() ) {
+          if ( widthSum > this.$wrapper_div.width() ) {
             break;
           }
         }
       }
 
-      if ( this.frozenColumnIdx !== this.newFrozenCol ) {
+      if ( this.frozenColumn.frozenColumnIdx !== this.frozenColumn.newFrozenCol ) {
         widthSum = 0;  
         
-        for ( i = 0; i<this.newFrozenCol; i++ ) {
-          widthSum += this.grid.viewModel.getMeta( ["*", i], "width" );
+        for ( i = 0; i<this.frozenColumn.newFrozenCol; i++ ) {
+          widthSum += this.viewModel.getMeta( ["*", i], "width" );
         }        
       }
 
-      this.$indicator.removeClass("hide").addClass("show").css({
-        top : this.grid.$wrapper_div.find("table thead").position().top,
-        height : this.grid.$wrapper_div.find("table thead").outerHeight(),
+      this.frozenColumn.$indicator.removeClass("hide").addClass("show").css({
+        top : this.$wrapper_div.find("table thead").position().top,
+        height : this.$wrapper_div.find("table thead").outerHeight(),
         left : widthSum
       });
     },
     moveEvent : function(e) {
-      this._moveEvent(e.clientX);
+      this.frozenColumn._moveEvent.call( this, e.clientX );
     },
     _upEvent : function() {
-      this.$seperateCol.removeClass("show").addClass("hide");
-      this.$indicator.removeClass("show").addClass("hide");
-      this.grid.viewModel.setOption("frozenColumn", this.newFrozenCol);
-      this.grid.drawByScroll();
+      this.frozenColumn.$seperateCol.removeClass("show").addClass("hide");
+      this.frozenColumn.$indicator.removeClass("show").addClass("hide");
+      this.viewModel.setOption("frozenColumn", this.frozenColumn.newFrozenCol);
+      this.drawByScroll();
     },
     upEvent : function(e) {
-      this._upEvent(e.target);
+      this.frozenColumn._upEvent.call( this, e.target );
 
-      document.removeEventListener('mousemove', this.moveEvent, true);
-      document.removeEventListener('mouseup', this.upEvent, true);
+      document.removeEventListener('mousemove', this.frozenColumn._wrapMoveEvent, true);
+      document.removeEventListener('mouseup', this.frozenColumn._wrapUpEvent, true);
     }
   },
   verticalScroll : {
     pos : null,
+    _wrapMoveEvent: null,
+    _wrapUpEvent: null,
 
     _areaDownEvent : function(offsetY){
-      var rowTop = this.grid.rowTop,
-          vScrollDegree = this.grid.viewModel.getOption("vScrollDegree") || this.grid.viewModel.getOption("rowNum"),
+      var rowTop = this.rowTop,
+          vScrollDegree = this.viewModel.getOption("vScrollDegree") || this.viewModel.getOption("rowNum"),
           scrollTop;
 
-      rowTop += (offsetY < this.grid.$scrollYHandle.position().top ? -1 : 1) * vScrollDegree;
+      rowTop += (offsetY < this.$scrollYHandle.position().top ? -1 : 1) * vScrollDegree;
       scrollTop = rowTop * 20;
-      this.grid.viewModel.setOption("scrollTop", scrollTop);
+      this.viewModel.setOption("scrollTop", scrollTop);
     },
     areaDownEvent : function(e){
-      this._areaDownEvent(e.offsetY);
+      this.verticalScroll._areaDownEvent.call( this, e.offsetY );
     },
     _handleDownEvent : function( clientY ){
-      var target_top = this.grid.$scrollYHandle.position().top;
-      this.pos = {
+      var target_top = this.$scrollYHandle.position().top;
+      this.verticalScroll.pos = {
         top : target_top,
         currentY : clientY
       };
     },
     handleDownEvent : function(e){
-      var moveEvent = function(e){ this.moveEvent(e); },
-          upEvent = function(e){ this.upEvent(e); };
-
-      this._handleDownEvent(e.clientY);
+      this.verticalScroll._handleDownEvent.call( this, e.clientY );
 
       e.preventDefault();
       e.stopPropagation();
 
-      moveEvent = _.bind(moveEvent, this);
-      upEvent = _.bind(upEvent, this);
+      this.verticalScroll._wrapMoveEvent = function(e){ this.verticalScroll.moveEvent.call( this, e ); };
+      this.verticalScroll._wrapUpEvent = function(e){ this.verticalScroll.upEvent.call( this, e ); };
 
-      document.addEventListener('mousemove', moveEvent, true);
-      document.addEventListener('mouseup', upEvent, true);
+      this.verticalScroll._wrapMoveEvent = _.bind(this.verticalScroll._wrapMoveEvent, this);
+      this.verticalScroll._wrapUpEvent = _.bind(this.verticalScroll._wrapUpEvent, this);
+
+      document.addEventListener('mousemove', this.verticalScroll._wrapMoveEvent, true);
+      document.addEventListener('mouseup', this.verticalScroll._wrapUpEvent, true);
     },
     _moveEvent : function(clientY) {
-      if ( !this.pos ) {
+      if ( !this.verticalScroll.pos ) {
         return;
       }
-      var topRange = this.grid.$scrollYArea.height() - this.grid.$scrollYHandle.height(),
-          top = parseInt( this.pos.top + clientY - this.pos.currentY, 10),
-          scrollYRange = this.grid.wholeTblHeight - 20 * this.grid.viewModel.getOption("rowNum"),
+      var topRange = this.$scrollYArea.height() - this.$scrollYHandle.height(),
+          top = parseInt( this.verticalScroll.pos.top + clientY - this.verticalScroll.pos.currentY, 10),
+          scrollYRange = this.wholeTblHeight - 20 * this.viewModel.getOption("rowNum"),
           scrollTop = top * scrollYRange / topRange;
-      this.grid.viewModel.setOption("scrollTop", scrollTop);
+
+      this.viewModel.setOption("scrollTop", scrollTop);
     },
     moveEvent : function(e) {
-      this._moveEvent( e.clientY );
+      this.verticalScroll._moveEvent.call( this, e.clientY );
     },
     _upEvent : function() {
-      this.pos = null;
+      this.verticalScroll.pos = null;
     },
     upEvent : function() {
-      this._upEvent();
+      this.verticalScroll._upEvent.call(this);
 
-      document.removeEventListener('mousemove', this.moveEvent, true);
-      document.removeEventListener('mouseup', this.upEvent, true);
+      document.removeEventListener('mousemove', this.verticalScroll._wrapMoveEvent, true);
+      document.removeEventListener('mouseup', this.verticalScroll._wrapUpEvent, true);
     }
   },    
   horizontalScroll : {
     pos : null,
+    _wrapMoveEvent: null,
+    _wrapUpEvent: null,
 
-    _areaDownEvent     : function(offsetX) {
-      var left = this.grid.$scrollXHandle.position().left,
-          leftRange = this.grid.$scrollXArea.width() - this.grid.$scrollXHandle.width(),
-          scrollLeft = left * (this.grid.wholeTblWidth - this.grid.tableWidth) / leftRange,
-          frozenArea = this.grid.viewModel.getFrozenArea();
-      scrollLeft += (offsetX < left ? -1 : 1) * (this.grid.tableWidth - frozenArea);
-      this.grid.viewModel.setOption("scrollLeft", scrollLeft);
+    _areaDownEvent : function(offsetX) {
+      var left = this.$scrollXHandle.position().left,
+          leftRange = this.$scrollXArea.width() - this.$scrollXHandle.width(),
+          scrollLeft = left * (this.wholeTblWidth - this.tableWidth) / leftRange,
+          frozenArea = this.viewModel.getFrozenArea();
+
+      scrollLeft += (offsetX < left ? -1 : 1) * (this.tableWidth - frozenArea);
+      this.viewModel.setOption("scrollLeft", scrollLeft);
     },
-    areaDownEvent     : function(e) {
-      this._areaDownEvent(e.offsetX);
+    areaDownEvent : function(e) {
+      this.horizontalScroll._areaDownEvent.call( this, e.offsetX );
     },
-    _handleDownEvent     : function(clientX) {
-      this.pos = {                         // vertical 스크롤에서도 사용
-        left : this.grid.$scrollXHandle.position().left,
+    _handleDownEvent : function(clientX) {
+      this.horizontalScroll.pos = {
+        left : this.$scrollXHandle.position().left,
         currentX : clientX
       };
     },
-    handleDownEvent     : function(e) {
-      var moveEvent = function(e){ this.moveEvent(e); },
-          upEvent = function(e){ this.upEvent(e); };
-
-      this._handleDownEvent(e.clientX);
+    handleDownEvent : function(e) {
+      this.horizontalScroll._handleDownEvent.call( this, e.clientX );
 
       e.preventDefault();
       e.stopPropagation();
 
-      moveEvent = _.bind(moveEvent, this);
-      upEvent = _.bind(upEvent, this);
+      this.horizontalScroll._wrapMoveEvent = function(e){ this.horizontalScroll.moveEvent.call( this, e ); };
+      this.horizontalScroll._wrapUpEvent = function(e){ this.horizontalScroll.upEvent.call( this, e ); };
 
-      document.addEventListener('mousemove', moveEvent, true);
-      document.addEventListener('mouseup', upEvent, true);
+      this.horizontalScroll._wrapMoveEvent = _.bind(this.horizontalScroll._wrapMoveEvent, this);
+      this.horizontalScroll._wrapUpEvent = _.bind(this.horizontalScroll._wrapUpEvent, this);
+
+      document.addEventListener('mousemove', this.horizontalScroll._wrapMoveEvent, true);
+      document.addEventListener('mouseup', this.horizontalScroll._wrapUpEvent, true);
     },
-    _moveEvent     : function(clientX) {
-      if ( !this.pos ) {
+    _moveEvent : function(clientX) {
+      if ( !this.horizontalScroll.pos ) {
         return;
       }
-      var leftRange = this.grid.$scrollXArea.width() - this.grid.$scrollXHandle.width(),
-          left = parseInt( this.pos.left + clientX - this.pos.currentX, 10),
-          scrollXRange = this.grid.wholeTblWidth - this.grid.tableWidth,
+      var leftRange = this.$scrollXArea.width() - this.$scrollXHandle.width(),
+          left = parseInt( this.horizontalScroll.pos.left + clientX - this.horizontalScroll.pos.currentX, 10),
+          scrollXRange = this.wholeTblWidth - this.tableWidth,
           scrollLeft = left * scrollXRange / leftRange;
-      this.grid.viewModel.setOption("scrollLeft", scrollLeft);
-    },
-    moveEvent     : function(e) {
-      this._moveEvent(e.clientX);
-    },
-    _upEvent       : function() {
-      this.pos = null;
-    },
-    upEvent       : function() {
-      this._upEvent();
 
-      document.removeEventListener('mousemove', this.moveEvent, true);
-      document.removeEventListener('mouseup', this.upEvent, true);
+      this.viewModel.setOption("scrollLeft", scrollLeft);
+    },
+    moveEvent : function(e) {
+      this.horizontalScroll._moveEvent.call( this, e.clientX );
+    },
+    _upEvent : function() {
+      this.horizontalScroll.pos = null;
+    },
+    upEvent : function() {
+      this.horizontalScroll._upEvent.call(this);
+
+      document.removeEventListener('mousemove', this.horizontalScroll._wrapMoveEvent, true);
+      document.removeEventListener('mouseup', this.horizontalScroll._wrapUpEvent, true);
     }
   },
   scrollByWheel : {
@@ -1422,7 +1427,7 @@ var GridProto = {
         deltaY /= 2;
       }
 
-      this.grid.scrollBy(deltaX, deltaY);
+      this.scrollBy(deltaX, deltaY);
 
       e.preventDefault();
       e.stopPropagation();
@@ -1430,14 +1435,14 @@ var GridProto = {
   },
   clickCell : {
     clickEvent : function(e) {
-      var row = $(e.target).closest("tr").index() + this.grid.rowTop,
+      var row = $(e.target).closest("tr").index() + this.rowTop,
           tdCol = $(e.target).closest("td").index(),
-          frozenColumn = this.grid.viewModel.getOption("frozenColumn"),
-          col = tdCol < frozenColumn ? tdCol : tdCol+this.grid.startCol-frozenColumn,
-          displayType = this.grid.viewModel.getMeta( [row, col], "displayType");
+          frozenColumn = this.viewModel.getOption("frozenColumn"),
+          col = tdCol < frozenColumn ? tdCol : tdCol + this.startCol - frozenColumn,
+          displayType = this.viewModel.getMeta( [row, col], "displayType");
 
-      if(cellObjects[displayType][e.type]) {
-        cellObjects[displayType][e.type](e, this.grid, row, col);
+      if ( cellObjects[displayType][e.type] ) {
+        cellObjects[displayType][e.type]( e, this, row, col );
       }
     }
   },
@@ -1455,9 +1460,11 @@ var GridProto = {
     this.drawTbody( index );
   },
   onReset: function () {
-    this.viewModel.setOption("scrollLeft", 0, {silent:true});
-    this.viewModel.setOption("scrollTop", 0, {silent:true});
-    this.setResize();
+    if ( this.$wrapper_div ) {
+      this.viewModel.setOption("scrollLeft", 0, {silent:true});
+      this.viewModel.setOption("scrollTop", 0, {silent:true});
+      this.setResize();
+    }
   },
   drawWhole: function ( model ) {
     if ( model instanceof Collection ) {
