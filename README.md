@@ -224,7 +224,7 @@ Use the basic information if the column information is omitted.
 	
 	 el: "#gridMain",
 	 
-	 option{
+	 option: {
 	
 	 	width: "650px",
 	
