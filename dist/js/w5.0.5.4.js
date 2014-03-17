@@ -5,7 +5,7 @@
  * Copyright 2013 Inswave Foundation and other contributors
  * Released under the LGPLv3.0 license
  *
- * Date: 2014-03-12
+ * Date: 2014-03-17
  */
 
 /* global jQuery */
@@ -841,7 +841,7 @@ var GridProto = {
         "<div class='separateCol hide'>Adjust Column seperator</div>" +
         "<div class='frozenCol hide'>Adjust Column seperator</div>" +
         "<div class='columnMove hide'>Column Move indicator</div>" +
-        "<table class='gGrid-table' style='width:0px'>" +
+        "<table class='gGrid-table' style='width:0'>" +
           "<caption class='gGrid-caption'><%= caption %></caption>" +
           "<colgroup></colgroup>" +
           "<thead></thead>" +
@@ -1121,11 +1121,13 @@ var GridProto = {
       }
     },
     downEvent : function(e) {
+      var that;
       if ( e.target.className.indexOf('glyphicon') < 0 && e.target.tagName !== 'A' ) {
         this.columnMove._downEvent.call( this, e.target);
 
-        this.columnMove._wrapMoveEvent = function(e) { this.columnMove.moveEvent.call( this, e ); };
-        this.columnMove._wrapUpEvent = function(e) { this.columnMove.upEvent.call( this, e ); };
+        that = this;
+        this.columnMove._wrapMoveEvent = function(e) { that.columnMove.moveEvent.call( this, e ); };
+        this.columnMove._wrapUpEvent = function(e) { that.columnMove.upEvent.call( this, e ); };
 
         this.columnMove._wrapMoveEvent = _.bind(this.columnMove._wrapMoveEvent, this);
         this.columnMove._wrapUpEvent = _.bind(this.columnMove._wrapUpEvent, this);
@@ -1209,14 +1211,15 @@ var GridProto = {
       };
     },
     downEvent : function(e) {
+      var that = this;
       this.frozenColumn._downEvent.call( this, e.clientX );
 
       this.frozenColumn.$frozenHandle = this.$el.find(".frozenCol");
       this.frozenColumn.$seperateCol = this.$el.find(".separateCol");
       this.frozenColumn.$indicator = this.$el.find(".columnMove");
 
-      this.frozenColumn._wrapMoveEvent = function(e){ this.frozenColumn.moveEvent.call( this, e ); };
-      this.frozenColumn._wrapUpEvent = function(e){ this.frozenColumn.upEvent.call( this, e ); };
+      this.frozenColumn._wrapMoveEvent = function(e){ that.frozenColumn.moveEvent.call( this, e ); };
+      this.frozenColumn._wrapUpEvent = function(e){ that.frozenColumn.upEvent.call( this, e ); };
 
       this.frozenColumn._wrapMoveEvent = _.bind(this.frozenColumn._wrapMoveEvent, this);
       this.frozenColumn._wrapUpEvent = _.bind(this.frozenColumn._wrapUpEvent, this);
@@ -1307,14 +1310,16 @@ var GridProto = {
         currentY : clientY
       };
     },
-    handleDownEvent : function(e){
+    handleDownEvent : function(e) {
+      var that = this;
+
       this.verticalScroll._handleDownEvent.call( this, e.clientY );
 
       e.preventDefault();
       e.stopPropagation();
 
-      this.verticalScroll._wrapMoveEvent = function(e){ this.verticalScroll.moveEvent.call( this, e ); };
-      this.verticalScroll._wrapUpEvent = function(e){ this.verticalScroll.upEvent.call( this, e ); };
+      this.verticalScroll._wrapMoveEvent = function(e){ that.verticalScroll.moveEvent.call( this, e ); };
+      this.verticalScroll._wrapUpEvent = function(e){ that.verticalScroll.upEvent.call( this, e ); };
 
       this.verticalScroll._wrapMoveEvent = _.bind(this.verticalScroll._wrapMoveEvent, this);
       this.verticalScroll._wrapUpEvent = _.bind(this.verticalScroll._wrapUpEvent, this);
@@ -1370,13 +1375,14 @@ var GridProto = {
       };
     },
     handleDownEvent : function(e) {
+      var that = this;
       this.horizontalScroll._handleDownEvent.call( this, e.clientX );
 
       e.preventDefault();
       e.stopPropagation();
 
-      this.horizontalScroll._wrapMoveEvent = function(e){ this.horizontalScroll.moveEvent.call( this, e ); };
-      this.horizontalScroll._wrapUpEvent = function(e){ this.horizontalScroll.upEvent.call( this, e ); };
+      this.horizontalScroll._wrapMoveEvent = function(e){ that.horizontalScroll.moveEvent.call( this, e ); };
+      this.horizontalScroll._wrapUpEvent = function(e){ that.horizontalScroll.upEvent.call( this, e ); };
 
       this.horizontalScroll._wrapMoveEvent = _.bind(this.horizontalScroll._wrapMoveEvent, this);
       this.horizontalScroll._wrapUpEvent = _.bind(this.horizontalScroll._wrapUpEvent, this);
