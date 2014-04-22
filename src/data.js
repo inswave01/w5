@@ -623,8 +623,6 @@ var w5DataCollectionProto = {
   __sorting: false,
   __filtering: false,
   __originalCollection: null,
-  __sortingCollection: null,
-  __filteringCollection: null,
   defaults: null,
   initialize: function(models, options) {
     if(options) {
@@ -645,45 +643,31 @@ var w5DataCollectionProto = {
     }
     return data;
   },
-  cloneCollection: function (action) {
-    if ( action === 'filter' && this.__sorting ) {
-      this.__sortingCollection = this.clone();
-      this.__sortingCollection.listenTo( this, 'add remove', this.syncData );
-    } else if ( action === 'sort' && this.__filtering ) {
-      this.__filteringCollection = this.clone();
-      this.__filteringCollection.listenTo( this, 'add remove', this.syncData );
-    } else if ( !this.__sorting && !this.__filtering ) {
+  cloneCollection: function () {
+    if ( !this.__originalCollection ) {
       this.__originalCollection = this.clone();
       this.__originalCollection.listenTo( this, 'add remove', this.syncData );
     }
   },
-  resetCollection: function () {
-    if ( this.__sortingCollection ) {
-      if( this.__filtering ) {
-        this.reset( this.__originalCollection.models );
+  resetCollection: function (action) {
+    if ( action === 'filter' ) {
+      if ( this.__sorting ) {
+        this.reset( this.__originalCollection.models, { silent: true } );
+        this.sortData();
       } else {
-        this.reset( this.__sortingCollection.models );
-      }
-      if ( !this.__sorting ) {
-        this.__sortingCollection.stopListening( this, 'add remove', this.syncData );
-        this.__sortingCollection = null;
-      }
-    }
-    if ( this.__filteringCollection ) {
-      if( this.__sorting ) {
         this.reset( this.__originalCollection.models );
+        this.__originalCollection.stopListening( this, 'add remove', this.syncData );
+        this.__originalCollection = null;
+      }
+    } else if ( action === 'sort' ) {
+      if ( this.__filtering ) {
+        this.reset( this.__originalCollection.models, { silent: true } );
+        this.filterData( true, {} );
       } else {
-        this.reset( this.__filteringCollection.models );
+        this.reset( this.__originalCollection.models );
+        this.__originalCollection.stopListening( this, 'add remove', this.syncData );
+        this.__originalCollection = null;
       }
-      if ( !this.__filtering ) {
-        this.__filteringCollection.stopListening( this, 'add remove', this.syncData );
-        this.__filteringCollection = null;
-      }
-    }
-    if ( !this.__sorting && !this.__filtering && this.__originalCollection ) {
-      this.reset( this.__originalCollection.models );
-      this.__originalCollection.stopListening( this, 'add remove', this.syncData );
-      this.__originalCollection = null;
     }
   },
   syncData: function ( model, collection, options ) {
@@ -734,7 +718,7 @@ var w5DataCollectionProto = {
   },
   sortData: function() {
     if ( this.sortInfo.column.length > 0 ) {
-      this.cloneCollection('sort');
+      this.cloneCollection();
       this.__sorting = true;
 
       if ( _.isFunction(this.sortInfo.column) ) {
@@ -748,7 +732,7 @@ var w5DataCollectionProto = {
       if ( this.__sorting ) {
         this.__sorting = false;
         this.comparator = null;
-        this.resetCollection();
+        this.resetCollection('sort');
       }
     }
   }
