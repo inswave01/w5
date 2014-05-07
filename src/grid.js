@@ -408,7 +408,7 @@ var GridProto = {
         widthSum += colWidth;
 
         if ( this.frozenColumn.newFrozenCol === -1 ) {
-          if ( widthSum - colWidth / 2 >= this.dragInfo.endX ) {
+          if ( widthSum - colWidth / 2 >= this.frozenColumn.dragInfo.endX ) {
             this.frozenColumn.newFrozenCol = endCol = i;
             widthSum = colWidth;
           }
