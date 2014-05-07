@@ -5,14 +5,20 @@
  * Copyright 2013 Inswave Foundation and other contributors
  * Released under the LGPLv3.0 license
  *
- * Date: 2014-04-22
+ * Date: 2014-05-07
  */
 
-/* global jQuery */
-/* global _ */
-/* global Backbone */
-/* global window */
-(function($, _, Backbone, window, undefined) {
+(function(root, factory) {
+  /* global define */
+  if ( typeof define === 'function' && define.amd ) {
+    define( ['jquery', 'underscore', 'Backbone', 'exports'], function( $, _, Backbone, exports ) {
+      root.w5 = factory( $, _, Backbone, root, exports );
+    });
+  } else {
+    root.w5 = factory( (root.jQuery || root.$), root._, root.Backbone, root, {} );
+  }
+
+}( this, function( $, _, Backbone, window, w5 ) {
 
     "use strict";
 
@@ -2450,10 +2456,10 @@ var Grid = Backbone.View.extend(GridProto);
 var Model = Backbone.Model.extend( _.extend( {}, w5DataModelProto, w5DataModelProtoPro ) );
 var Collection = Backbone.Collection.extend( _.extend( {model : Model}, w5DataCollectionProto, w5DataCollectionProtoPro ) );
 
-window["w5"] = {
-  Model: Model,
-  Collection: Collection,
-  Grid: Grid
-};
+w5.Model = Model;
+w5.Collection = Collection;
+w5.Grid = Grid;
 
-})(jQuery, _, Backbone, window);
+return w5;
+
+}));
