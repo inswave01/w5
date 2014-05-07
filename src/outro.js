@@ -1,2 +1,2 @@
 
-})(jQuery, _, Backbone, window);
+}));
