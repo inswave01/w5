@@ -5,7 +5,7 @@
  * Copyright 2013 Inswave Foundation and other contributors
  * Released under the LGPLv3.0 license
  *
- * Date: 2014-05-07
+ * Date: 2014-05-08
  */
 
 (function(root, factory) {
@@ -1464,7 +1464,6 @@ var GridProto = {
   },
   drawWhole: function ( model ) {
     if ( model instanceof Collection ) {
-      this.createTbody();
       this.onReset();
     }
   },
