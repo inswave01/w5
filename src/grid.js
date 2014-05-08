@@ -638,7 +638,6 @@ var GridProto = {
   },
   drawWhole: function ( model ) {
     if ( model instanceof Collection ) {
-      this.createTbody();
       this.onReset();
     }
   },
