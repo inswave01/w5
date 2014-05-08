@@ -100,12 +100,12 @@ module.exports = function(grunt) {
           cleancss: true
         },
         files: {
-          "dist/css/w5.min.css": "src/grid.less"
+          "dist/css/w5.min.css": "resources/less/*.less"
         }
       },
       css: {
         files: {
-          "dist/css/w5.css": "src/grid.less"
+          "dist/css/w5.css": "resources/less/*.less"
         }
       }
     },

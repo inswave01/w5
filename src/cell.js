@@ -172,7 +172,8 @@ cellObjects["toggleButton"] = _.defaults({
   },
   getContent : function ( grid, value, row ) {
     var closed = !!grid.viewModel.getMeta([row, "*"], "closed"),
-        plusminus = closed ? "+" : "-";
-    return $("<div class='toggleButton_button'>" + plusminus + "</div><span class='toggleButton_text'>" + value + "<span>");
+        plusminus = closed ? "fold" : "unfold";
+
+    return $("<i class='w5-grid-group "+ plusminus + "'>"+ plusminus +"</i><span class='w5-grid-group-text'>" + value + "</span>");
   }
 }, cellProto);
