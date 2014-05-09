@@ -28,6 +28,7 @@ module.exports = function(grunt) {
           "src/api.js",
           "src/cell.js",
           "src/export.js",
+          "src/formatter.js",
           "src/outro.js"
         ],
         dest: "js/w5.js"

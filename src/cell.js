@@ -7,11 +7,12 @@ var cellProto = {
 cellObjects["text"] = _.defaults({
   $editBox: $("<div class='w5_grid_editbox' contenteditable='true'>"),
   getContent : function(grid, data, row, col) {
-    var template = grid.viewModel.getMeta([row, col], "template") || "<%=data%>";
+    var template = grid.viewModel.getMeta([row, col], "template") || "<%=data%>",
+        format = grid.viewModel.getMeta([row, col], "format") || "";
     if(_.isString(template)) {
       template = _.template(template);
     }
-    return template({data:data});
+    return template({data:w5.numberFormatter(data, format)});
   },
   dblclick: function(e, grid, row, col) {
     var readOnly = grid.viewModel.getMeta( [row, col], "readOnly");
@@ -162,6 +163,18 @@ cellObjects["link"] = _.defaults({
     var href = _.isObject(value) ? value.href : value,
         label = _.isObject(value) ? value.label : value;
     return $("<a href='" + href + "'>" + label + "</a>");
+  }
+}, cellProto);
+
+cellObjects["img"] = _.defaults({
+  getContent : function ( grid, value ) {
+    return $("<img src='" + value + "'/>");
+  }
+}, cellProto);
+
+cellObjects["button"] = _.defaults({
+  getContent : function ( grid, value ) {
+    return $("<button>" + value + "</button>");
   }
 }, cellProto);
 

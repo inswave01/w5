@@ -59,6 +59,8 @@ _.extend( ViewModel.prototype, {
     displayType : "text",
     options : null,
     hidden : false,
+    dataType : null,
+    format : "",
     //editType : null,
     class : ""
   },
@@ -111,7 +113,7 @@ _.extend( ViewModel.prototype, {
   },
   setData: function ( pos, value, options ) {
     var models,
-        rst;
+        rst, i, dataType;
 
     options = options || {};
     if ( this.collection.__validator && _.isUndefined(options.validate) ) {
@@ -123,23 +125,34 @@ _.extend( ViewModel.prototype, {
       models = this.collection.reset(value, options);
     } else if ( pos[1] === "*" ) {
       value = this.checkDataType( value );
+      for(i in value) {
+        dataType = this.getMeta([pos[0], i], "dataType");
+        if(dataType) {
+          value[i] = w5.dataType[dataType](value[i]);
+        }
+      }
       models = this.collection.at(pos[0]).set( value, options );
     } else if ( pos[0] === "*" ) {
-      options.silent = true;
       options.save = false;
       options.targetColumn = pos[1];
       (this.collection).find( function( row, index ) {
         if ( _(value).isArray() && index >= value.length ) {
           return;
         }
-        if ( value.length === (index + 1) ) {
-          delete options.silent;
+        var val = _(value).isArray() ? value[index] : value;
+        dataType = this.getMeta([index, pos[1]], "dataType");
+        if(dataType) {
+          val = w5.dataType[dataType]( val );
         }
-        rst = row.set( pos[1], _(value).isArray() ? value[index] : value, options );
+        rst = row.set( pos[1], val, options );
 
         return rst === false;
       }, this);
     } else {
+      dataType = this.getMeta([pos[0], pos[1]], "dataType");
+      if(dataType) {
+        value = w5.dataType[dataType](value);
+      }
       models = this.collection.at(pos[0]).set( pos[1], value, options );
     }
 

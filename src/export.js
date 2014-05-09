@@ -8,4 +8,9 @@ w5.Model = Model;
 w5.Collection = Collection;
 w5.Grid = Grid;
 
-return w5;
+w5.dataType = {
+  "auto": function(value) { return value; },
+  "string": String,
+  "number": Number,
+  "boolean": Boolean
+};

@@ -34,6 +34,7 @@ var GridProto = {
     "mousewheel" : function(e) { this.scrollByWheel.wheelEvent.call( this, e ); }
   },
   initialize: function(options) {
+    this.options = options;
     if(options.parseTable) {
       this.parseTable(options);
       if(!this.collection && options.collection) {
@@ -84,6 +85,24 @@ var GridProto = {
     this.listenTo( this.viewModel.row, 'change', this.drawMetaByPos );
     this.listenTo( this.viewModel.cell, 'change', this.drawMetaByPos );
     this.listenTo( this.viewModel.option, 'change', this.onOptionChange );
+    
+    var events = {},
+        i;
+    for(i in options.gridEvents) {
+      var eventName = i.split(" ")[0];
+      if(!events[eventName]) {
+        events[eventName] = [];
+      }
+      events[eventName].push({
+        select: i.slice(eventName.length + 1),
+        funcName: options.gridEvents[i]
+      });
+    }
+    this.gridEventMatch = events;
+    for(i in events) {
+      this.events[i + " td"] = "handleCommonEvent";
+    }
+    this.delegateEvents(this.events);
   },
   render: function() {
     var $el,
@@ -122,6 +141,27 @@ var GridProto = {
     this.setResize();
 
     return this; // enable chained calls
+  },
+  handleCommonEvent: function(e) {
+    var events = this.gridEventMatch[e.type],
+        $td = $(e.target).closest("td"),
+        col = $td.index(),
+        row = $td.parent().index() + this.rowTop,
+        cid = this.viewModel.getDataCID(row),
+        frozenColumn = this.viewModel.getOption("frozenColumn"),
+        i, j, elems;
+    if(col >= frozenColumn) {
+      col += this.startCol;
+    }
+    col = this.viewModel.getColID(col, true); 
+    for(i = 0; i < events.length; i++) {
+      elems = this.select(events[i].select);
+      for(j = 0; j < elems.length; j++) {
+        if(elems[j][0] === cid && elems[j][1] === col) {
+          this.options[events[i].funcName].call(this, e, row, col);
+        }
+      }
+    }
   },
   parseTable: function(options) {
     if ( this.$el[0].tagName !== "TABLE" ) {
@@ -1250,25 +1290,25 @@ var GridProto = {
     }
   },
   _cell: function (row, col) {
-    return new GridSelector(this, [row, this.viewModel.getColID(col, true)]);
+    return new GridSelector(this, [[row, this.viewModel.getColID(col, true)]]);
   },
   _row: function (row) {
-    return new GridSelector(this, [row, "*"]);
+    return new GridSelector(this, [[row, "*"]]);
   },
   _col: function (col) {
-    return new GridSelector(this, ["*", this.viewModel.getColID(col, true)]);
+    return new GridSelector(this, [["*", this.viewModel.getColID(col, true)]]);
   },
   cell: function (row, col) {
-    return new GridSelector(this, [row, this.viewModel.getColID(col)]);
+    return new GridSelector(this, [[row, this.viewModel.getColID(col)]]);
   },
   row: function (row) {
-    return new GridSelector(this, [row, "*"]);
+    return new GridSelector(this, [[row, "*"]]);
   },
   col: function (col) {
-    return new GridSelector(this, ["*", this.viewModel.getColID(col)]);
+    return new GridSelector(this, [["*", this.viewModel.getColID(col)]]);
   },
   table: function () {
-    return new GridSelector(this, ["*", "*"]);
+    return new GridSelector(this, [["*", "*"]]);
   },
   option: function() {
     return this.viewModel.option;
@@ -1301,5 +1341,91 @@ var GridProto = {
 
     return results;
   },
-  matchExp: /(cell|row|column):(\S+)/i
+  matchExp: /(cell|row|column):(\S+)/i,
+  getChildren: function(parentEls, tagName, attribute) {
+    var unique_check = {},
+        elems = [],
+        i, j, k,
+        row, col, colName;
+    for(k = 0; k < parentEls.length; k++) {
+      row = parentEls[k][0];
+      col = parentEls[k][1];
+      // add cols in table or cells in row
+      if(col === "*") {
+        if(!tagName || // tagName이 주어지지 않았거나
+            (row === "*" && tagName === "col") ||  // parent가 table일 경우에는 tagName === "col"
+            (row !== "*" && tagName === "cell")) { // parent가 row일 경우에는 tagName === "cell"
+          for(i = 0; i < this.viewModel.colModel.length; i++) {
+            colName = this.viewModel.getColID(i);
+            if(!unique_check[row + "_" + colName]) {
+              unique_check[row + "_" + colName] = 1;
+              elems.push([row, colName]);  
+            }
+          }
+        }
+      }
+      // add rows in table or cells in col
+      if(row === "*") {
+        if(!tagName || // tagName이 주어지지 않았거나
+            (col === "*" && tagName === "row") ||  // parent가 table일 경우에는 tagName === "row"
+            (col !== "*" && tagName === "cell")) { // parent가 row일 경우에는 tagName === "cell"
+          for(i = 0; i < this.collection.length; i++) {
+            if(!unique_check[i + "_" + col]) {
+              unique_check[i + "_" + col] = 1;
+              elems.push([i, col]);  
+            }
+          }
+        }
+      }
+      // add cells in table
+      if(row === "*" && col === "*" && (!tagName || tagName === "cell")) {
+        for(i = 0; i < this.collection.length; i++) {
+          for(j = 0; j < this.viewModel.colModel.length; j++) {
+            colName = this.viewModel.getColID(j);
+            if(!unique_check[i + "_" + colName]) {
+              unique_check[i + "_" + colName] = 1;
+              elems.push([i, colName]);
+            }
+          }
+        }
+      }
+    }
+    if(attribute) {
+      var attr = /\[([^=]+)=([^\]]+)\]/g.exec(attribute),
+          attrName = attr[1],
+          attrValue = attr[2],
+          newEls = [],
+          val;
+      for(i = 0; i < elems.length; i++) {
+        if(attrName === "data") {
+          val = this.viewModel.getData(elems[i]);
+        } else {
+          val = this.viewModel.getMeta(elems[i], attrName);
+        }
+        if(String(val) === attrValue) {
+          newEls.push(elems[i]);
+        }
+      }
+      elems = newEls;
+    }
+    return elems;
+  },
+  select: function(str) {
+    var sel = str.match(/[^ ]+/g),
+        parentEls = [["*", "*"]], // start with a table
+        els, i;
+    for(i = 0; i < sel.length; i++) {
+      if(sel[i].match(/^[^\[\s]+\[[^\]]+\]|^[^\[\s]+/g)) {
+        var tagName = (sel[i].match(/^[^\[]*/g) || [])[0],
+            attribute = (sel[i].match(/\[[^\]]+\]$/g) || [])[0];
+
+        els = this.getChildren(parentEls, tagName, attribute);
+        parentEls = els;
+      } else {
+        els = [];
+        break;
+      }
+    }
+    return new GridSelector(this, els);
+  }
 };

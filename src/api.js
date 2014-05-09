@@ -1,13 +1,13 @@
-function GridSelector(grid, pos) {
-  return new GridSelector.fn.init(grid, pos);
+function GridSelector(grid, items) {
+  return new GridSelector.fn.init(grid, items);
 }
 
 GridSelector.fn = GridSelector.prototype = {
   constructor : GridSelector,
-  init : function (grid, pos) {
+  init : function (grid, items) {
     this.grid = grid;
     this.viewModel = grid.viewModel;
-    this.push(pos);
+    this.push.apply(this, items);
   },
   clone : function (grid) {
     this.grid = grid; 
@@ -31,8 +31,7 @@ var GridSelectorApis = {
       return this.viewModel.getOption.apply(this.viewModel, args);
     } else {
       var deep = _.isString(args[0]), ret;
-      args = [this[0], prop, deep ? args[1] : args[0]];
-      ret = this.viewModel.getMeta.apply(this.viewModel, args);
+      ret = this.viewModel.getMeta.apply(this.viewModel, [this[0], prop, deep ? args[1] : args[0]]);
       if( deep ) {
         ret = ret[arguments[1]];
       }
@@ -51,11 +50,10 @@ var GridSelectorApis = {
         if(deep) {
           value = _.clone(this.viewModel.getMeta(pos, prop, {noncomputed:true})) || {};
           value[args[0]] = args[1];
-          args = [this[0], prop, value, args[2]];
+          this.viewModel.setMeta.apply(this.viewModel, [pos, prop, value, args[2]]);
         } else {
-          args = [this[0], prop, args[0], args[1]];
+          this.viewModel.setMeta.apply(this.viewModel, [pos, prop, args[0], args[1]]);
         }
-        this.viewModel.setMeta.apply(this.viewModel, args);
       }
     }, this);
     return this;
