@@ -8,7 +8,7 @@ var GridProto = {
           "<thead></thead>" +
           "<tbody></tbody>" +
         "</table>" +
-        "<div class='adjustCol-handle-hover'></div>" +
+        "<div class='adjustCol-handle-hover hide'></div>" +
         "<div class='separateCol hide'></div>" +
         "<div class='frozenCol hide'></div>" +
         "<div class='columnMove-indicator hide'></div>" +

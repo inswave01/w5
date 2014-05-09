@@ -5,7 +5,7 @@
  * Copyright 2013 Inswave Foundation and other contributors
  * Released under the LGPLv3.0 license
  *
- * Date: 2014-05-08
+ * Date: 2014-05-09
  */
 
 (function(root, factory) {
@@ -834,7 +834,7 @@ var GridProto = {
           "<thead></thead>" +
           "<tbody></tbody>" +
         "</table>" +
-        "<div class='adjustCol-handle-hover'></div>" +
+        "<div class='adjustCol-handle-hover hide'></div>" +
         "<div class='separateCol hide'></div>" +
         "<div class='frozenCol hide'></div>" +
         "<div class='columnMove-indicator hide'></div>" +
@@ -1109,7 +1109,8 @@ var GridProto = {
     },
     downEvent : function(e) {
       var that;
-      if ( e.target.className.indexOf('glyphicon') < 0 && e.target.tagName !== 'A' ) {
+
+      if ( e.target.className.indexOf('gGrid-headerLabelWrap') > -1 && e.target.tagName !== 'I' ) {
         this.columnMove._downEvent.call( this, e.target);
 
         that = this;
@@ -1129,6 +1130,7 @@ var GridProto = {
         colOrder = this.viewModel.getOption("colOrder"),
         visibleCol = this.viewModel.getVisibleCol(),
         thIndex, frozenColumn, targetIndex;
+
       if ( $th.length > 0 ) {
         thIndex = $th.index();
         frozenColumn = this.viewModel.getOption("frozenColumn");
