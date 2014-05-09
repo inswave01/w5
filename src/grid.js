@@ -284,7 +284,7 @@ var GridProto = {
     downEvent : function(e) {
       var that;
 
-      if ( e.target.className.indexOf('gGrid-headerLabelWrap') > 0 && e.target.tagName !== 'i' ) {
+      if ( e.target.className.indexOf('gGrid-headerLabelWrap') > -1 && e.target.tagName !== 'I' ) {
         this.columnMove._downEvent.call( this, e.target);
 
         that = this;
