@@ -283,7 +283,8 @@ var GridProto = {
     },
     downEvent : function(e) {
       var that;
-      if ( e.target.className.indexOf('glyphicon') < 0 && e.target.tagName !== 'A' ) {
+
+      if ( e.target.className.indexOf('gGrid-headerLabelWrap') > 0 && e.target.tagName !== 'i' ) {
         this.columnMove._downEvent.call( this, e.target);
 
         that = this;
@@ -303,6 +304,7 @@ var GridProto = {
         colOrder = this.viewModel.getOption("colOrder"),
         visibleCol = this.viewModel.getVisibleCol(),
         thIndex, frozenColumn, targetIndex;
+
       if ( $th.length > 0 ) {
         thIndex = $th.index();
         frozenColumn = this.viewModel.getOption("frozenColumn");
