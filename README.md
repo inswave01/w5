@@ -25,15 +25,15 @@ You can obtain the latest LESS and JavaScript source code of W5Grid directly fro
 ##### [Clone or fork via GitHub](https://github.com/inswave/w5.git)
 
 You can clone or fork the W5Grid project by visiting GitHub.
-<!--
+
 ##### Install with [Bower](http://bower.io/)
 
 You can install and manage W5Grid styles, JavaScript, and documentation using Bower. 
 
 Using Bower is recommended if you want to avoid cumbersome dependency management.
 
-	$ bower install w5grid
--->
+	$ bower install w5
+
 <!--
 #### W5Grid CDN
 
@@ -63,8 +63,16 @@ The structure of the distributed Zip file is as follows:
 	├── dist/
 	
 	│ ├── css/
+
+	│ ├── images/
 	
 	│ ├── js/
+
+	├── resources/
+
+    │ ├── images/
+
+    │ ├── less/
 	
 	├── src/
 	
@@ -77,12 +85,14 @@ The structure of the distributed Zip file is as follows:
 * dist/ 
 
 	* Minified distribution version
+
+* resources/
+
+	* source code for CSS
 	
 * src/ 
 
 	* complete JS source code
-	
-	* source code for CSS
 	
 	* Not available in the trial distribution
 	
