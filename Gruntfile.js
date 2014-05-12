@@ -62,6 +62,16 @@ module.exports = function(grunt) {
             dest: 'www-root/javascripts/'
           }
         ]
+      },
+      resources: {
+        files: [
+          {
+            expand: true,
+            cwd: 'resources',
+            src: 'images/*',
+            dest: 'dist/'
+          }
+        ]
       }
     },
     connect: {
@@ -113,7 +123,7 @@ module.exports = function(grunt) {
     clean: ['js/w5.js', 'www-root/javascripts']
   });
 
-  grunt.registerTask('default', ['clean', 'concat:basic', 'jshint:js', 'uglify', 'copy:js', 'less']);
+  grunt.registerTask('default', ['clean', 'concat:basic', 'jshint:js', 'uglify', 'copy:js', 'copy:resources', 'less']);
   grunt.registerTask('startup', ['connect:server']);
   grunt.registerTask('clear', ['clean']);
 };
