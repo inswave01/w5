@@ -1,5 +1,8 @@
 @charset "UTF-8";
 
+// resources dir variables
+@image-dir							: "../images";
+
 // gird variables
 @gird-default-row-h 				: 25px;
 @gird-title-h						: 25px;
@@ -225,7 +228,7 @@
 			top: (@header-label-height - 14)/2;
 			.w5-grid-column-show {
 				height: 100%;
-				background: url(../images/column-show-hide.png) left 0px no-repeat;
+				background: url("@{image-dir}/column-show-hide.png") left 0px no-repeat;
 				display: block;
 				&:hover {
 					background-position: 0px -15px;	
@@ -234,22 +237,23 @@
 			}
 		}
 		&.display-right {
+			width: 30px;
 			right: 12px;
 			//bootstrap. 추후 바뀔 수 있음
 			.w5-grid-sort {
 				background-position: center center;
 				&.state-none {
-				 	background: url(../images/sort-state-none.png) left top no-repeat;	
+				 	background: url("@{image-dir}/sort-state-none.png") left top no-repeat;	
 				}
 				&.state-asc {
-				 	background: url(../images/sort-state-asc.png) left top no-repeat;	
+				 	background: url("@{image-dir}/sort-state-asc.png") left top no-repeat;	
 				}
 				&.state-desc {
- 					background: url(../images/sort-state-desc.png) left top no-repeat;	
+ 					background: url("@{image-dir}/sort-state-desc.png") left top no-repeat;	
 				}
 			}
 			.w5-grid-colMenu-icon {
-				background: url(../images/colMenu-btn.png) left top no-repeat;	
+				background: url("@{image-dir}/colMenu-btn.png") left top no-repeat;	
 				&:hover {
 					background-position: 0 -25px;
 					cursor: pointer;
@@ -262,6 +266,7 @@
 		&.open {
 			.w5-dropdown-menu {
 				display: block;
+				z-index: 2;
 			}
 		}
 		.w5-grid-sort, .w5-grid-colMenu-icon {
@@ -274,13 +279,16 @@
  	}
 }
 .w5-dropdown-menu {
+	margin: 0px;
+	padding: 0px;
 	width: @colMenu-width;
 	background: #fff;
 	border: 1px solid #636363;
 	position: absolute;
-	top: @header-label-height;
-	left: 0px;
+	top: @header-label-height + 5;
+	left: 15px; // sort icon width
 	display: none;
+	list-style: none;
 
 	&.form-none {
 		width: 180px;
@@ -307,13 +315,13 @@
 			clear: left;
 		}
 		.column-hide {
-			background: url(../images/menu-icon-hide.png) 2px center no-repeat;	
+			background: url("@{image-dir}/menu-icon-hide.png") 2px center no-repeat;	
 		}
 		.filter {
-			background: url(../images/menu-icon-filter.png) 2px center no-repeat;	
+			background: url("@{image-dir}/menu-icon-filter.png") 2px center no-repeat;	
 		}
 		.validator {
-			background: url(../images/menu-icon-validator.png) 2px center no-repeat;	
+			background: url("@{image-dir}/menu-icon-validator.png") 2px center no-repeat;	
 		}
 	}
 	.line-none {
@@ -455,7 +463,7 @@
 	margin: 0;
 	padding: 0;
 	width: 8px;
-	background: url(../images/bg-indicator.png) left top no-repeat;
+	background: url("@{image-dir}/bg-indicator.png") left top no-repeat;
 	position: absolute;
 	z-index: 10;
 }
@@ -545,10 +553,10 @@
 	text-indent: -9999px;
 	cursor: pointer;
 	&.fold {
-		background: url(../images/group-fold.png) center center no-repeat;
+		background: url("@{image-dir}/group-fold.png") center center no-repeat;
 	}
 	&.unfold {
-		background: url(../images/group-unfold.png) center center no-repeat;
+		background: url("@{image-dir}/group-unfold.png") center center no-repeat;
 	}
 }
 .w5-grid-group-text {

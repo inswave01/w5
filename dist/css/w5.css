@@ -142,7 +142,7 @@
 }
 .gGrid-headerLabel .gGrid-colMenu.display-left .w5-grid-column-show {
   height: 100%;
-  background: url(../images/column-show-hide.png) left 0px no-repeat;
+  background: url("../images/column-show-hide.png") left 0px no-repeat;
   display: block;
 }
 .gGrid-headerLabel .gGrid-colMenu.display-left .w5-grid-column-show:hover {
@@ -150,22 +150,23 @@
   cursor: pointer;
 }
 .gGrid-headerLabel .gGrid-colMenu.display-right {
+  width: 30px;
   right: 12px;
 }
 .gGrid-headerLabel .gGrid-colMenu.display-right .w5-grid-sort {
   background-position: center center;
 }
 .gGrid-headerLabel .gGrid-colMenu.display-right .w5-grid-sort.state-none {
-  background: url(../images/sort-state-none.png) left top no-repeat;
+  background: url("../images/sort-state-none.png") left top no-repeat;
 }
 .gGrid-headerLabel .gGrid-colMenu.display-right .w5-grid-sort.state-asc {
-  background: url(../images/sort-state-asc.png) left top no-repeat;
+  background: url("../images/sort-state-asc.png") left top no-repeat;
 }
 .gGrid-headerLabel .gGrid-colMenu.display-right .w5-grid-sort.state-desc {
-  background: url(../images/sort-state-desc.png) left top no-repeat;
+  background: url("../images/sort-state-desc.png") left top no-repeat;
 }
 .gGrid-headerLabel .gGrid-colMenu.display-right .w5-grid-colMenu-icon {
-  background: url(../images/colMenu-btn.png) left top no-repeat;
+  background: url("../images/colMenu-btn.png") left top no-repeat;
 }
 .gGrid-headerLabel .gGrid-colMenu.display-right .w5-grid-colMenu-icon:hover {
   background-position: 0 -25px;
@@ -176,6 +177,7 @@
 }
 .gGrid-headerLabel .gGrid-colMenu.open .w5-dropdown-menu {
   display: block;
+  z-index: 2;
 }
 .gGrid-headerLabel .gGrid-colMenu .w5-grid-sort,
 .gGrid-headerLabel .gGrid-colMenu .w5-grid-colMenu-icon {
@@ -186,13 +188,16 @@
   text-indent: -9999px;
 }
 .w5-dropdown-menu {
+  margin: 0px;
+  padding: 0px;
   width: 278px;
   background: #fff;
   border: 1px solid #636363;
   position: absolute;
-  top: 25px;
-  left: 0px;
+  top: 30px;
+  left: 15px;
   display: none;
+  list-style: none;
 }
 .w5-dropdown-menu.form-none {
   width: 180px;
@@ -219,13 +224,13 @@
   clear: left;
 }
 .w5-dropdown-menu li .column-hide {
-  background: url(../images/menu-icon-hide.png) 2px center no-repeat;
+  background: url("../images/menu-icon-hide.png") 2px center no-repeat;
 }
 .w5-dropdown-menu li .filter {
-  background: url(../images/menu-icon-filter.png) 2px center no-repeat;
+  background: url("../images/menu-icon-filter.png") 2px center no-repeat;
 }
 .w5-dropdown-menu li .validator {
-  background: url(../images/menu-icon-validator.png) 2px center no-repeat;
+  background: url("../images/menu-icon-validator.png") 2px center no-repeat;
 }
 .w5-dropdown-menu .line-none {
   border-top: none;
@@ -392,7 +397,7 @@
   margin: 0;
   padding: 0;
   width: 8px;
-  background: url(../images/bg-indicator.png) left top no-repeat;
+  background: url("../images/bg-indicator.png") left top no-repeat;
   position: absolute;
   z-index: 10;
 }
@@ -485,10 +490,10 @@
   cursor: pointer;
 }
 .w5-grid-group.fold {
-  background: url(../images/group-fold.png) center center no-repeat;
+  background: url("../images/group-fold.png") center center no-repeat;
 }
 .w5-grid-group.unfold {
-  background: url(../images/group-unfold.png) center center no-repeat;
+  background: url("../images/group-unfold.png") center center no-repeat;
 }
 .w5-grid-group-text {
   padding-left: 3px;

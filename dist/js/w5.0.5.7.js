@@ -5,7 +5,7 @@
  * Copyright 2013 Inswave Foundation and other contributors
  * Released under the LGPLv3.0 license
  *
- * Date: 2014-05-12
+ * Date: 2014-05-15
  */
 
 (function(root, factory) {
@@ -1898,18 +1898,28 @@ var GridProto = {
         $colMenu = $(document.createDocumentFragment()),
         $leftMenu = $(this.colLeftMenu()),
         $rightMenu = $(this.colRightMenu()),
-        $menuIcon = $rightMenu.find(".w5-grid-colMenu-icon");
+        $menuIcon = $rightMenu.find(".w5-grid-colMenu-icon"),
+        colOrder = grid.viewModel.getOption("colOrder"),
+        visibleCol = grid.viewModel.getVisibleCol(),
+        frozenCol = grid.viewModel.getOption("frozenColumn");
 
     var leftMenu = {
       _showCol : function () {
-        var colOrder = grid.viewModel.getOption("colOrder"),
-            visibleCol = grid.viewModel.getVisibleCol(),
-            from = _(colOrder).indexOf(visibleCol[col]) - 1,
+        var from = _(colOrder).indexOf(visibleCol[col]) - 1,
             to = _(colOrder).indexOf(visibleCol[col-1]),
             i;
 
-        for( i = from; i >= to && i >= 0 ; i-- ) {
-          grid.viewModel.setMeta(["*", colOrder[i]], "hidden", false);
+        if ( col>=frozenCol ){
+          for( i = from; i >= to && i >= 0 ; i-- ) {
+            grid.viewModel.setMeta(["*", colOrder[i]], "hidden", false);
+          }
+          grid.viewModel.updateVisibleCol();
+        } else {
+          throw {
+            name: "UsageException",
+            message: "Section of the column to a frozen column can not be show. \n"+
+                     "First, turn off the frozen column."
+          };
         }
       },
       showCol : function(e) {
@@ -1942,7 +1952,7 @@ var GridProto = {
         }
 
         $rightMenu.addClass("open");
-        $menuIcon.addClass("on");
+        $(menuBtn).addClass("on");
       },
       openColMenu : function(e){
         this._openColMenu(e.target);
@@ -1955,8 +1965,25 @@ var GridProto = {
         this._closeColMenu(e.target);  
       },
       _hideCol : function () {
+        var remainCol = grid.viewModel.getVisibleCol().length;
 
-        grid.viewModel.setMeta(["*", col], "hidden", true);
+        if ( remainCol!==1 ){
+          if ( col>=frozenCol ){
+            grid.viewModel.setMeta(["*", col], "hidden", true);
+            grid.viewModel.updateVisibleCol();
+          } else {
+            throw {
+              name: "UsageException",
+              message: "Section of the column to a frozen column can not be hidden. \n"+
+                       "First, turn off the frozen column."
+            };
+          }
+        } else {
+          throw {
+            name: "UsageException",
+            message: "W5 Grid is must have a column."
+          };
+        }
       },
       hideCol : function ( e ) {
         this._hideCol( e.target );
