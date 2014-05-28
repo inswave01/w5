@@ -411,6 +411,7 @@
 		border-right-width: @cell-borderWidth-right;
 		border-right-style: @cell-borderStyle-right;
 		border-right-color: @cell-borderColor-right;
+		cursor: cell;
 		.text-overflow();
 		>input {
 			margin: 0px;
@@ -548,6 +549,30 @@
 		position: absolute;
 		top: 1px;
 	}
+}
+.w5-grid-select-cell {
+	height: @gird-default-row-h;
+	outline: solid 2px #296fd2;
+	overflow: visible;
+	position: absolute;
+	.w5-grid-select-dragger {
+		margin: 0;
+		padding: 0;
+		width: 6px;
+		height: 6px;
+		background: #296fd2;
+		color: #296fd2;
+		border: none;
+		cursor: crosshair;
+		position: absolute;
+		right: -3px;
+		bottom: -3px;
+	}	
+}
+.w5-grid-select-area {
+	background: url("@{image-dir}/bg-selection.png") left top repeat;
+	border: solid 2px #296fd2;
+	position: absolute;
 }
 .noselect {
    -moz-user-select: -moz-none;
