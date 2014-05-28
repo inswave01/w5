@@ -126,7 +126,6 @@
 }
 
 .gGrid {
-	margin: 0 auto;
 	padding: 9px 10px; 
 	font-size: 12px;
 	font-family: "Helvetica Neue",Helvetica,Arial,sans-serif;
@@ -188,7 +187,6 @@
 	border-spacing: 0;
 }
 .gGrid-headerLabel {
-	height: @header-label-height; 
  	background-color: @header-label-bg;
  	border-top-width: @header-label-borderWidth-top;
  	border-top-style: @header-label-borderStyle-top;
@@ -207,13 +205,36 @@
  	vertical-align: middle;
  	overflow-y: visible;
  	.gGrid-headerLabelWrap {
- 		text-align: center; 
-	 	font-size: @header-label-font-size;
-	 	font-weight: bold;
-	 	color: @header-label-color;
-	 	line-height: @header-label-height; 
  		position: relative;
  	}
+ 	.gGrid-headerLabelText {
+ 		margin: 0px 12px; // 12px : column show buttn half size
+ 		height: @header-label-height; 
+ 		font-size: @header-label-font-size;
+	 	font-weight: bold;
+	 	text-align: center; 
+	 	line-height: @header-label-height; 
+	 	color: @header-label-color;
+	 	.text-overflow();
+ 	}
+ 	.w5-grid-sort {
+ 		margin-left: 2px;
+ 		width: 8px;
+ 		height: @header-label-font-size;
+ 		line-height: 1;
+ 		text-indent: -9999px;
+		background-position: center center;
+		display: inline-block;
+		&.state-none {
+		 	background: url("@{image-dir}/sort-state-none.png") left top no-repeat;	
+		}
+		&.state-asc {
+		 	background: url("@{image-dir}/sort-state-asc.png") left @header-label-font-size/4 no-repeat;	
+		}
+		&.state-desc {
+			background: url("@{image-dir}/sort-state-desc.png") left @header-label-font-size/4 no-repeat;	
+		}
+	}
  	.gGrid-colMenu {
  		height: 100%;
 		background-color: @header-label-bg;
@@ -239,19 +260,6 @@
 		&.display-right {
 			width: 30px;
 			right: 12px;
-			//bootstrap. 추후 바뀔 수 있음
-			.w5-grid-sort {
-				background-position: center center;
-				&.state-none {
-				 	background: url("@{image-dir}/sort-state-none.png") left top no-repeat;	
-				}
-				&.state-asc {
-				 	background: url("@{image-dir}/sort-state-asc.png") left top no-repeat;	
-				}
-				&.state-desc {
- 					background: url("@{image-dir}/sort-state-desc.png") left top no-repeat;	
-				}
-			}
 			.w5-grid-colMenu-icon {
 				background: url("@{image-dir}/colMenu-btn.png") left top no-repeat;	
 				&:hover {
@@ -269,7 +277,7 @@
 				z-index: 2;
 			}
 		}
-		.w5-grid-sort, .w5-grid-colMenu-icon {
+		.w5-grid-colMenu-icon {
 			width: 15px;
 			height: 100%;
 			display: inline-block;
@@ -371,6 +379,9 @@
 		background: linear-gradient(to bottom,  #f8f8f8 0%,#f1f1f1 100%); /* W3C */
 		filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#f8f8f8', endColorstr='#f1f1f1',GradientType=0 ); /* IE6-9 */
 		border: 1px solid #c0c0c0;
+		&:hover {
+			background: #ebebeb;
+		}
 	}
 }
 .gGrid-row {
@@ -401,7 +412,10 @@
 		border-right-style: @cell-borderStyle-right;
 		border-right-color: @cell-borderColor-right;
 		.text-overflow();
-		>input[type=text]{
+		>input {
+			margin: 0px;
+		}
+		>input[type=text] {
 	 		width: 100% - @cell-input-width;
 	 		background-color: @cell-input-bg;
 			border-width: @cell-input-borderWidth;	
@@ -412,11 +426,12 @@
 			}
 		}
 		>select {
-				width: 100% - @cell-input-width;
-			}
-			>input[type=radio],
-			>input[type=checkbox]{
-				margin: 0 3px 0 5px;
+			margin: 0px;
+			width: 100% - @cell-input-width;
+		}
+		>input[type=radio],
+		>input[type=checkbox] {
+			margin: 0 3px 0 5px;
 	 		&:first-child {
 	 			margin-left: 0px;
 	 		}
