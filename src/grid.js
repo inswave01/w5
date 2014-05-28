@@ -277,7 +277,9 @@ var GridProto = {
           tdCol = $th.index(),
           frozenColumn = this.viewModel.getOption("frozenColumn"),
           col = tdCol < frozenColumn ? tdCol : tdCol + this.startCol - frozenColumn;
-      this.sortColumn.sortColumn.call( this, col );
+      if ( this.viewModel.hasMeta( ["*", col], "sortable") ){
+        this.sortColumn.sortColumn.call( this, col );
+      }
     },
     sortColumn : function( col ) {
       var column = this.collection.sortInfo.column || [],
@@ -923,11 +925,12 @@ var GridProto = {
         $labelNode = $("<div class='gGrid-headerLabelText'></div>"),
         $sortStateNode = $("<i class='w5-grid-sort'></i>");
 
-    $labelNode.append(label)
-              .attr("abbr", label)
-              .append($sortStateNode);
-
     if (cell) {
+      $labelNode.append(label).attr("abbr", label);
+      if( this.viewModel.hasMeta( ["*", col], "sortable") ){
+        $labelNode.append($sortStateNode);
+      }
+
       $(cell).children(0).html("")
           .append($labelNode)
           .append(this.getColMenu(colIndex))
