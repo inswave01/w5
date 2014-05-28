@@ -778,7 +778,10 @@ var GridProto = {
       this.endCol = endCol;
       for ( i = $cols.length; i <= endCol - startCol + frozenColumn; i++ ) {
         this.$el.find("colgroup").append("<col>");
-        this.$el.find("thead tr").append("<th><div class='gGrid-headerLabelWrap'></th>");
+        this.$el.find("thead tr").append("<th>"+
+                                          "<div class='gGrid-headerLabelWrap'>"+
+                                            "<div class='gGrid-headerLabelText'>"+
+                                        "</th>");
         this.$el.find("tbody tr").append("<td>");
       }
       $cols = this.$el.find("colgroup col");
@@ -915,11 +918,18 @@ var GridProto = {
         frozenColumn = this.viewModel.getOption("frozenColumn"),
         visibleCol = this.viewModel.getVisibleCol(),
         tdCol = colIndex < frozenColumn ? colIndex : colIndex-this.startCol+frozenColumn,
-        cell = this.getHeaderCell(0, tdCol);
+        cell = this.getHeaderCell(0, tdCol),
+        label = this.viewModel.getMeta( ["*", col], "headerLabel"),
+        $labelNode = $("<div class='gGrid-headerLabelText'></div>"),
+        $sortStateNode = $("<i class='w5-grid-sort'></i>");
+
+    $labelNode.append(label)
+              .attr("abbr", label)
+              .append($sortStateNode);
 
     if (cell) {
       $(cell).children(0).html("")
-          .append(this.viewModel.getMeta( ["*", col], "headerLabel"))
+          .append($labelNode)
           .append(this.getColMenu(colIndex))
           .append(this.getAdjustColHandle(colIndex));
     }
@@ -938,13 +948,15 @@ var GridProto = {
     var column = this.collection.sortInfo.column || [],
         direction = this.collection.sortInfo.direction || [],
         btnClass = ["state-none", "state-asc", "state-desc"],
+        textNode = ["Sort None", "Sort Ascending", "Sort Descending"],
         colID = this.viewModel.getColID(col),
         index = _.indexOf( column, colID ),
         sortState = index === -1 ? 0 : (direction[index] === "asc" ? 1 : 2);
 
     $(cell).find(".w5-grid-sort").addClass(btnClass[sortState])
         .removeClass(btnClass[(sortState + 1) % 3])
-        .removeClass(btnClass[(sortState + 2) % 3]);
+        .removeClass(btnClass[(sortState + 2) % 3])
+        .text(textNode[sortState]);
   },
   drawCell: function ( row, col ) {
     var colIndex = this.viewModel.getColIndex(col),
@@ -1047,7 +1059,6 @@ var GridProto = {
   ),
   colRightMenu: _.template(
     "<div class='gGrid-colMenu display-right'>"+
-      "<i class='w5-grid-sort'></i>"+
       "<i class='w5-grid-colMenu-icon'></i>"+ 
       "<ul class='w5-dropdown-menu form-none' role='menu'>"+
       "<li><a class='w5-dropdown-menu-label column-hide' role='menuitem' href='#'>Column Hide</a></li>"+
