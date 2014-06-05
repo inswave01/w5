@@ -17,10 +17,7 @@ function ViewModel(option, colModel, view, data, style) {
   _(colModel).each( function ( model, index ) {
     var id = model.id || model.headerLabel;
     if(!id) {
-      throw {
-        name: "PrerequisiteError",
-        message: "The column should be assigned one of id or headerLable."
-      };
+      throw new Error( "The column should be assigned one of id or headerLable." );
     }
     this.colLinker[id] = index;
     this.colInvertLinker[index] = id;

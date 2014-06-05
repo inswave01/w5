@@ -1090,11 +1090,8 @@ var GridProto = {
           }
           grid.viewModel.updateVisibleCol();
         } else {
-          throw {
-            name: "UsageException",
-            message: "Section of the column to a frozen column can not be show. \n"+
-                     "First, turn off the frozen column."
-          };
+          throw new Error( "Section of the column to a frozen column can not be show. \n" +
+                           "First, turn off the frozen column." );
         }
       },
       showCol : function(e) {
@@ -1147,17 +1144,10 @@ var GridProto = {
             grid.viewModel.setMeta(["*", col], "hidden", true);
             grid.viewModel.updateVisibleCol();
           } else {
-            throw {
-              name: "UsageException",
-              message: "Section of the column to a frozen column can not be hidden. \n"+
-                       "First, turn off the frozen column."
-            };
+            throw new Error( "Section of the column to a frozen column can not be hidden.\nFirst, turn off the frozen column." );
           }
         } else {
-          throw {
-            name: "UsageException",
-            message: "W5 Grid is must have a column."
-          };
+          throw new Error( "W5 Grid is must have a column." );
         }
       },
       hideCol : function ( e ) {
