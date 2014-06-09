@@ -5,7 +5,7 @@
  * Copyright 2013 Inswave Foundation and other contributors
  * Released under the LGPLv3.0 license
  *
- * Date: 2014-05-15
+ * Date: 2014-06-09
  */
 
 (function(root, factory) {
@@ -100,10 +100,7 @@ function ViewModel(option, colModel, view, data, style) {
   _(colModel).each( function ( model, index ) {
     var id = model.id || model.headerLabel;
     if(!id) {
-      throw {
-        name: "PrerequisiteError",
-        message: "The column should be assigned one of id or headerLable."
-      };
+      throw new Error( "The column should be assigned one of id or headerLable." );
     }
     this.colLinker[id] = index;
     this.colInvertLinker[index] = id;
@@ -1116,7 +1113,9 @@ var GridProto = {
           tdCol = $th.index(),
           frozenColumn = this.viewModel.getOption("frozenColumn"),
           col = tdCol < frozenColumn ? tdCol : tdCol + this.startCol - frozenColumn;
-      this.sortColumn.sortColumn.call( this, col );
+      if ( this.viewModel.hasMeta( ["*", col], "sortable") ){
+        this.sortColumn.sortColumn.call( this, col );
+      }
     },
     sortColumn : function( col ) {
       var column = this.collection.sortInfo.column || [],
@@ -1617,7 +1616,10 @@ var GridProto = {
       this.endCol = endCol;
       for ( i = $cols.length; i <= endCol - startCol + frozenColumn; i++ ) {
         this.$el.find("colgroup").append("<col>");
-        this.$el.find("thead tr").append("<th><div class='gGrid-headerLabelWrap'></th>");
+        this.$el.find("thead tr").append("<th>"+
+                                          "<div class='gGrid-headerLabelWrap'>"+
+                                            "<div class='gGrid-headerLabelText'>"+
+                                        "</th>");
         this.$el.find("tbody tr").append("<td>");
       }
       $cols = this.$el.find("colgroup col");
@@ -1754,11 +1756,19 @@ var GridProto = {
         frozenColumn = this.viewModel.getOption("frozenColumn"),
         visibleCol = this.viewModel.getVisibleCol(),
         tdCol = colIndex < frozenColumn ? colIndex : colIndex-this.startCol+frozenColumn,
-        cell = this.getHeaderCell(0, tdCol);
+        cell = this.getHeaderCell(0, tdCol),
+        label = this.viewModel.getMeta( ["*", col], "headerLabel"),
+        $labelNode = $("<div class='gGrid-headerLabelText'></div>"),
+        $sortStateNode = $("<i class='w5-grid-sort'></i>");
 
     if (cell) {
+      $labelNode.append(label).attr("abbr", label);
+      if( this.viewModel.hasMeta( ["*", col], "sortable") ){
+        $labelNode.append($sortStateNode);
+      }
+
       $(cell).children(0).html("")
-          .append(this.viewModel.getMeta( ["*", col], "headerLabel"))
+          .append($labelNode)
           .append(this.getColMenu(colIndex))
           .append(this.getAdjustColHandle(colIndex));
     }
@@ -1777,13 +1787,15 @@ var GridProto = {
     var column = this.collection.sortInfo.column || [],
         direction = this.collection.sortInfo.direction || [],
         btnClass = ["state-none", "state-asc", "state-desc"],
+        textNode = ["Sort None", "Sort Ascending", "Sort Descending"],
         colID = this.viewModel.getColID(col),
         index = _.indexOf( column, colID ),
         sortState = index === -1 ? 0 : (direction[index] === "asc" ? 1 : 2);
 
     $(cell).find(".w5-grid-sort").addClass(btnClass[sortState])
         .removeClass(btnClass[(sortState + 1) % 3])
-        .removeClass(btnClass[(sortState + 2) % 3]);
+        .removeClass(btnClass[(sortState + 2) % 3])
+        .text(textNode[sortState]);
   },
   drawCell: function ( row, col ) {
     var colIndex = this.viewModel.getColIndex(col),
@@ -1886,7 +1898,6 @@ var GridProto = {
   ),
   colRightMenu: _.template(
     "<div class='gGrid-colMenu display-right'>"+
-      "<i class='w5-grid-sort'></i>"+
       "<i class='w5-grid-colMenu-icon'></i>"+ 
       "<ul class='w5-dropdown-menu form-none' role='menu'>"+
       "<li><a class='w5-dropdown-menu-label column-hide' role='menuitem' href='#'>Column Hide</a></li>"+
@@ -1915,11 +1926,8 @@ var GridProto = {
           }
           grid.viewModel.updateVisibleCol();
         } else {
-          throw {
-            name: "UsageException",
-            message: "Section of the column to a frozen column can not be show. \n"+
-                     "First, turn off the frozen column."
-          };
+          throw new Error( "Section of the column to a frozen column can not be show. \n" +
+                           "First, turn off the frozen column." );
         }
       },
       showCol : function(e) {
@@ -1972,17 +1980,10 @@ var GridProto = {
             grid.viewModel.setMeta(["*", col], "hidden", true);
             grid.viewModel.updateVisibleCol();
           } else {
-            throw {
-              name: "UsageException",
-              message: "Section of the column to a frozen column can not be hidden. \n"+
-                       "First, turn off the frozen column."
-            };
+            throw new Error( "Section of the column to a frozen column can not be hidden.\nFirst, turn off the frozen column." );
           }
         } else {
-          throw {
-            name: "UsageException",
-            message: "W5 Grid is must have a column."
-          };
+          throw new Error( "W5 Grid is must have a column." );
         }
       },
       hideCol : function ( e ) {
