@@ -11,6 +11,17 @@
   line-height: 0;
   height: 0;
 }
+.noselect {
+  -moz-user-select: -moz-none;
+  -khtml-user-select: none;
+  -webkit-user-select: none;
+  /*
+     Introduced in IE 10.
+     See http://ie.microsoft.com/testdrive/HTML5/msUserSelect/
+   */
+  -ms-user-select: none;
+  user-select: none;
+}
 .hide {
   opacity: 0;
   display: none !important;
@@ -26,10 +37,16 @@
   float: right;
 }
 .dragging {
-  cursor: pointer;
+  cursor: pointer !important;
 }
 .sizingH {
-  cursor: col-resize;
+  cursor: col-resize !important;
+}
+.allowed {
+  cursor: copy !important;
+}
+.not-allowed {
+  cursor: not-allowed !important;
 }
 .gGrid {
   padding: 9px 10px;
@@ -38,6 +55,19 @@
   color: #333;
   border: 1px solid #bebebe;
   position: relative;
+  /*
+     Introduced in IE 10.
+     See http://ie.microsoft.com/testdrive/HTML5/msUserSelect/
+   */
+  -moz-user-select: -moz-none;
+  -khtml-user-select: none;
+  -webkit-user-select: none;
+  /*
+     Introduced in IE 10.
+     See http://ie.microsoft.com/testdrive/HTML5/msUserSelect/
+   */
+  -ms-user-select: none;
+  user-select: none;
 }
 .gGrid .gGrid-setTable {
   padding-bottom: 10px;
@@ -54,35 +84,53 @@
 .adjustCol-handle {
   margin: 0;
   padding: 0;
-  width: 3px;
-  background: transparent;
+  width: 5px;
+  height: 25px;
   border: none;
+  background: transparent url("../images/transparent.gif") repeat 0 0;
   display: block;
   position: absolute;
-  top: -3px;
+  top: 0px;
   right: 0px;
-  bottom: -3px;
   text-indent: -9999px;
+  z-index: 12;
 }
 .adjustCol-handle:focus {
-  bottom: 0px;
-  cursor: col-resize;
+  cursor: col-resize !important;
 }
 .adjustCol-handle:hover {
-  bottom: 0px;
-  cursor: col-resize;
+  background: #296fd2;
+  cursor: col-resize !important;
 }
 .adjustCol-handle:active {
-  bottom: 0px;
-  cursor: col-resize;
+  cursor: col-resize !important;
 }
-.adjustCol-handle-hover {
-  width: 3px;
-  background: #B2BCC6;
+.adjustCol-start {
+  width: 5px;
+  background: url("../images/adjust-column-line.png") left top repeat-y;
   position: absolute;
   top: 25px;
   bottom: 10px;
-  z-index: 10;
+  z-index: 12;
+}
+.adjustCol-start .adjustCol-start-icon {
+  height: 27px;
+  display: block;
+  background: url("../images/adjust-column-icon.gif") left top repeat-y;
+}
+.adjustCol-move {
+  width: 5px;
+  background: url("../images/adjust-column-line.png") -5px top repeat-y;
+  position: absolute;
+  top: 25px;
+  bottom: 10px;
+  z-index: 12;
+  cursor: col-resize !important;
+}
+.adjustCol-move .adjustCol-move-icon {
+  height: 27px;
+  display: block;
+  background: url("../images/adjust-column-icon.gif") -5px top repeat-y;
 }
 .gGrid-table {
   table-layout: fixed;
@@ -107,12 +155,13 @@
   box-sizing: border-box;
   vertical-align: middle;
   overflow-y: visible;
+  cursor: default;
 }
 .gGrid-headerLabel .gGrid-headerLabelWrap {
   position: relative;
 }
 .gGrid-headerLabel .gGrid-headerLabelText {
-  margin: 0px 12px;
+  padding: 0px 11px;
   height: 25px;
   font-size: 12px;
   font-weight: bold;
@@ -133,13 +182,13 @@
   display: inline-block;
 }
 .gGrid-headerLabel .w5-grid-sort.state-none {
-  background: url("../images/sort-state-none.png") left top no-repeat;
+  background: url("../images/sort-state-none.gif") left top no-repeat;
 }
 .gGrid-headerLabel .w5-grid-sort.state-asc {
-  background: url("../images/sort-state-asc.png") left 3px no-repeat;
+  background: url("../images/sort-state-asc.gif") left 3px no-repeat;
 }
 .gGrid-headerLabel .w5-grid-sort.state-desc {
-  background: url("../images/sort-state-desc.png") left 3px no-repeat;
+  background: url("../images/sort-state-desc.gif") left 3px no-repeat;
 }
 .gGrid-headerLabel .gGrid-colMenu {
   height: 100%;
@@ -162,40 +211,47 @@
   background: transparent;
   left: -12px;
   top: 5.5px;
+  z-index: 4;
 }
 .gGrid-headerLabel .gGrid-colMenu.display-left .w5-grid-column-show {
+  margin: 0;
+  padding: 0;
+  width: 23px;
   height: 100%;
-  background: url("../images/column-show-hide.png") left 0px no-repeat;
+  background: url("../images/column-show-hide.gif") left 0px no-repeat;
+  border: none;
   display: block;
+  text-indent: -9999px;
 }
 .gGrid-headerLabel .gGrid-colMenu.display-left .w5-grid-column-show:hover {
   background-position: 0px -15px;
   cursor: pointer;
 }
 .gGrid-headerLabel .gGrid-colMenu.display-right {
-  width: 30px;
-  right: 12px;
+  width: 14px;
+  top: -1px;
+  right: -1px;
+  z-index: 10;
 }
 .gGrid-headerLabel .gGrid-colMenu.display-right .w5-grid-colMenu-icon {
-  background: url("../images/colMenu-btn.png") left top no-repeat;
+  margin: 0;
+  padding: 0;
+  width: 14px;
+  height: 27px;
+  background: transparent url("../images/colMenu-btn-close.gif") center center no-repeat;
+  border: 1px solid #636363;
+  text-indent: -9999px;
 }
 .gGrid-headerLabel .gGrid-colMenu.display-right .w5-grid-colMenu-icon:hover {
-  background-position: 0 -25px;
+  background: transparent url("../images/colMenu-btn-hover.gif") center center no-repeat;
+  border: 1px solid #366AD2;
   cursor: pointer;
 }
 .gGrid-headerLabel .gGrid-colMenu.display-right .w5-grid-colMenu-icon.on {
-  background-position: 0 -50px;
+  background: transparent url("../images/colMenu-btn-open.gif") center center no-repeat;
 }
 .gGrid-headerLabel .gGrid-colMenu.open .w5-dropdown-menu {
   display: block;
-  z-index: 2;
-}
-.gGrid-headerLabel .gGrid-colMenu .w5-grid-colMenu-icon {
-  width: 15px;
-  height: 100%;
-  display: inline-block;
-  float: left;
-  text-indent: -9999px;
 }
 .w5-dropdown-menu {
   margin: 0px;
@@ -204,8 +260,8 @@
   background: #fff;
   border: 1px solid #636363;
   position: absolute;
-  top: 30px;
-  left: 15px;
+  top: 27px;
+  left: 0px;
   display: none;
   list-style: none;
 }
@@ -213,7 +269,6 @@
   width: 180px;
 }
 .w5-dropdown-menu li {
-  padding: 7px;
   border-top: 1px solid #636363;
 }
 .w5-dropdown-menu li:first-child {
@@ -223,7 +278,8 @@
   background: #fafafa;
 }
 .w5-dropdown-menu li .w5-dropdown-menu-label {
-  padding-left: 17px;
+  padding: 7px;
+  padding-left: 24px;
   font-size: 12px;
   font-weight: bold;
   color: #333;
@@ -234,13 +290,18 @@
   clear: left;
 }
 .w5-dropdown-menu li .column-hide {
-  background: url("../images/menu-icon-hide.png") 2px center no-repeat;
+  background: url("../images/menu-icon-hide.gif") 9px center no-repeat;
+}
+.w5-dropdown-menu li .frozen-column.disabled {
+  color: #bdbdbd;
+  text-shadow: 1px 1px 1px #fff;
+  cursor: default;
 }
 .w5-dropdown-menu li .filter {
-  background: url("../images/menu-icon-filter.png") 2px center no-repeat;
+  background: url("../images/menu-icon-filter.gif") 2px center no-repeat;
 }
 .w5-dropdown-menu li .validator {
-  background: url("../images/menu-icon-validator.png") 2px center no-repeat;
+  background: url("../images/menu-icon-validator.gif") 2px center no-repeat;
 }
 .w5-dropdown-menu .line-none {
   border-top: none;
@@ -376,6 +437,13 @@
 .gGrid-row > td:hover {
   background-color: #dfe9f8 !important;
 }
+.gGrid-row .gGrid-frozen-cell {
+  text-align: center;
+  background: #f4f6f7;
+  border-right: 1px solid #b1bcc6;
+  border-bottom: 1px solid #b1bcc6;
+  border-left: 1px solid #b1bcc6;
+}
 .gGrid-row .gGrid-cell-selected {
   background-color: #fafbfb !important;
 }
@@ -384,21 +452,23 @@
   background: white;
   overflow: hidden;
   padding: 3px 5px;
+  -moz-box-sizing: border-box;
+  box-sizing: border-box;
+  left: -9999px;
 }
-.separateCol {
+.frozenHandle-move {
   margin: 0;
   padding: 0;
-  width: 0px;
+  width: 1px;
   background: gray;
   border-left: 1px dotted #030303;
   text-indent: -9999px;
   position: absolute;
   top: 25px;
-  left: 100px;
   bottom: 10px;
-  cursor: col-resize;
+  cursor: col-resize !important;
 }
-.frozenCol {
+.frozenHandle {
   margin: 0;
   padding: 0;
   width: 2px;
@@ -407,17 +477,49 @@
   text-indent: -9999px;
   position: absolute;
   top: 25px;
-  left: 200px;
   bottom: 0px;
-  cursor: col-resize;
+  z-index: 6;
+  cursor: col-resize !important;
+}
+.columnMove-start {
+  border: dotted 2px #020202;
+  position: absolute;
+  top: 52px;
+  bottom: 10px;
+}
+.columnMove-move {
+  background: #636363;
+  position: absolute;
+  top: 52px;
+  bottom: 10px;
+  /* IE 8 */
+  -ms-filter: "progid:DXImageTransform.Microsoft.Alpha(Opacity=20)";
+  opacity: 0.2;
+  cursor: not-allowed;
+  z-index: 10;
 }
 .columnMove-indicator {
   margin: 0;
   padding: 0;
   width: 8px;
-  background: url("../images/bg-indicator.png") left top no-repeat;
   position: absolute;
-  z-index: 10;
+  top: 18px;
+  bottom: 10px;
+  z-index: 12;
+}
+.columnMove-indicator .columnMove-indicator-arrow {
+  width: 8px;
+  height: 7px;
+  background: url("../images/bg-indicator.gif") left top no-repeat;
+  display: block;
+  position: absolute;
+}
+.columnMove-indicator .columnMove-indicator-bar {
+  margin: 0px auto 0px;
+  width: 2px;
+  height: 100%;
+  background: #296fd2;
+  display: block;
 }
 .gScroll-v button,
 .gScroll-h button {
@@ -488,13 +590,16 @@
   position: absolute;
   top: 1px;
 }
-.w5-grid-select-cell {
-  height: 25px;
-  outline: solid 2px #296fd2;
+.w5-grid-focused-cell {
+  width: 2px;
+  height: 2px;
+  background: #296fd2;
+  border: 0 none;
   overflow: visible;
   position: absolute;
+  z-index: 8;
 }
-.w5-grid-select-cell .w5-grid-select-dragger {
+.w5-grid-focused-cell .w5-grid-select-dragger {
   margin: 0;
   padding: 0;
   width: 6px;
@@ -504,24 +609,18 @@
   border: none;
   cursor: crosshair;
   position: absolute;
-  right: -3px;
-  bottom: -3px;
+  right: -2px;
+  bottom: -2px;
+  text-indent: -9999px;
 }
 .w5-grid-select-area {
   background: url("../images/bg-selection.png") left top repeat;
   border: solid 2px #296fd2;
   position: absolute;
+  cursor: cell;
 }
-.noselect {
-  -moz-user-select: -moz-none;
-  -khtml-user-select: none;
-  -webkit-user-select: none;
-  /*
-     Introduced in IE 10.
-     See http://ie.microsoft.com/testdrive/HTML5/msUserSelect/
-   */
-  -ms-user-select: none;
-  user-select: none;
+.w5-grid-group-row {
+  background-color: LightSteelBlue;
 }
 .w5-grid-group {
   width: 12px;
@@ -532,10 +631,10 @@
   cursor: pointer;
 }
 .w5-grid-group.fold {
-  background: url("../images/group-fold.png") center center no-repeat;
+  background: url("../images/group-fold.gif") center center no-repeat;
 }
 .w5-grid-group.unfold {
-  background: url("../images/group-unfold.png") center center no-repeat;
+  background: url("../images/group-unfold.gif") center center no-repeat;
 }
 .w5-grid-group-text {
   padding-left: 3px;
