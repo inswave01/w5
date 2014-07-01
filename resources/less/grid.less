@@ -105,6 +105,28 @@
 	overflow-y: visible;
  	text-overflow: initial;
  }
+ .noselect {
+   -moz-user-select: -moz-none;
+   -khtml-user-select: none;
+   -webkit-user-select: none;
+   /*
+     Introduced in IE 10.
+     See http://ie.microsoft.com/testdrive/HTML5/msUserSelect/
+   */
+   -ms-user-select: none;
+   user-select: none;
+}
+ .noselect() {
+   -moz-user-select: -moz-none;
+   -khtml-user-select: none;
+   -webkit-user-select: none;
+   /*
+     Introduced in IE 10.
+     See http://ie.microsoft.com/testdrive/HTML5/msUserSelect/
+   */
+   -ms-user-select: none;
+   user-select: none;
+}
 
 .hide { opacity: 0; display: none !important; }
 .show { opacity: 1; display: block !important; }
@@ -112,17 +134,20 @@
 .float-right { float: right; }
 
 // body용 클래스... mixin으로 정의한다고 해서 별개의 공통 클래스로 빠지는 것은 아니었음.
-.dragging() {
-	cursor: pointer;
-}
 .dragging {
-	cursor: pointer;
+	cursor: pointer !important;
 }
 .sizingH {
-	cursor: col-resize;
+	cursor: col-resize !important;
 }
 .sizingH() {
-	cursor: col-resize;
+	cursor: col-resize !important;
+}
+.allowed {
+	cursor: copy !important;	
+}
+.not-allowed {
+	cursor: not-allowed !important;	
 }
 
 .gGrid {
@@ -132,6 +157,7 @@
 	color: #333;
 	border: 1px solid #bebebe;
 	position: relative;
+	.noselect();
 	.gGrid-setTable {
 		padding-bottom: @hScroll-height;
 		width: 100%;
@@ -151,35 +177,53 @@
  .adjustCol-handle {
 	margin: 0;
 	padding: 0;
-	width: 3px;
-	background: transparent;
+	width: 5px;
+	height: @header-label-height;
 	border: none;
+	background: transparent url("@{image-dir}/transparent.gif") repeat 0 0;
 	display: block;
 	position: absolute;
-	top: -(@cell-padding-upDown);
+	top: 0px;
 	right: 0px;
-	bottom: -(@cell-padding-upDown);
 	text-indent: -9999px;
+	z-index: 12;
 	&:focus {
-		bottom: 0px;
 		.sizingH();
 	}
 	&:hover {
-		bottom: 0px;
+		background: #296fd2;
 		.sizingH();
 	}
 	&:active {
-		bottom: 0px;
 		.sizingH();
 	}
 }
-.adjustCol-handle-hover {
-	width: 3px;
-	background: #B2BCC6;
+.adjustCol-start {
+	width: 5px;
+	background: url("@{image-dir}/adjust-column-line.png") left top repeat-y;
 	position: absolute;
 	top: @gird-title-h;
 	bottom: @hScroll-height;
-	z-index: 10;
+	z-index: 12;
+	.adjustCol-start-icon {
+		height: @header-label-borderWidth-top + @header-label-height + @header-label-borderWidth-bottom ;
+		display: block;
+		background: url("@{image-dir}/adjust-column-icon.gif") left top repeat-y;
+	}	
+}
+.adjustCol-move {
+	width: 5px;
+	background: url("@{image-dir}/adjust-column-line.png") -5px top repeat-y;
+	position: absolute;
+	top: @gird-title-h;
+	bottom: @hScroll-height;
+	z-index: 12;
+	.sizingH();
+	.adjustCol-move-icon {
+		height: @header-label-borderWidth-top + @header-label-height + @header-label-borderWidth-bottom ;
+		display: block;
+		background: url("@{image-dir}/adjust-column-icon.gif") -5px top repeat-y;
+	}	
 }
 .gGrid-table {
 	table-layout: fixed;
@@ -204,11 +248,12 @@
  	box-sizing: border-box;
  	vertical-align: middle;
  	overflow-y: visible;
+ 	cursor: default;
  	.gGrid-headerLabelWrap {
  		position: relative;
  	}
  	.gGrid-headerLabelText {
- 		margin: 0px 12px; // 12px : column show buttn half size
+ 		padding: 0px 11px; // 11px : column show button half size
  		height: @header-label-height; 
  		font-size: @header-label-font-size;
 	 	font-weight: bold;
@@ -226,13 +271,13 @@
 		background-position: center center;
 		display: inline-block;
 		&.state-none {
-		 	background: url("@{image-dir}/sort-state-none.png") left top no-repeat;	
+		 	background: url("@{image-dir}/sort-state-none.gif") left top no-repeat;	
 		}
 		&.state-asc {
-		 	background: url("@{image-dir}/sort-state-asc.png") left @header-label-font-size/4 no-repeat;	
+		 	background: url("@{image-dir}/sort-state-asc.gif") left @header-label-font-size/4 no-repeat;	
 		}
 		&.state-desc {
-			background: url("@{image-dir}/sort-state-desc.png") left @header-label-font-size/4 no-repeat;	
+			background: url("@{image-dir}/sort-state-desc.gif") left @header-label-font-size/4 no-repeat;	
 		}
 	}
  	.gGrid-colMenu {
@@ -247,10 +292,16 @@
 			background: transparent;
 			left: -12px;
 			top: (@header-label-height - 14)/2;
+			z-index: 4;
 			.w5-grid-column-show {
+				margin: 0;
+				padding: 0;
+				width: 23px;
 				height: 100%;
-				background: url("@{image-dir}/column-show-hide.png") left 0px no-repeat;
+				background: url("@{image-dir}/column-show-hide.gif") left 0px no-repeat;
+				border: none;
 				display: block;
+				text-indent: -9999px;
 				&:hover {
 					background-position: 0px -15px;	
 					cursor: pointer;
@@ -258,31 +309,32 @@
 			}
 		}
 		&.display-right {
-			width: 30px;
-			right: 12px;
+			width: 14px;
+			top: -1px;
+			right: -1px;
+			z-index: 10;
 			.w5-grid-colMenu-icon {
-				background: url("@{image-dir}/colMenu-btn.png") left top no-repeat;	
+				margin: 0;
+				padding: 0;
+				width: 14px;
+				height: @header-label-height + @header-label-borderWidth-top + @header-label-borderWidth-bottom;
+				background: transparent url("@{image-dir}/colMenu-btn-close.gif") center center no-repeat;	
+				border: 1px solid #636363;
+				text-indent: -9999px;
 				&:hover {
-					background-position: 0 -25px;
+					background: transparent url("@{image-dir}/colMenu-btn-hover.gif") center center no-repeat;	
+					border: 1px solid #366AD2;
 					cursor: pointer;
 				}
 				&.on {
-					background-position: 0 -50px;
+					background: transparent url("@{image-dir}/colMenu-btn-open.gif") center center no-repeat;
 				}
 			}		
 		}
 		&.open {
 			.w5-dropdown-menu {
 				display: block;
-				z-index: 2;
 			}
-		}
-		.w5-grid-colMenu-icon {
-			width: 15px;
-			height: 100%;
-			display: inline-block;
-			float: left;
-			text-indent: -9999px;
 		}
  	}
 }
@@ -293,8 +345,8 @@
 	background: #fff;
 	border: 1px solid #636363;
 	position: absolute;
-	top: @header-label-height + 5;
-	left: 15px; // sort icon width
+	top: @header-label-height + @header-label-borderWidth-top + @header-label-borderWidth-bottom;
+	left: 0px;
 	display: none;
 	list-style: none;
 
@@ -302,7 +354,6 @@
 		width: 180px;
 	}
 	li {
-		padding: 7px;
 		border-top: 1px solid #636363;
 		&:first-child{
 			border-top: none;
@@ -312,7 +363,8 @@
 		}
 
 		.w5-dropdown-menu-label {
-			padding-left: 17px;
+			padding: 7px;
+			padding-left: 24px;
 			font-size: 12px;
 			font-weight: bold;
 			color: #333;
@@ -323,13 +375,21 @@
 			clear: left;
 		}
 		.column-hide {
-			background: url("@{image-dir}/menu-icon-hide.png") 2px center no-repeat;	
+			background: url("@{image-dir}/menu-icon-hide.gif") 9px center no-repeat;	
+		}
+		.frozen-column {
+
+		}
+		.frozen-column.disabled {
+			color: #bdbdbd;
+			text-shadow: 1px 1px 1px #fff;
+			cursor: default;
 		}
 		.filter {
-			background: url("@{image-dir}/menu-icon-filter.png") 2px center no-repeat;	
+			background: url("@{image-dir}/menu-icon-filter.gif") 2px center no-repeat;	
 		}
 		.validator {
-			background: url("@{image-dir}/menu-icon-validator.png") 2px center no-repeat;	
+			background: url("@{image-dir}/menu-icon-validator.gif") 2px center no-repeat;	
 		}
 	}
 	.line-none {
@@ -441,28 +501,37 @@
 	 	>input[type=range] { width: 100% - @cell-input-width; }
 	 	&:hover { background-color:@cell-hover-color !important; }
 	}
+	.gGrid-frozen-cell {
+		text-align: center;
+		background: @header-label-bg;
+		border-right: @header-label-borderWidth-right @header-label-borderStyle-right @header-label-borderColor-right;
+		border-bottom: @header-label-borderWidth-bottom @header-label-borderStyle-bottom @header-label-borderColor-bottom;
+		border-left: @header-label-borderWidth-left @header-label-borderStyle-left @header-label-borderColor-left;
+	}
 	.gGrid-cell-selected { background-color:@cell-selected-color !important; }
-} 
+}
 .w5_grid_editbox {
 	position: absolute;
 	background: white;
 	overflow: hidden;
 	padding: 3px 5px;
+	-moz-box-sizing: border-box;
+	box-sizing: border-box;
+	left: -9999px;
 }
-.separateCol {
+.frozenHandle-move {
 	margin: 0;
 	padding: 0;
-	width: 0px;
+	width: 1px;
 	background: gray;
 	border-left: 1px dotted #030303;
 	text-indent: -9999px;
 	position: absolute;
 	top: @gird-title-h;
-	left: 100px;
 	bottom: @hScroll-height;
 	.sizingH();
 }
-.frozenCol {
+.frozenHandle {
 	margin: 0;
 	padding: 0;
 	width: 2px;
@@ -471,17 +540,49 @@
 	text-indent: -9999px;
 	position: absolute;
 	top: @gird-title-h;
-	left: 200px;
 	bottom: 0px;
+	z-index: 6;
 	.sizingH();
+}
+.columnMove-start {
+	border: dotted 2px #020202;
+	position: absolute;
+	top: @gird-title-h + @header-label-height + @header-label-borderWidth-top + @header-label-borderWidth-bottom;
+	bottom: @hScroll-height;
+}
+.columnMove-move {
+	background: #636363;
+	position: absolute; 
+	top: @gird-title-h + @header-label-height + @header-label-borderWidth-top + @header-label-borderWidth-bottom;
+	bottom: @hScroll-height;
+	/* IE 8 */
+	-ms-filter: "progid:DXImageTransform.Microsoft.Alpha(Opacity=20)";
+	opacity: 0.2;
+	cursor: not-allowed;
+	z-index: 10;	
 }
 .columnMove-indicator {
 	margin: 0;
 	padding: 0;
 	width: 8px;
-	background: url("@{image-dir}/bg-indicator.png") left top no-repeat;
 	position: absolute;
-	z-index: 10;
+	top: @gird-title-h - 7;
+	bottom: @hScroll-height;
+	z-index: 12;
+	.columnMove-indicator-arrow {
+		width: 8px;
+		height: 7px;
+		background: url("@{image-dir}/bg-indicator.gif") left top no-repeat;
+		display: block;
+		position: absolute;
+	}	
+	.columnMove-indicator-bar {
+		margin: 0px auto 0px;
+		width: 2px;
+		height: 100%;
+		background: #296fd2;
+		display: block;
+	}
 }
 .gScroll-v,
 .gScroll-h {
@@ -550,11 +651,14 @@
 		top: 1px;
 	}
 }
-.w5-grid-select-cell {
-	height: @gird-default-row-h;
-	outline: solid 2px #296fd2;
+.w5-grid-focused-cell {
+	width: 2px;
+	height: 2px;
+	background: #296fd2;
+	border: 0 none;
 	overflow: visible;
 	position: absolute;
+	z-index: 8;
 	.w5-grid-select-dragger {
 		margin: 0;
 		padding: 0;
@@ -565,25 +669,19 @@
 		border: none;
 		cursor: crosshair;
 		position: absolute;
-		right: -3px;
-		bottom: -3px;
+		right: -2px;
+		bottom: -2px;
+		text-indent: -9999px;
 	}	
 }
 .w5-grid-select-area {
 	background: url("@{image-dir}/bg-selection.png") left top repeat;
 	border: solid 2px #296fd2;
 	position: absolute;
+	cursor: cell;
 }
-.noselect {
-   -moz-user-select: -moz-none;
-   -khtml-user-select: none;
-   -webkit-user-select: none;
-   /*
-     Introduced in IE 10.
-     See http://ie.microsoft.com/testdrive/HTML5/msUserSelect/
-   */
-   -ms-user-select: none;
-   user-select: none;
+.w5-grid-group-row {
+  background-color: LightSteelBlue;
 }
 .w5-grid-group {
 	width: 12px;
@@ -593,10 +691,10 @@
 	text-indent: -9999px;
 	cursor: pointer;
 	&.fold {
-		background: url("@{image-dir}/group-fold.png") center center no-repeat;
+		background: url("@{image-dir}/group-fold.gif") center center no-repeat;
 	}
 	&.unfold {
-		background: url("@{image-dir}/group-unfold.png") center center no-repeat;
+		background: url("@{image-dir}/group-unfold.gif") center center no-repeat;
 	}
 }
 .w5-grid-group-text {
@@ -604,7 +702,6 @@
 	height: 100%;
 	display: inline-block;
 }
-
 
 // test 용 bgClass generator
 .bg-variant(@colorName; @background) {

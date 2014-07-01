@@ -157,14 +157,27 @@ _.extend( ViewModel.prototype, {
       this.save( models, options );
     }
   },
+  runExpression: function( expression, rowIndex, colId ) {
+    return expression.call( this.view, {
+      rowIndex: rowIndex,
+      colId: colId,
+      attributes: this.collection.at(rowIndex).toJSON()
+    });
+  },
   getCellData: function(rowIndex, colId) {
-    var expression = this.getMeta([rowIndex, colId], "expression");
-    if(_.isFunction(expression)) {
-      return expression.call(this.view, {
-        rowIndex: rowIndex,
-        colId: colId,
-        attributes: this.collection.at(rowIndex).toJSON()
-      });
+    var expression = this.getMeta( [rowIndex, colId], "expression" );
+
+    if ( _.isFunction( expression ) ) {
+      expression = this.runExpression( expression, rowIndex, colId );
+
+      if( _.isFunction( expression ) ) {
+        this.setMeta( [rowIndex, colId], "expression", expression, { silent: true } );
+        return this.runExpression( expression, rowIndex, colId );
+      } else {
+        return expression;
+      }
+    } else if(_.isString(expression) && this.evalExpression) {
+      return this.evalExpression(rowIndex, colId, expression);
     } else {
       return this.collection.at(rowIndex).get(colId);
     }

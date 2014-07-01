@@ -5,7 +5,6 @@ var cellProto = {
 }, cellObjects = {};
 
 cellObjects["text"] = _.defaults({
-  $editBox: $("<div class='w5_grid_editbox' contenteditable='true'>"),
   getContent : function(grid, data, row, col) {
     var template = grid.viewModel.getMeta([row, col], "template") || "<%=data%>",
         format = grid.viewModel.getMeta([row, col], "format") || "";
@@ -19,58 +18,63 @@ cellObjects["text"] = _.defaults({
     if(!readOnly) {
       this.popupEditBox(grid, row, col);
     }
+    $("body").addClass("noselect");
   },
   popupEditBox: function(grid, row, col) {
     var frozenColumn = grid.viewModel.getOption("frozenColumn"),
         tdCol = col < frozenColumn ? col : col-grid.startCol+frozenColumn,
         $cell = $(grid.getTbodyCell(row - grid.rowTop, tdCol)),
         data = grid.viewModel.getData([row, col]);
-    grid.$el.append(this.$editBox);
-    this.$editBox.text(data).css({
+
+    grid.$editBox.text(data).css({
       width: "auto",
       "min-width": $cell.outerWidth(),
       height: $cell.outerHeight(),
-      top: $cell.offset().top - grid.$el.offset().top,
-      left: $cell.offset().left - grid.$el.offset().left
-    }).show().data({
+      top: $cell.offset().top - grid.$wrapper_div.offset().top,
+      left: $cell.offset().left - grid.$wrapper_div.offset().left
+    }).data({
+      edit : true,
       row : row,
       col : col,
       grid : grid
     });
-    this.$editBox.focus();
+    grid.$editBox.focus();
 
     if (typeof window.getSelection !== "undefined" &&
         typeof document.createRange !== "undefined") {
       var range = document.createRange();
-      range.selectNodeContents( this.$editBox[0] );
+      range.selectNodeContents( grid.$editBox[0] );
       range.collapse(false);
       var sel = window.getSelection();
       sel.removeAllRanges();
       sel.addRange(range);
     } else if (typeof document.body.createTextRange !== "undefined") {
       var textRange = document.body.createTextRange();
-      textRange.moveToElementText( this.$editBox[0] );
+      textRange.moveToElementText( grid.$editBox[0] );
       textRange.collapse(false);
       textRange.select();
     }
   },
-  endEdit: function(e) {
-    if(e.type === "blur" || (e.type === "keydown" && e.keyCode === 13)) {
-      var value = this.$editBox.text(),
-          row = this.$editBox.data("row"),
-          col = this.$editBox.data("col"),
-          grid = this.$editBox.data("grid");
-      grid.viewModel.setData([row, col], value);
-      this.$editBox.hide();
+  endEdit: function( e, grid, options ) {
+    if ( e.type === "blur" || ( e.type === "keydown" && e.keyCode === 13 ) || options.isForced ) {
+      if ( grid.$editBox.data("edit") ) {
+        var value = grid.$editBox.text(),
+            row = grid.$editBox.data("row"),
+            col = grid.$editBox.data("col");
+        grid.viewModel.setData([row, col], value);
+        grid.$editBox.text("").css("cssText", "");
+        grid.$editBox.removeData("edit");
+      }
     }
+    $("body").removeClass("noselect");
   }
 }, cellProto);
 _(cellObjects["text"]).bindAll("dblclick", "popupEditBox", "endEdit");
-$(cellObjects["text"].$editBox).on("blur keydown", cellObjects["text"].endEdit);
 
 cellObjects["select"] = _.defaults({
   getContent : function(grid, value, row, col) {
     var options = grid.viewModel.getMeta([row, col], "options"),
+        callback = grid.viewModel.getMeta([row, col], "callback"),
         $select,
         index;
     $select = $("<select>" + _(options).reduce(function(memo, obj) {
@@ -92,15 +96,23 @@ cellObjects["select"] = _.defaults({
           label = $this.val(),
           options = grid.viewModel.getMeta([pos.row, pos.col], "options"),
           value = _(options).findWhere({label:label}).value;
-      grid.viewModel.setData([pos.row, pos.col], value);
+      grid.viewModel.setData([pos.row, pos.col], value, {silent: true});
+
+      if ( callback && callback.change && _.isFunction( callback.change ) ) {
+        callback.change.call( grid, value, pos );
+      }
     });
     return $select;
+  },
+  dblclick: function(e, grid) {
+    grid.focusWidget( e, { isSkip: true } );
   }
 }, cellProto);
 
 cellObjects["checkbox"] = _.defaults({
   getContent : function(grid, value, row, col) {
     var options = grid.viewModel.getMeta([row, col], "options"),
+        callback = grid.viewModel.getMeta([row, col], "callback"),
         values = value.split(" "),
         $checkbox = $(_(options).reduce(function(memo, obj, idx) {
           var checked = _(values).indexOf(obj.value) >= 0 ? " checked='true'" : "";
@@ -123,14 +135,22 @@ cellObjects["checkbox"] = _.defaults({
             return checked[idx] ? obj.value : "";
           }).compact().value().join(" ");
       grid.viewModel.setData([pos.row, pos.col], value, {silent:true});
+
+      if ( callback && callback.change && _.isFunction( callback.change ) ) {
+        callback.change.call( grid, value, pos );
+      }
     });
     return $checkbox;
+  },
+  dblclick: function(e, grid) {
+    grid.focusWidget( e, { isSkip: true } );
   }
 }, cellProto);
 
 cellObjects["radio"] = _.defaults({
   getContent : function(grid, value, row, col) {
     var options = grid.viewModel.getMeta([row, col], "options"),
+        callback = grid.viewModel.getMeta([row, col], "callback"),
         values = value.split(" "),
         cid = grid.viewModel.getDataCID(row),
         $radio = $(_(options).reduce(function(memo, obj, idx) {
@@ -153,8 +173,15 @@ cellObjects["radio"] = _.defaults({
           item = options[_.indexOf(checked, true)],
           value = item ? item.value : undefined;
       grid.viewModel.setData([pos.row, pos.col], value, {silent:true});
+
+      if ( callback && callback.change && _.isFunction( callback.change ) ) {
+        callback.change.call( grid, value, pos );
+      }
     });
     return $radio;
+  },
+  dblclick: function(e, grid) {
+    grid.focusWidget( e, { isSkip: true } );
   }
 }, cellProto);
 
@@ -163,6 +190,9 @@ cellObjects["link"] = _.defaults({
     var href = _.isObject(value) ? value.href : value,
         label = _.isObject(value) ? value.label : value;
     return $("<a href='" + href + "'>" + label + "</a>");
+  },
+  dblclick: function(e, grid) {
+    grid.focusWidget( e, { isSkip: true } );
   }
 }, cellProto);
 
@@ -175,6 +205,9 @@ cellObjects["img"] = _.defaults({
 cellObjects["button"] = _.defaults({
   getContent : function ( grid, value ) {
     return $("<button>" + value + "</button>");
+  },
+  dblclick: function(e, grid) {
+    grid.focusWidget( e, { isSkip: true } );
   }
 }, cellProto);
 
@@ -187,6 +220,21 @@ cellObjects["toggleButton"] = _.defaults({
     var closed = !!grid.viewModel.getMeta([row, "*"], "closed"),
         plusminus = closed ? "fold" : "unfold";
 
+    value = value || grid.viewModel.getMeta([row, "*"], "group").join("-");
     return $("<i class='w5-grid-group "+ plusminus + "'>"+ plusminus +"</i><span class='w5-grid-group-text'>" + value + "</span>");
   }
 }, cellProto);
+
+cellObjects["custom"] = _.defaults( {
+  getContent: function ( grid, data, row, col ) {
+    var template = grid.viewModel.getMeta( [row, col], "template" ) || "<%=data%>",
+        format = grid.viewModel.getMeta( [row, col], "format" ) || "";
+    if ( _.isString( template ) ) {
+      template = _.template( template );
+    }
+    return template( { data: w5.numberFormatter( data, format ) } );
+  },
+  dblclick: function(e, grid) {
+    grid.focusWidget( e, { isSkip: true } );
+  }
+}, cellProto );

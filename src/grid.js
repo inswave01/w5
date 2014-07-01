@@ -2,16 +2,34 @@ var GridProto = {
   template: _.template(
     "<<%= tagName %> id='<%= id %>' class='gGrid<%= className %>' style='width:<%= width %>'>" +
       "<div class='gGrid-setTable'>" +
+        "<div class='w5_grid_editbox' contenteditable='true'></div>" +
         "<table class='gGrid-table' style='width:0'>" +
           "<caption class='gGrid-caption'><%= caption %></caption>" +
           "<colgroup></colgroup>" +
           "<thead></thead>" +
           "<tbody></tbody>" +
         "</table>" +
+        "<div class='w5-grid-focused-cell border-top hide'></div>" +
+        "<div class='w5-grid-focused-cell border-right hide'></div>" +
+        "<div class='w5-grid-focused-cell border-bottom hide'>" +
+        //  "<button type='button' class='w5-grid-select-dragger'>Drag and Select area</button>" +
+        "</div>" +
+        "<div class='w5-grid-focused-cell border-left hide'></div>" +
         "<div class='adjustCol-handle-hover hide'></div>" +
-        "<div class='separateCol hide'></div>" +
-        "<div class='frozenCol hide'></div>" +
-        "<div class='columnMove-indicator hide'></div>" +
+        "<div class='frozenHandle hide'></div>" +
+        "<div class='frozenHandle-move hide'></div>" +
+        "<div class='columnMove-start hide'></div>" +
+        "<div class='columnMove-move hide'></div>" +
+        "<div class='columnMove-indicator hide'>"+
+          "<span class='columnMove-indicator-arrow'></span>"+
+          "<span class='columnMove-indicator-bar'></span>"+
+        "</div>" +
+        "<div class='adjustCol-start hide'>" +
+          "<span class='adjustCol-start-icon'></span>" +
+        "</div>" +
+        "<div class='adjustCol-move hide'>" +
+          "<span class='adjustCol-move-icon'></span>" +
+        "</div>" +
         "<div class='gScroll-v'>" +
           "<button class='scrollHandler'>Move vertical scroll</button>" +
         "</div>" +
@@ -26,12 +44,28 @@ var GridProto = {
     "mousedown .gGrid-table thead" : function(e){ this.columnMove.downEvent.call( this, e ); },
     "click .gGrid-table tbody" : function(e){ this.clickCell.clickEvent.call( this, e ); },
     "dblclick .gGrid-table tbody" : function(e){ this.clickCell.clickEvent.call( this, e ); },
-    "mousedown .frozenCol" : function(e){ this.frozenColumn.downEvent.call( this, e ); },
+    "mousedown .frozenHandle" : function(e){ this.frozenColumn.downEvent.call( this, e ); },
     "mousedown .gScroll-v" : function(e) { this.verticalScroll.areaDownEvent.call( this, e ); },
     "mousedown .gScroll-v .scrollHandler" : function(e) { this.verticalScroll.handleDownEvent.call( this, e ); },
     "mousedown .gScroll-h" : function(e) { this.horizontalScroll.areaDownEvent.call( this, e ); },
     "mousedown .gScroll-h .scrollHandler" : function(e) { this.horizontalScroll.handleDownEvent.call( this, e ); },
-    "mousewheel" : function(e) { this.scrollByWheel.wheelEvent.call( this, e ); }
+    "mousewheel" : function(e) { this.scrollByWheel.wheelEvent.call( this, e ); },
+    "keydown .w5_grid_editbox": "handleKeydown",
+    "keydown .gGrid-table>tbody": "handleKeydown"
+  },
+  keydownEvents: {
+    38:  "moveUp",              // up
+    40:  "moveDown",            // down
+    37:  "moveLeft",            // left
+    39:  "moveRight",           // right
+    13:  "focusWidget",         // enter
+    113: "focusWidget",         // F2
+    27:  "blurWidget",          // esc
+    9:   "moveActionableItem",  // Tab
+    36:  "jumpTo",              // HOME
+    35:  "jumpTo",              // END
+    33:  "jumpTo",              // PAGE UP
+    34:  "jumpTo"               // PAGE DOWN
   },
   initialize: function(options) {
     this.options = options;
@@ -76,6 +110,8 @@ var GridProto = {
       this.viewModel.fetch( this.collection, _.extend( { reset: true, silent: true }, options.fetch ) );
     }
 
+    this.tabbableElements = ['checkbox'];
+
     this.listenTo( this.collection, 'change', this.onModelChange );
     this.listenTo( this.collection, 'add remove', this.onModelAddRemove );
     this.listenTo( this.collection, 'reset sort', this.onReset );
@@ -86,23 +122,7 @@ var GridProto = {
     this.listenTo( this.viewModel.cell, 'change', this.drawMetaByPos );
     this.listenTo( this.viewModel.option, 'change', this.onOptionChange );
     
-    var events = {},
-        i;
-    for(i in options.gridEvents) {
-      var eventName = i.split(" ")[0];
-      if(!events[eventName]) {
-        events[eventName] = [];
-      }
-      events[eventName].push({
-        select: i.slice(eventName.length + 1),
-        funcName: options.gridEvents[i]
-      });
-    }
-    this.gridEventMatch = events;
-    for(i in events) {
-      this.events[i + " td"] = "handleCommonEvent";
-    }
-    this.delegateEvents(this.events);
+    this.setGridEvents();
   },
   render: function() {
     var $el,
@@ -136,14 +156,42 @@ var GridProto = {
     this.$scrollYHandle = $el.find(".gScroll-v .scrollHandler");
     this.$scrollXArea   = $el.find(".gScroll-h");
     this.$scrollXHandle = $el.find(".gScroll-h .scrollHandler");
+    this.$editBox       = $el.find(".w5_grid_editbox");
+
+    this.scrollYHandleMinHeight = parseInt( this.$scrollYHandle.css('min-height'), 10 );
+    this.scrollXHandleMinWidth  = parseInt( this.$scrollXHandle.css('min-width'), 10 );
 
     this.addEvents();
     this.setResize();
 
+    this.headNum = $el.find("thead tr").length;
+
     return this; // enable chained calls
   },
+  setGridEvents: function() {
+    var events = {},
+        i;
+    for(i in this.options.gridEvents) {
+      var eventName = i.split(" ")[0];
+      if(!events[eventName]) {
+        events[eventName] = [];
+      }
+      events[eventName].push({
+        select: i.slice(eventName.length + 1),
+        funcName: this.options.gridEvents[i]
+      });
+    }
+    this.gridEventMatch = events;
+    for(i in events) {
+      if(i === "change") {
+        continue;
+      }
+      this.events[i + " td"] = "handleCommonEvent";
+    }
+    this.delegateEvents(this.events);
+  },
   handleCommonEvent: function(e) {
-    var events = this.gridEventMatch[e.type],
+    var events = this.gridEventMatch[e.type] || [],
         $td = $(e.target).closest("td"),
         col = $td.index(),
         row = $td.parent().index() + this.rowTop,
@@ -157,8 +205,12 @@ var GridProto = {
     for(i = 0; i < events.length; i++) {
       elems = this.select(events[i].select);
       for(j = 0; j < elems.length; j++) {
-        if(elems[j][0] === cid && elems[j][1] === col) {
-          this.options[events[i].funcName].call(this, e, row, col);
+        if(this.viewModel.getDataCID(elems[j][0]) === cid && elems[j][1] === col) {
+          if(_.isString(events[i].funcName)) {
+            this.options[events[i].funcName].call(this, e, row, col);
+          } else if(_.isFunction(events[i].funcName)) {
+            events[i].funcName.call(this, e, row, col);
+          }
         }
       }
     }
@@ -267,6 +319,10 @@ var GridProto = {
     this.$wrapper_div.find("thead").append($tr);
   },
   addEvents: function() {
+    var _this = this;
+    this.$editBox.on("blur", function(e) {
+      cellObjects["text"].endEdit.call( cellObjects["text"], e, _this );
+    });
     this.delegateEvents();
 
     resizeChecker.add(this);
@@ -280,6 +336,7 @@ var GridProto = {
       if ( this.viewModel.hasMeta( ["*", col], "sortable") ){
         this.sortColumn.sortColumn.call( this, col );
       }
+      $("document").addClass("noselect");
     },
     sortColumn : function( col ) {
       var column = this.collection.sortInfo.column || [],
@@ -303,18 +360,32 @@ var GridProto = {
     }
   },
   columnMove : {
-    draggedColumn : null,
-    _wrapMoveEvent: null,
-    _wrapUpEvent: null,
+    draggedColumn   : null,
+    _wrapMoveEvent  : null,
+    _wrapUpEvent    : null,
+    $pickTH         : null,
+    $pickTHWidth    : null,
+    dragInfo        : {
+                      startX : null, 
+                      indicatorMovePosX : null,
+                      increasedX : null
+                    },
 
-    _downEvent : function(th) {
-      var $th = $(th).closest("th"),
-        colOrder = this.viewModel.getOption("colOrder"),
-        visibleCol = this.viewModel.getVisibleCol(),
-        thIndex, frozenColumn;
-      $("body").addClass("noselect");
-      if ( $th.length > 0 ) {
-        thIndex = $th.index();
+    _downEvent : function(e) {
+      var colOrder = this.viewModel.getOption("colOrder"),
+          visibleCol = this.viewModel.getVisibleCol(),
+          thIndex, frozenColumn;
+
+      this.columnMove.$indicator =  this.$el.find(".columnMove-indicator");
+      this.columnMove.$indicatorStart = this.$el.find(".columnMove-start");
+      this.columnMove.$indicatorMove = this.$el.find(".columnMove-move");
+      this.columnMove.$pickTH = $(e.target).closest("th");
+      this.columnMove.$pickTHWidth = this.columnMove.$pickTH.outerWidth();
+      this.columnMove.dragInfo.startX = e.clientX; 
+      this.columnMove.dragInfo.indicatorMovePosX = this.columnMove.$pickTH.position().left;
+
+      if ( this.columnMove.$pickTH.length > 0 ) {
+        thIndex = this.columnMove.$pickTH.index();
         frozenColumn = this.viewModel.getOption("frozenColumn");
         this.columnMove.draggedColumn = thIndex < frozenColumn ? thIndex : thIndex + this.startCol - frozenColumn;
       }
@@ -322,12 +393,14 @@ var GridProto = {
       if ( colOrder[this.columnMove.draggedColumn] !== visibleCol[this.columnMove.draggedColumn] ) {
         this.columnMove.draggedColumn = _(colOrder).indexOf(this.columnMove.draggedColumn);
       }
+
+      $("body").addClass("noselect");
     },
     downEvent : function(e) {
       var that;
-
-      if ( e.target.className.indexOf('gGrid-headerLabelWrap') > -1 && e.target.tagName !== 'I' ) {
-        this.columnMove._downEvent.call( this, e.target);
+      
+      if ( ( e.target.className.indexOf('gGrid-headerLabelWrap') > -1 || e.target.className.indexOf('gGrid-headerLabelText') > -1 || e.target.className.indexOf('w5-grid-sort') > -1 ) && e.target.tagName !== 'BUTTON' ) {
+        this.columnMove._downEvent.call( this, e);
 
         that = this;
         this.columnMove._wrapMoveEvent = function(e) { that.columnMove.moveEvent.call( this, e ); };
@@ -340,12 +413,21 @@ var GridProto = {
         document.addEventListener('mouseup', this.columnMove._wrapUpEvent, true);
       }
     },
-    _moveEvent : function(el) {
-      var $th = $(el).closest("th"),
-        $indicator = this.$el.find(".columnMove-indicator"),
-        colOrder = this.viewModel.getOption("colOrder"),
-        visibleCol = this.viewModel.getVisibleCol(),
-        thIndex, frozenColumn, targetIndex;
+    _moveEvent : function(e) {
+      var $th = $(e.target).closest("th"),
+          colOrder = this.viewModel.getOption("colOrder"),
+          visibleCol = this.viewModel.getVisibleCol(),
+          thIndex, frozenColumn, targetIndex;
+      
+      this.columnMove.$indicatorStart.css({
+          left : this.columnMove.dragInfo.indicatorMovePosX,
+          width : this.columnMove.$pickTH.width() - 2
+      }).removeClass("hide");
+      this.columnMove.$indicatorMove.css({
+          width : this.columnMove.$pickTH.width()
+      }).removeClass("hide");
+      this.columnMove.dragInfo.increasedX = e.clientX - this.columnMove.dragInfo.startX;
+      this.columnMove.$indicatorMove.css("left", this.columnMove.dragInfo.indicatorMovePosX + this.columnMove.dragInfo.increasedX);
 
       if ( $th.length > 0 ) {
         thIndex = $th.index();
@@ -356,41 +438,49 @@ var GridProto = {
           this.columnMove.targetIndex = _(colOrder).indexOf(this.columnMove.draggedColumn);
         }
         if ( targetIndex === this.columnMove.draggedColumn ) {
-          $indicator.addClass("hide").removeClass("show");
-        } else {
-          $indicator.addClass("show").removeClass("hide").css({
-            top : $th.position().top-4,
-            height : $th.outerHeight()+8,
+          this.columnMove.$indicator.addClass("hide");
+          $("body").addClass("not-allowed");
+          if ( ( e.target.className.indexOf('gGrid-headerLabelWrap') > -1 || e.target.className.indexOf('gGrid-headerLabelText') > -1 || e.target.className.indexOf('w5-grid-sort') > -1 ) ){
+            $(e.target).closest("th").addClass("not-allowed").removeClass("allowed");
+          }
+        } else {  
+          this.columnMove.$indicator.removeClass("hide").css({
             left : $th.position().left + (targetIndex < this.columnMove.draggedColumn ? 0 : $th.outerWidth()) -3
           });
+          if ( ( e.target.className.indexOf('gGrid-headerLabelWrap') > -1 || e.target.className.indexOf('gGrid-headerLabelText') > -1 || e.target.className.indexOf('w5-grid-sort') > -1 ) ){
+            $(e.target).closest("th").addClass("allowed").removeClass("not-allowed");
+          }
         }
       }
     },
     moveEvent : function(e) {
       if(this.columnMove.draggedColumn) {
-        this.columnMove._moveEvent.call( this, e.target );
+        this.columnMove._moveEvent.call( this, e );
       }
     },
     _upEvent : function(el) {
       var $th = $(el).closest("th"),
-        $indicator = this.$el.find(".columnMove-indicator"),
-        colOrder = this.viewModel.getOption("colOrder"),
-        visibleCol = this.viewModel.getVisibleCol(),
-        thIndex, frozenColumn, targetIndex;
+          colOrder = this.viewModel.getOption("colOrder"),
+          visibleCol = this.viewModel.getVisibleCol(),
+          thIndex, frozenColumn, targetIndex;
+
       if ( $th.length > 0 ) {
         thIndex = $th.index();
         frozenColumn = this.viewModel.getOption("frozenColumn");
         targetIndex = thIndex < frozenColumn ? thIndex : thIndex + this.startCol - frozenColumn;
 
-        if ( colOrder[this.columnMove.targetIndex] !== visibleCol[this.columnMove.targetIndex] ) {
-          this.columnMove.targetIndex = _(colOrder).indexOf(this.columnMove.draggedColumn);
+        if ( colOrder[targetIndex] !== visibleCol[targetIndex] ) {
+          targetIndex = _(colOrder).indexOf(this.columnMove.draggedColumn);
         }
         if ( this.columnMove.draggedColumn!==targetIndex ) {
           this.moveColumn(this.columnMove.draggedColumn, targetIndex);
         }
       }
-      $("body").removeClass("noselect");
-      $indicator.addClass("hide").removeClass("show");
+      $("body").removeClass("noselect").removeClass("not-allowed");
+      $th.removeClass("allowed").removeClass("not-allowed");
+      this.columnMove.$indicator.addClass("hide").removeClass("show");
+      this.columnMove.$indicatorStart.addClass("hide");
+      this.columnMove.$indicatorMove.addClass("hide");
       this.columnMove.draggedColumn = null;
     },
     upEvent : function(e) {
@@ -418,8 +508,8 @@ var GridProto = {
       var that = this;
       this.frozenColumn._downEvent.call( this, e.clientX );
 
-      this.frozenColumn.$frozenHandle = this.$el.find(".frozenCol");
-      this.frozenColumn.$seperateCol = this.$el.find(".separateCol");
+      this.frozenColumn.$frozenHandle = this.$el.find(".frozenHandle");
+      this.frozenColumn.$seperateCol = this.$el.find(".frozenHandle-move");
       this.frozenColumn.$indicator = this.$el.find(".columnMove-indicator");
 
       this.frozenColumn._wrapMoveEvent = function(e){ that.frozenColumn.moveEvent.call( this, e ); };
@@ -436,7 +526,8 @@ var GridProto = {
           endCol = -1,
           colWidth = 0,
           widthSum = 0,
-          visibleCol = this.viewModel.getVisibleCol();
+          visibleCol = this.viewModel.getVisibleCol(),
+          $indicator_width = this.frozenColumn.$indicator.width();
 
       this.frozenColumn.dragInfo.endX = clientX - this.$wrapper_div.offset().left;
       this.frozenColumn.$seperateCol.css("left", this.frozenColumn.dragInfo.endX);
@@ -453,7 +544,7 @@ var GridProto = {
             widthSum = colWidth;
           }
         } else {
-          endCol = i;
+          endCol = i; 
           if ( widthSum > this.$wrapper_div.width() ) {
             break;
           }
@@ -461,18 +552,14 @@ var GridProto = {
       }
 
       if ( this.frozenColumn.frozenColumnIdx !== this.frozenColumn.newFrozenCol ) {
-        widthSum = 0;  
+        widthSum = 0;
         
         for ( i = 0; i<this.frozenColumn.newFrozenCol; i++ ) {
           widthSum += this.viewModel.getMeta( ["*", i], "width" );
         }        
       }
 
-      this.frozenColumn.$indicator.removeClass("hide").addClass("show").css({
-        top : this.$wrapper_div.find("table thead").position().top,
-        height : this.$wrapper_div.find("table thead").outerHeight(),
-        left : widthSum
-      });
+      this.frozenColumn.$indicator.removeClass("hide").addClass("show").css("left", widthSum-$indicator_width/2);
     },
     moveEvent : function(e) {
       this.frozenColumn._moveEvent.call( this, e.clientX );
@@ -503,9 +590,11 @@ var GridProto = {
       rowTop += (offsetY < this.$scrollYHandle.position().top ? -1 : 1) * vScrollDegree;
       scrollTop = rowTop * 20;
       this.viewModel.setOption("scrollTop", scrollTop);
+      $("body").addClass("noselect");
     },
     areaDownEvent : function(e){
-      this.verticalScroll._areaDownEvent.call( this, e.offsetY );
+      var y = e.offsetY || (e.pageY - this.$scrollYArea.offset().top);
+      this.verticalScroll._areaDownEvent.call( this, y );
     },
     _handleDownEvent : function( clientY ){
       var target_top = this.$scrollYHandle.position().top;
@@ -570,7 +659,8 @@ var GridProto = {
       this.viewModel.setOption("scrollLeft", scrollLeft);
     },
     areaDownEvent : function(e) {
-      this.horizontalScroll._areaDownEvent.call( this, e.offsetX );
+      var x = e.offsetX || e.pageX - $(e.target).offset().left;
+      this.horizontalScroll._areaDownEvent.call( this, x );
     },
     _handleDownEvent : function(clientX) {
       this.horizontalScroll.pos = {
@@ -625,9 +715,9 @@ var GridProto = {
           deltaX = 0,
           deltaY = 0;
 
-      if ( 'detail'      in ev ) { deltaY = ev.detail * -1;      }
-      if ( 'wheelDelta'  in ev ) { deltaY = ev.wheelDelta;       }
-      if ( 'wheelDeltaY' in ev ) { deltaY = ev.wheelDeltaY;      }
+      if ( 'detail'      in ev ) { deltaY = ev.detail;        }
+      if ( 'wheelDelta'  in ev ) { deltaY = ev.wheelDelta * -1;  }
+      if ( 'wheelDeltaY' in ev ) { deltaY = ev.wheelDeltaY * -1; }
       if ( 'wheelDeltaX' in ev ) { deltaX = ev.wheelDeltaX * -1; }
       if(Math.abs(deltaY) < 40 ) {
         //   3 -> 60 (3 lines)
@@ -651,6 +741,8 @@ var GridProto = {
           col = tdCol < frozenColumn ? tdCol : tdCol + this.startCol - frozenColumn,
           displayType = this.viewModel.getMeta( [row, col], "displayType");
 
+      this.setFocusedCell( row, col, e.target.tagName === 'TD' );
+
       if ( cellObjects[displayType][e.type] ) {
         cellObjects[displayType][e.type]( e, this, row, col );
       }
@@ -659,6 +751,21 @@ var GridProto = {
   onModelChange: function ( model ) {
     var rowIndex = model.collection.indexOf(model);
     _.each(model.changed, function(data, colID) {
+      var events = this.gridEventMatch["change"] || [],
+          eventObj = {type:"change"},
+          i, j;
+      for(i = 0; i < events.length; i++) {
+        var elems = this.select(events[i].select);
+        for(j = 0; j < elems.length; j++) {
+          if(this.viewModel.getDataCID(elems[j][0]) === model.cid && elems[j][1] === colID) {
+            if(_.isString(events[i].funcName)) {
+              this.options[events[i].funcName].call(this, eventObj, rowIndex, colID);
+            } else if(_.isFunction(events[i].funcName)) {
+              events[i].funcName.call(this, eventObj, rowIndex, colID);
+            }
+          }
+        }
+      }
       this.drawCell(rowIndex, colID);
     }, this);
   },
@@ -723,44 +830,39 @@ var GridProto = {
         frozenColumn = this.viewModel.getOption("frozenColumn"),
         scrollXRange = this.wholeTblWidth - this.tableWidth,
         scrollYRange = this.wholeTblHeight - 20 * this.viewModel.getOption("rowNum"),
-        $frozenDiv = this.$el.find(".frozenCol"),
+        $frozenDiv = this.$el.find(".frozenHandle"),
         $cols = this.$el.find("colgroup col"),
         frozenArea = this.viewModel.getFrozenArea(),
         visibleCol = this.viewModel.getVisibleCol(),
-        topRange = this.$scrollYArea.height() - this.$scrollYHandle.height(),
+        topRange, leftRange,
         widthSum = 0,
         startCol = -1,
         endCol = -1,
         drawFlag = false,
-        left, leftRange, i, colWidth, top, rowTop;
+        yAreaHeight, yHandleHeight,
+        xAreaWidth, xHandleWidth,
+        left, i, colWidth, top, rowTop;
 
     // handle scrollLeft
-    if(scrollLeft > scrollXRange) {
+    if ( scrollLeft > scrollXRange ) {
       scrollLeft = scrollXRange;
     }
-    if(scrollLeft < 0) {
+    if ( scrollLeft < 0 ) {
       scrollLeft = 0;
     }
-    scrollLeft = parseInt(scrollLeft, 10);
-    this.viewModel.setOption("scrollLeft", scrollLeft, {silent:true});
+    scrollLeft = parseInt( scrollLeft, 10 );
+    this.viewModel.setOption( "scrollLeft", scrollLeft, { silent: true } );
 
     // set frozenArea
     $frozenDiv.css( "left", frozenArea ).toggleClass("hide", !frozenArea).toggleClass("show", !!frozenArea);
     this.$scrollXArea.css( "left", frozenArea );
-    
-    // set scrollXHandle's width and left
-    this.$scrollXHandle.width( this.$scrollXArea.width() * this.tableWidth / this.wholeTblWidth );
-    leftRange = this.$scrollXArea.width() - this.$scrollXHandle.width();
-    // left : leftRange = scrollLeft : scrollXRange
-    left = leftRange * scrollLeft / (this.wholeTblWidth - this.tableWidth);
-    this.$scrollXHandle.css("left", left + "px");
 
     for ( i = frozenColumn; i < visibleCol.length; i++ ) {
       colWidth = this.viewModel.getMeta( ["*", i], "width" );
       widthSum += colWidth;
 
       if ( startCol === -1 ) {
-        if ( widthSum - colWidth / 2 >= scrollLeft ) {
+        if ( widthSum - colWidth / 2 > scrollLeft ) {
           startCol = endCol = i;
           widthSum = colWidth;
         }
@@ -772,18 +874,15 @@ var GridProto = {
       }
     }
 
-    this.$scrollXArea.css( "opacity",
-        this.$scrollXArea.width() <= this.$scrollXHandle.width() ? 0 : 1 );
-
     if ( this.startCol !== startCol || this.endCol !== endCol ) {
       this.startCol = startCol;
       this.endCol = endCol;
       for ( i = $cols.length; i <= endCol - startCol + frozenColumn; i++ ) {
         this.$el.find("colgroup").append("<col>");
         this.$el.find("thead tr").append("<th>"+
-                                          "<div class='gGrid-headerLabelWrap'>"+
-                                            "<div class='gGrid-headerLabelText'>"+
-                                        "</th>");
+                                           "<div class='gGrid-headerLabelWrap'>"+
+                                           "<div class='gGrid-headerLabelText'>"+
+                                         "</th>");
         this.$el.find("tbody tr").append("<td>");
       }
       $cols = this.$el.find("colgroup col");
@@ -794,7 +893,7 @@ var GridProto = {
         var width = colIndex <= endCol ? this.viewModel.getMeta( ["*", colIndex], "width") : 0;
         
         $(col).width( width );
-        if ( width===0 ){
+        if ( width === 0 ) {
           $(this.getHeaderCell(0, i)).children(0).html("");
         }
       }, this);
@@ -802,17 +901,14 @@ var GridProto = {
     }
 
     // handle scrollTop
-    if(scrollTop > scrollYRange) {
+    if ( scrollTop > scrollYRange ) {
       scrollTop = scrollYRange;
     }
-    if(scrollTop < 0) {
+    if ( scrollTop < 0 ) {
       scrollTop = 0;
     }
     scrollTop = parseInt(scrollTop, 10);
-    this.viewModel.setOption("scrollTop", scrollTop, {silent:true});
-
-    top = parseInt(scrollTop * topRange / scrollYRange + 0.5, 10);
-    this.$scrollYHandle.css( "top", top + "px" );
+    this.viewModel.setOption( "scrollTop", scrollTop, { silent: true } );
 
     rowTop = parseInt(scrollTop / 20, 10);
     if ( this.rowTop !== rowTop ) {
@@ -820,13 +916,35 @@ var GridProto = {
       drawFlag = true;
     }
 
-    this.$scrollYArea.css( "opacity",
-      this.$scrollYArea.height() <= this.$scrollYHandle.height() ? 0 : 1 );
-
-    if(drawFlag) {
+    if ( drawFlag ) {
       this.drawHeader();
       this.drawTbody();
+      this.setFocusedCell();
     }
+
+    yAreaHeight = this.$scrollYArea.height();
+    yHandleHeight = this.$el.find("tbody tr").length * yAreaHeight / this.viewModel.getDataLength();
+    yHandleHeight = ( this.scrollYHandleMinHeight > yHandleHeight ) ? this.scrollYHandleMinHeight : yHandleHeight;
+
+    // calculate scrollXHandle's width and left
+    xAreaWidth = this.$scrollXArea.width();
+    xHandleWidth = xAreaWidth * this.tableWidth / this.wholeTblWidth;
+    xHandleWidth = ( this.scrollXHandleMinWidth > xHandleWidth ) ? this.scrollXHandleMinWidth : xHandleWidth;
+
+    topRange = yAreaHeight - yHandleHeight;
+    top = parseInt(scrollTop * topRange / scrollYRange + 0.5, 10);
+    this.$scrollYHandle.css( "top", top + "px" );
+    this.$scrollYHandle.height( yHandleHeight );
+
+    this.$scrollYArea.css( "opacity", yAreaHeight <= yHandleHeight ? 0 : 1 );
+
+    leftRange = xAreaWidth - xHandleWidth;
+    // left : leftRange = scrollLeft : scrollXRange
+    left = leftRange * scrollLeft / (this.wholeTblWidth - this.tableWidth);
+    this.$scrollXHandle.css("left", left + "px");
+    this.$scrollXHandle.width( xHandleWidth );
+
+    this.$scrollXArea.css( "opacity", xAreaWidth <= xHandleWidth ? 0 : 1 );
   },
   onOptionChange: function ( model ) {
     if ( model.hasChanged("colOrder") ) {
@@ -926,12 +1044,12 @@ var GridProto = {
         $sortStateNode = $("<i class='w5-grid-sort'></i>");
 
     if (cell) {
-      $labelNode.append(label).attr("abbr", label);
+      $labelNode.append(label);
       if( this.viewModel.hasMeta( ["*", col], "sortable") ){
         $labelNode.append($sortStateNode);
       }
 
-      $(cell).children(0).html("")
+      $(cell).attr("abbr", label).children(0).html("")
           .append($labelNode)
           .append(this.getColMenu(colIndex))
           .append(this.getAdjustColHandle(colIndex));
@@ -947,7 +1065,7 @@ var GridProto = {
       $(cell).find(".display-left .w5-grid-column-show").removeClass("hide");
     }
 
-    // sort 상태 아이콘 표시
+    // sort 상태 아이콘 표시 
     var column = this.collection.sortInfo.column || [],
         direction = this.collection.sortInfo.direction || [],
         btnClass = ["state-none", "state-asc", "state-desc"],
@@ -967,7 +1085,7 @@ var GridProto = {
         inColRange = colIndex < frozenColumn || (this.startCol <= colIndex && colIndex <= this.endCol),
         inRowRange = this.rowTop <= row && row < this.rowTop + this.viewModel.getOption("rowNum"),
         tdCol = colIndex < frozenColumn ? colIndex : colIndex-this.startCol+frozenColumn,
-        $cell, data, cellObject, style, className;
+        $cell, data, cellObject, node, nodeFormatter, isNodeFormatter, style, className;
 
     if( !inColRange || !inRowRange ) {
       return;
@@ -978,7 +1096,26 @@ var GridProto = {
       if ( row < this.viewModel.getDataLength() ) {
         data = this.viewModel.getData( [row, col] );
         cellObject = cellObjects[this.viewModel.getMeta( [row, col], "displayType" )];
-        $cell.html("").append(cellObject.getContent(this, data, row, colIndex));
+        nodeFormatter = this.viewModel.getMeta( [row, col], "nodeFormatter" );
+
+        if ( nodeFormatter && _.isFunction(nodeFormatter) ) {
+          isNodeFormatter = true;
+        }
+
+        if ( isNodeFormatter && nodeFormatter.destroy && _.isFunction( nodeFormatter.destroy ) ) {
+          nodeFormatter.destroy.call( this.view, $cell, data, this.viewModel.collection.at(row), row, this.viewModel.getColID(colIndex) );
+        }
+
+        $cell.html("").append( cellObject.getContent(this, data, row, colIndex) );
+
+        if ( isNodeFormatter ) {
+          node = $cell.get(0);
+          node = node.querySelector(':first-child');
+          if ( node ) {
+            nodeFormatter.call( this.view, $cell, node, data, this.viewModel.collection.at(row), row, this.viewModel.getColID(colIndex) );
+          }
+        }
+
         style = this.viewModel.getMeta( [row, col], "style" );
         className = this.viewModel.getMeta( [row, col], "class" ) || "";
       } else {
@@ -998,8 +1135,8 @@ var GridProto = {
 
     var adjustCol = {
       $adjustHandle  : $("<i class='adjustCol-handle'>Adjust this Column</i>"),
-      $seperateColHover : grid.$el.find(".adjustCol-handle-hover"),
-      $seperateCol   : grid.$el.find(".separateCol"),
+      $adjustCol_start : grid.$el.find(".adjustCol-start"),
+      $adjustCol_move  : grid.$el.find(".adjustCol-move"),
       targetCol      : 0,
       targetColW     : 0,
       draggingX      : 0,
@@ -1015,10 +1152,10 @@ var GridProto = {
           startX : $metaCol.position().left
         };
 
-        this.$seperateCol.css("left", this.colDragInfo.startX);
-        this.$seperateCol.removeClass("hide").addClass("show");
-        this.$seperateColHover.css("left", this.colDragInfo.startX);
-        this.$seperateColHover.removeClass("hide").addClass("show");
+        this.$adjustCol_start.css("left", this.colDragInfo.startX);
+        this.$adjustCol_start.removeClass("hide").addClass("show");
+        this.$adjustCol_move.css("left", this.colDragInfo.startX);
+        this.$adjustCol_move.removeClass("hide").addClass("show");
 
         document.addEventListener('mousemove', this.moveEvent, true);
         document.addEventListener('mouseup', this.upEvent, true);
@@ -1027,7 +1164,7 @@ var GridProto = {
       },
       moveEvent : function(e) {
         this.draggingX = e.clientX - this.colDragInfo.posX;
-        this.$seperateCol.css("left", this.colDragInfo.startX+this.draggingX-this.$seperateCol.width());
+        this.$adjustCol_move.css("left", this.colDragInfo.startX+this.draggingX-this.$adjustCol_move.width());
         $("body").addClass("sizingH");
       },
       upEvent : function() {
@@ -1041,8 +1178,8 @@ var GridProto = {
         grid.viewModel.removeMeta( ["*", this.targetCol], "flex", {silent:true} );
         grid.viewModel.setMeta( ["*", this.targetCol], "width", colWidth + this.draggingX );
         
-        this.$seperateCol.removeClass("show").addClass("hide");
-        this.$seperateColHover.removeClass("show").addClass("hide");
+        this.$adjustCol_start.removeClass("show").addClass("hide");
+        this.$adjustCol_move.removeClass("show").addClass("hide");
         $("body").removeClass("sizingH");
 
         document.removeEventListener('mousemove', this.moveEvent, true);
@@ -1053,18 +1190,19 @@ var GridProto = {
     _(adjustCol).bindAll("downEvent", "moveEvent", "upEvent");
     adjustCol.$adjustHandle.on("mousedown", adjustCol.downEvent);
 
-    return adjustCol.$adjustHandle;
+    return adjustCol.$adjustHandle; 
   },
   colLeftMenu: _.template(
       "<div class='gGrid-colMenu display-left'>"+
-        "<i class='w5-grid-column-show'></i>"+
+        "<button type='button' class='w5-grid-column-show'>Show hide column</button>"+
       "</div>"
   ),
   colRightMenu: _.template(
-    "<div class='gGrid-colMenu display-right'>"+
-      "<i class='w5-grid-colMenu-icon'></i>"+ 
-      "<ul class='w5-dropdown-menu form-none' role='menu'>"+
-      "<li><a class='w5-dropdown-menu-label column-hide' role='menuitem' href='#'>Column Hide</a></li>"+
+    "<div class='gGrid-colMenu display-right hide'>"+
+      "<button type='button' class='w5-grid-colMenu-icon'>Open this column menu</button>"+ 
+      "<ul role='menu' class='w5-dropdown-menu form-none'>"+
+      "<li><a href='#' role='menuitem' class='w5-dropdown-menu-label column-hide'>Column Hide</a></li>"+
+      "<li><a href='#' role='menuitem' aria-disabled='false' class='w5-dropdown-menu-label frozen-column'>Set Frozen Column</a></li>"+
       "</ul>"+
     "</div>"
   ),
@@ -1076,7 +1214,8 @@ var GridProto = {
         $menuIcon = $rightMenu.find(".w5-grid-colMenu-icon"),
         colOrder = grid.viewModel.getOption("colOrder"),
         visibleCol = grid.viewModel.getVisibleCol(),
-        frozenCol = grid.viewModel.getOption("frozenColumn");
+        frozenCol = grid.viewModel.getOption("frozenColumn"),
+        scrollLeft = grid.viewModel.getOption("scrollLeft");
 
     var leftMenu = {
       _showCol : function () {
@@ -1118,7 +1257,7 @@ var GridProto = {
         }
         if ( checkMenuPos > grid.$wrapper_div.width()-$cell.find(".display-right .w5-dropdown-menu").width() ){
           $cell.find(".display-right .w5-dropdown-menu").css({
-            left : "initial",
+            left : "auto",
             right : "0px"
           });
         }
@@ -1127,14 +1266,14 @@ var GridProto = {
         $(menuBtn).addClass("on");
       },
       openColMenu : function(e){
-        this._openColMenu(e.target);
+        this._openColMenu(e);
       },
       _closeColMenu : function () {
         $rightMenu.removeClass("open");
         $menuIcon.removeClass("on");
       },
-      closeColMenu : function(e){
-        this._closeColMenu(e.target);  
+      closeColMenu : function(){
+        this._closeColMenu();  
       },
       _hideCol : function () {
         var remainCol = grid.viewModel.getVisibleCol().length;
@@ -1153,18 +1292,43 @@ var GridProto = {
       hideCol : function ( e ) {
         this._hideCol( e.target );
         e.preventDefault();
+      },
+      _frozenCol : function () {
+        grid.viewModel.setOption("frozenColumn", col+1 );
+      },
+      frozenCol : function ( e ) {
+        this._frozenCol(e);
+        e.preventDefault();
       }
     };
 
-    _(rightMenu).bindAll("openColMenu", "closeColMenu", "hideCol");
-    $rightMenu.find(".w5-grid-colMenu-icon").on("click", rightMenu.openColMenu);  
-    $rightMenu.find(".w5-dropdown-menu li").eq(0).on("click", rightMenu.hideCol);  
-    grid.$el.on("mouseleave", rightMenu.closeColMenu);
-    $colMenu.append($rightMenu);
+    _(rightMenu).bindAll("openColMenu", "closeColMenu", "hideCol", "frozenCol");
+    $rightMenu.find(".w5-grid-colMenu-icon").on("click", function(){
+      if ( $(this).hasClass("on") ){
+        rightMenu.closeColMenu( $(this) );
+      } else{
+        rightMenu.openColMenu( $(this) );
+      }
+    });  
+    $rightMenu.find(".w5-dropdown-menu li").find(".column-hide").on("click", rightMenu.hideCol);  
+    $rightMenu.find(".w5-dropdown-menu li").find(".frozen-column").on("click", rightMenu.frozenCol);  
+    grid.$el.find("thead th").on("mouseenter", function(){
+      $(this).find(".display-right").removeClass("hide");
+    });
+    grid.$el.find("thead th").on("mouseleave", function(){
+      $rightMenu.removeClass("open").addClass("hide");
+      rightMenu.closeColMenu();
+    });
 
     if ( this.viewModel.getMeta(["*", col], "colMenu")!=="hidden" ){
-      return $colMenu;   
+      if( scrollLeft!==0 || col+1===frozenCol ){
+        $rightMenu.find(".frozen-column").attr("aria-disabled", true).addClass("disabled");
+        $rightMenu.find(".frozen-column").off("click", rightMenu.frozenCol);  
+      }
+
+      $colMenu.append($rightMenu);
     }
+    return $colMenu;   
   },
   setFlex: function () {
     var restWidth = this.tableWidth,
@@ -1216,8 +1380,6 @@ var GridProto = {
     this.setFlex();
     this.wholeTblWidth = this.getWholeTblWidth();
     this.wholeTblHeight = this.getWholeTblHeight();
-    this.$scrollYHandle.height( this.$el.find("tbody tr").length * this.$scrollYArea.height() / this.viewModel.getDataLength());
-    this.$scrollXHandle.width( this.$scrollXArea.width() * this.tableWidth / this.wholeTblWidth );
     
     this.startCol = this.endCol = -1;
     
@@ -1299,13 +1461,21 @@ var GridProto = {
   getCollection: function() {
     return this.viewModel.collection;
   },
-  setColumnVisible: function(col, visibility){
-    if ( _.isNumber(col) ){
-      this.viewModel.setMeta(["*", col], "hidden", !visibility, {inorder:true});   
+  setColumnVisible: function( col, visibility ) {
+    var lastIdx,
+        options = { inorder: true };
+
+    if ( _.isNumber(col) ) {
+      this.viewModel.setMeta( ["*", col], "hidden", !visibility, options );
     }
-    if ( _.isArray(col) ){
-      _(col).each(function(item){
-        this.viewModel.setMeta(["*", item], "hidden", !visibility, {inorder:true});   
+    if ( _.isArray(col) ) {
+      options.silent = true;
+      lastIdx = col.length - 1;
+      _(col).each( function( item, index ) {
+        if ( index === lastIdx ) {
+          delete options.silent;
+        }
+        this.viewModel.setMeta( ["*", item], "hidden", !visibility, options );
       }, this);
     }
     return this;
@@ -1458,5 +1628,397 @@ var GridProto = {
       }
     }
     return new GridSelector(this, els);
+  },
+  addGridEvent: function(selector, eventFunc) {
+    this.options.gridEvents = this.options.gridEvents || {};
+    this.options.gridEvents[selector] = eventFunc;
+    this.setGridEvents();
+  },
+  removeGridEvent: function(selector) {
+    this.options.gridEvents = this.options.gridEvents || {};
+    delete this.options.gridEvents[selector];
+    this.setGridEvents();
+  },
+  setFocusedCell: function( rowIndex, colIndex, isFocused ) {
+    if ( _.isUndefined(isFocused) ) {
+      isFocused = true;
+    }
+
+    if(arguments.length === 0) {
+      if(this.focusedCell) {
+        rowIndex = this.focusedCell.rowIndex;
+        colIndex = this.focusedCell.colIndex;
+      } else {
+        this.$el.find(".w5-grid-focused-cell").addClass("hide");
+        return;
+      }
+    } else {
+      this.focusedCell = {
+        rowIndex : rowIndex,
+        colIndex : colIndex
+      };
+    }
+
+    this.$el.find(".w5-grid-focused-cell").removeClass("hide");
+    var trIndex = rowIndex - this.rowTop,
+        frozenColumn = this.viewModel.getOption("frozenColumn"),
+        tdIndex = colIndex < frozenColumn ? colIndex : colIndex - this.startCol + frozenColumn,
+        $td = this.$el.find("tbody tr").eq(trIndex).find("td").eq(tdIndex);
+    if($td.length === 0 || trIndex < 0 || tdIndex < 0) {
+      this.$el.find(".w5-grid-focused-cell").addClass("hide");
+      return;
+    }
+    var top = $td.offset().top - this.$wrapper_div.offset().top,
+        left = $td.offset().left - this.$wrapper_div.offset().left,
+        width = $td.outerWidth(true),
+        height = $td.outerHeight(true),
+        size = this.$el.find(".border-top").height();
+    this.$el.find(".border-top").css({
+      top   : top,
+      left  : left,
+      width : width
+    });
+    this.$el.find(".border-bottom").css({
+      top   : top + height - size,
+      left  : left,
+      width : width
+    });
+    this.$el.find(".border-left").css({
+      top   : top,
+      left  : left,
+      height: height
+    });
+    this.$el.find(".border-right").css({
+      top   : top,
+      left  : left + width - size,
+      height: height
+    });
+    if ( isFocused ) {
+      this.$editBox.focus();
+    }
+  },
+  handleKeydown: function(e) {
+    if ( this.keydownEvents[e.keyCode] ) {
+      this[this.keydownEvents[e.keyCode]].call( this, e );
+    }
+  },
+  moveUp: function ( e, options ) {
+    var rowIndex, colIndex,
+        isForced = options && options.isForced,
+        rowTop;
+
+    if ( this.focusedCell && ( isForced || this.checkEditBox( e.target.className ) ) ) {
+      rowIndex = this.focusedCell.rowIndex;
+      colIndex = this.focusedCell.colIndex;
+
+      if ( rowIndex > 0 ) {
+        rowTop = this.rowTop + 1;
+
+        if ( rowIndex < rowTop ) {
+          this.focusedCell = {
+            rowIndex: rowIndex - 1,
+            colIndex: colIndex
+          };
+          this.viewModel.setOption( "scrollTop", (rowIndex - 1) * 20 );
+        } else {
+          this.setFocusedCell( rowIndex - 1, colIndex );
+        }
+      }
+    }
+  },
+  moveDown: function ( e, options ) {
+    var rowIndex, colIndex,
+        isForced = options && options.isForced,
+        rowTop, rowNum;
+
+    if ( this.focusedCell && ( isForced || this.checkEditBox( e.target.className ) ) ) {
+      rowIndex = this.focusedCell.rowIndex;
+      colIndex = this.focusedCell.colIndex;
+
+      if ( rowIndex < this.getRowLength() - 1 ) {
+        rowTop = this.rowTop + 1;
+        rowNum = this.viewModel.getOption('rowNum');
+
+        if ( rowIndex + 3 > rowTop + rowNum ) {
+          this.focusedCell = {
+            rowIndex: rowIndex + 1,
+            colIndex: colIndex
+          };
+          this.viewModel.setOption( "scrollTop", (rowIndex + 1) * 20 );
+        } else {
+          this.setFocusedCell(rowIndex + 1, colIndex);
+        }
+      }
+    }
+  },
+  moveLeft: function( e, options ) {
+    var rowIndex, colIndex,
+        targetCol = options && options.targetCol,
+        isForced = options && options.isForced,
+        frozenColumn = this.viewModel.getOption("frozenColumn"),
+        i, scrollLeft = 0;
+
+    if ( this.focusedCell && ( isForced || this.checkEditBox( e.target.className ) ) ) {
+      rowIndex = this.focusedCell.rowIndex;
+      colIndex = this.focusedCell.colIndex;
+
+      if ( !_.isNumber( targetCol ) ) {
+        targetCol = colIndex - 1;
+      }
+
+      if ( targetCol >= 0 ) {
+        if ( targetCol < this.startCol ) {
+          if ( targetCol < frozenColumn ) {
+            this.setFocusedCell( rowIndex, targetCol );
+          } else {
+            this.focusedCell = {
+              rowIndex: rowIndex,
+              colIndex: targetCol
+            };
+
+            for ( i = colIndex; i > targetCol - 1; i-- ) {
+              scrollLeft += this.viewModel.getMeta( ["*", i], 'width' );
+            }
+
+            this.viewModel.setOption( "scrollLeft", this.viewModel.getOption( "scrollLeft" ) - scrollLeft );
+          }
+        } else {
+          this.setFocusedCell( rowIndex, targetCol );
+        }
+      }
+    }
+  },
+  moveRight: function( e, options ) {
+    var rowIndex, colIndex,
+        targetCol = options && options.targetCol,
+        isForced = options && options.isForced,
+        frozenColumn = this.viewModel.getOption("frozenColumn"),
+        i, scrollLeft = 0;
+
+    if ( this.focusedCell && ( isForced || this.checkEditBox( e.target.className ) ) ) {
+      rowIndex = this.focusedCell.rowIndex;
+      colIndex = this.focusedCell.colIndex;
+
+      if ( !_.isNumber( targetCol ) ) {
+        targetCol = colIndex + 1;
+      }
+
+      if ( targetCol <= this.getColLength() - 1 ) {
+        if ( targetCol > this.endCol - 1 ) {
+          this.focusedCell = {
+            rowIndex: rowIndex,
+            colIndex: targetCol
+          };
+
+          if ( this.endCol === this.getColLength() - 1 ) {
+            this.setFocusedCell( rowIndex, targetCol );
+          } else {
+            for ( i = this.endCol; i < targetCol + 2; i++ ) {
+              scrollLeft += this.viewModel.getMeta( ["*", i], 'width' );
+            }
+            this.viewModel.setOption( "scrollLeft", this.viewModel.getOption( "scrollLeft" ) + scrollLeft );
+          }
+        } else {
+          if ( frozenColumn && frozenColumn === targetCol ) {
+            this.viewModel.setOption( "scrollLeft", 0 );
+          }
+
+          this.setFocusedCell( rowIndex, targetCol );
+        }
+      }
+    }
+  },
+  checkEditBox: function(classNm) {
+    var result = false;
+    if ( classNm === 'w5_grid_editbox' ) {
+      result = true;
+    }
+    return result;
+  },
+  focusWidget: function( e, options ) {
+    var displayType,
+        $cell,
+        focusSelector;
+
+    options = options || {};
+
+    if ( this.focusedCell ) {
+      var rowIndex = this.focusedCell.rowIndex,
+          colIndex = this.focusedCell.colIndex,
+          that = this;
+
+      displayType = this.viewModel.getMeta( [rowIndex, colIndex], 'displayType' );
+      if ( options && !options.isSkip && displayType === 'text' ) {
+        if ( this.$editBox.data("edit") ) {
+          cellObjects["text"].endEdit.call( cellObjects["text"], e, that, { isForced: true } );
+        } else {
+          cellObjects["text"].popupEditBox.call( cellObjects["text"], that, rowIndex, colIndex );
+        }
+      } else {
+        $cell = this.getTbodyCell( rowIndex - this.rowTop, colIndex - this.startCol );
+        if ( $cell ) {
+          focusSelector = this.viewModel.getMeta( [rowIndex, colIndex], 'focusSelector' );
+          if ( displayType === 'custom' && focusSelector ) {
+            $($cell).find(focusSelector)[0].focus();
+          } else {
+            ( $cell.firstElementChild || $cell.children[0] ).focus();
+          }
+        }
+      }
+      e.preventDefault();
+    }
+  },
+  blurWidget: function(e) {
+    var rowIndex, colIndex,
+        displayType,
+        that = this;
+
+    if ( this.focusedCell ) {
+      rowIndex = this.focusedCell.rowIndex;
+      colIndex = this.focusedCell.colIndex;
+
+      displayType = this.viewModel.getMeta( [rowIndex, colIndex], 'displayType' );
+      if ( displayType === 'text' ) {
+        cellObjects["text"].endEdit.call( cellObjects["text"], e, that, { isForced: true } );
+      }
+      this.setFocusedCell( rowIndex, colIndex );
+    }
+  },
+  checkTabbableItem: function( item ) {
+    return _.contains( this.tabbableElements, item.type );
+  },
+  getActivatePosition: function ( isSift ) {
+    var focusedCell = document.activeElement,
+        $focusedCell,
+        $focusedRow,
+        nodelist,
+        inputArray,
+        runNative = false,
+        cellIndex = null,
+        rowIndex = null;
+
+    if ( this.checkEditBox( focusedCell.className ) ) {
+      if ( this.focusedCell ) {
+        cellIndex = this.focusedCell.colIndex;
+        rowIndex = this.focusedCell.rowIndex;
+      }
+    } else {
+      $focusedCell = $(focusedCell).closest( 'tr.gGrid-row>td' );
+
+      if ( this.checkTabbableItem( focusedCell ) ) {
+        inputArray = [];
+        nodelist = $focusedCell.get(0).childNodes;
+        nodelist = _.reduce( nodelist, function( inputArray, node ) {
+          if ( node.tagName === 'INPUT' ) {
+            inputArray.push(node);
+          }
+          return inputArray;
+        }, inputArray );
+
+        if ( isSift ) {
+          if ( nodelist[0] !== focusedCell ) {
+            runNative = true;
+          }
+        } else {
+          if ( nodelist[nodelist.length - 1] !== focusedCell ) {
+            runNative = true;
+          }
+        }
+      }
+
+      if ( !runNative ) {
+        $focusedRow = $focusedCell.closest( 'tr' );
+        cellIndex = $focusedCell.get(0).cellIndex + this.startCol;
+        rowIndex = $focusedRow.get(0).rowIndex - this.headNum + this.rowTop;
+      }
+    }
+
+    return { row: rowIndex, col: cellIndex, runNative: runNative };
+  },
+  moveActionableItem: function(e) {
+    var isSift = e.shiftKey,
+        position = this.getActivatePosition( isSift ),
+        frozenColumn = this.viewModel.getOption("frozenColumn"),
+        displayType,
+        that = this,
+        notMoved = true;
+
+    if ( !position.runNative ) {
+      if ( position.row !== null ) {
+        displayType = this.viewModel.getMeta( [position.row, position.col], 'displayType' );
+        if ( displayType === 'text' ) {
+          if ( this.$editBox.data( "edit" ) ) {
+            cellObjects["text"].endEdit.call( cellObjects["text"], e, that, { isForced: true } );
+          }
+        }
+
+        if ( isSift ) {
+          if ( position.col === 0 ) {
+            if ( position.row > 0 ) {
+              position.row -= 1;
+              position.col = this.viewModel.getVisibleCol().length - 1;
+
+              if ( position.col >= this.endCol ) {
+                notMoved = false;
+                this.moveRight( e, { targetCol: position.col, isForced: true } );
+                this.moveUp( e, { isForced: true } );
+              }
+            } else {
+              e.preventDefault();
+              return false;
+            }
+          } else {
+            position.col -= 1;
+            if ( position.col < this.startCol ) {
+              notMoved = false;
+              this.moveLeft( e, { isForced: true } );
+            }
+          }
+        } else {
+          if ( position.col === this.viewModel.getVisibleCol().length - 1 ) {
+            if ( position.row < this.getRowLength() - 1 ) {
+              position.row += 1;
+              position.col = 0;
+
+              if ( position.col <= this.startCol ) {
+                notMoved = false;
+                this.moveLeft( e, { targetCol: position.col, isForced: true } );
+                this.moveDown( e, { isForced: true } );
+              }
+            } else {
+              e.preventDefault();
+              return false;
+            }
+          } else {
+            position.col += 1;
+            if ( position.col > this.endCol - 1 || position.col === frozenColumn ) {
+              notMoved = false;
+              this.moveRight( e, { isForced: true } );
+            }
+          }
+        }
+
+        if ( notMoved ) {
+          this.setFocusedCell( position.row, position.col, false );
+        }
+
+        this.focusWidget( e );
+      }
+    }
+  },
+  jumpTo: function( e ) {
+    this.blurWidget(e);
+
+    if ( e.keyCode === 36 ) {
+      this.moveLeft( e, { targetCol: 0, isForced: true } );
+    } else if ( e.keyCode === 35 ) {
+      this.moveRight( e, { targetCol: this.viewModel.getVisibleCol().length - 1, isForced: true } );
+    } else if ( e.keyCode === 33 ) {
+      this.focusedCell.rowIndex = 1;
+      this.moveUp( e, { isForced: true } );
+    } else if ( e.keyCode === 34 ) {
+      this.focusedCell.rowIndex = this.getRowLength() - 2;
+      this.moveDown( e, { isForced: true } );
+    }
   }
 };
