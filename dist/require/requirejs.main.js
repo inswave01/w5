@@ -7,6 +7,18 @@ requirejs.config({
   },
 
   shim: {
-    'w5': ['jquery', 'underscore', 'Backbone']
+    'jquery': {
+      exports: 'jquery'
+    },
+    'underscore': {
+      exports: 'underscore'
+    },
+    'Backbone': {
+      exports: 'Backbone'
+    },
+    'w5': {
+      exports: 'w5',
+      deps: ['jquery', 'underscore', 'Backbone']
+    }
   }
 });
