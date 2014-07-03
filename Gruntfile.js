@@ -40,7 +40,7 @@ module.exports = function(grunt) {
       },
       build: {
         src: ['js/w5.js'],
-        dest: 'dist/js/<%= pkg.name %>.min.<%= pkg.version %>.js'
+        dest: 'dist/js/<%= pkg.version %>/<%= pkg.name %>.min.js'
       }
     },
     copy: {
@@ -52,7 +52,7 @@ module.exports = function(grunt) {
             src: ['*.js'],
             dest: 'dist/js',
             rename: function ( dest, src ) {
-              return dest + '/' + src.substring( 0, src.indexOf('.js') ) + '.<%= pkg.version %>.js';
+              return dest + '/<%= pkg.version %>/' + src.substring( 0, src.indexOf('.js') ) + '.js';
             }
           },
           {
