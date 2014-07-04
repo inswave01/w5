@@ -80,6 +80,8 @@
   text-align: left;
   font-size: 17px;
   line-height: 25px;
+  white-space: nowrap;
+  overflow: visiable;
 }
 .adjustCol-handle {
   margin: 0;
@@ -292,9 +294,13 @@
 .w5-dropdown-menu li .column-hide {
   background: url("../images/menu-icon-hide.gif") 9px center no-repeat;
 }
+.w5-dropdown-menu li .frozen-column {
+  background: url("../images/menu-icon-frozen.png") 10px center no-repeat;
+}
 .w5-dropdown-menu li .frozen-column.disabled {
   color: #bdbdbd;
   text-shadow: 1px 1px 1px #fff;
+  background: url("../images/menu-icon-frozen-disabled.png") 10px center no-repeat;
   cursor: default;
 }
 .w5-dropdown-menu li .filter {
@@ -560,6 +566,7 @@
   top: 52px;
   right: 0px;
   bottom: 10px;
+  z-index: 10;
 }
 .gScroll-v .scrollHandler {
   padding: 0px;
