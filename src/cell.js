@@ -198,7 +198,7 @@ cellObjects["link"] = _.defaults({
 
 cellObjects["img"] = _.defaults({
   getContent : function ( grid, value ) {
-    return $("<img src='" + value + "'/>");
+    return $("<img src='" + value + "' tabindex=0 />");
   }
 }, cellProto);
 
