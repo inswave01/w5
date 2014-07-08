@@ -625,7 +625,7 @@ var w5DataModelProto = {
         data = JSON.parse(data);
       }
       if( this.collection && _.isArray(data) ) {
-        return _.object(this.collection.keys, data);
+        return this.parseWithDataType( this.collection.keys, data, ( this.collection.grid ? this.collection.grid.options.colModel : null )  );
       }
     }
     return data;
@@ -637,6 +637,21 @@ var w5DataModelProto = {
       }
       return this.collection.defaults;
     }
+  },
+  parseWithDataType: function( keys, data, colModel ) {
+    var dataType,
+        result = {};
+
+    for ( var i = 0, length = keys.length; i < length; i++ ) {
+      if ( colModel ) {
+        dataType = colModel[i].dataType;
+        if ( dataType ) {
+          data[i] = w5.dataType[dataType]( data[i] );
+        }
+      }
+      result[keys[i]] = data[i];
+    }
+    return result;
   }
 };
 
