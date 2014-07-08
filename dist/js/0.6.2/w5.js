@@ -3054,7 +3054,7 @@ cellObjects["text"] = _.defaults({
     if(_.isString(template)) {
       template = _.template(template);
     }
-    return template( { data: _.isFunction(format) ? format.call( this, data ) : w5.numberFormatter( data, format ) } );
+    return template( { data: _.isFunction(format) ? format.call( grid, data ) : w5.numberFormatter( data, format ) } );
   },
   dblclick: function(e, grid, row, col) {
     var readOnly = grid.viewModel.getMeta( [row, col], "readOnly");
@@ -3079,7 +3079,8 @@ cellObjects["text"] = _.defaults({
       edit : true,
       row : row,
       col : col,
-      grid : grid
+      grid : grid,
+      dataType: _.isNumber(data) ? 'number' : _.isBoolean(data) ? 'boolean' : null
     });
     grid.$editBox.focus();
 
@@ -3103,8 +3104,10 @@ cellObjects["text"] = _.defaults({
       if ( grid.$editBox.data("edit") ) {
         var value = grid.$editBox.text(),
             row = grid.$editBox.data("row"),
-            col = grid.$editBox.data("col");
-        grid.viewModel.setData([row, col], value);
+            col = grid.$editBox.data("col"),
+            dataType = grid.$editBox.data("dataType");
+
+        grid.viewModel.setData([row, col], dataType ? w5.dataType[dataType](value) : value );
         grid.$editBox.text("").css("cssText", "");
         grid.$editBox.removeData("edit");
       }
