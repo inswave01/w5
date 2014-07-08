@@ -11,7 +11,7 @@ cellObjects["text"] = _.defaults({
     if(_.isString(template)) {
       template = _.template(template);
     }
-    return template({data:w5.numberFormatter(data, format)});
+    return template( { data: _.isFunction(format) ? format.call( this, data ) : w5.numberFormatter( data, format ) } );
   },
   dblclick: function(e, grid, row, col) {
     var readOnly = grid.viewModel.getMeta( [row, col], "readOnly");
@@ -232,7 +232,7 @@ cellObjects["custom"] = _.defaults( {
     if ( _.isString( template ) ) {
       template = _.template( template );
     }
-    return template( { data: w5.numberFormatter( data, format ) } );
+    return template( { data: _.isFunction(format) ? format.call( this, data ) : w5.numberFormatter( data, format ) } );
   },
   dblclick: function(e, grid) {
     grid.focusWidget( e, { isSkip: true } );
