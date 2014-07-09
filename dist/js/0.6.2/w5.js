@@ -5,7 +5,7 @@
  * Copyright 2013 Inswave Foundation and other contributors
  * Released under the LGPLv3.0 license
  *
- * Date: 2014-07-08
+ * Date: 2014-07-09
  */
 
 (function(root, factory) {
@@ -326,7 +326,7 @@ _.extend( ViewModel.prototype, {
     if( options.alter && model.has(prop) ) {
       obj = model.get( prop );
     }
-    obj.value = value;
+    obj.value = ( prop === 'width' || prop === 'height' ) ? parseInt( value, 10 ) : value;
 
     model.set( prop, prop === 'id' ? value : obj, options); 
   },
