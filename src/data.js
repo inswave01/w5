@@ -243,7 +243,7 @@ _.extend( ViewModel.prototype, {
     if( options.alter && model.has(prop) ) {
       obj = model.get( prop );
     }
-    obj.value = value;
+    obj.value = ( prop === 'width' || prop === 'height' ) ? parseInt( value, 10 ) : value;
 
     model.set( prop, prop === 'id' ? value : obj, options); 
   },
