@@ -1707,7 +1707,7 @@ var GridProto = {
         isForced = options && options.isForced,
         rowTop;
 
-    if ( this.focusedCell && ( isForced || this.checkEditBox( e.target.className ) ) ) {
+    if ( this.focusedCell && ( isForced || this.checkEditBox( e.target.className, true ) ) ) {
       rowIndex = this.focusedCell.rowIndex;
       colIndex = this.focusedCell.colIndex;
 
@@ -1731,7 +1731,7 @@ var GridProto = {
         isForced = options && options.isForced,
         rowTop, rowNum;
 
-    if ( this.focusedCell && ( isForced || this.checkEditBox( e.target.className ) ) ) {
+    if ( this.focusedCell && ( isForced || this.checkEditBox( e.target.className, true ) ) ) {
       rowIndex = this.focusedCell.rowIndex;
       colIndex = this.focusedCell.colIndex;
 
@@ -1758,7 +1758,7 @@ var GridProto = {
         frozenColumn = this.viewModel.getOption("frozenColumn"),
         i, scrollLeft = 0;
 
-    if ( this.focusedCell && ( isForced || this.checkEditBox( e.target.className ) ) ) {
+    if ( this.focusedCell && ( isForced || this.checkEditBox( e.target.className, true ) ) ) {
       rowIndex = this.focusedCell.rowIndex;
       colIndex = this.focusedCell.colIndex;
 
@@ -1795,7 +1795,7 @@ var GridProto = {
         frozenColumn = this.viewModel.getOption("frozenColumn"),
         i, scrollLeft = 0;
 
-    if ( this.focusedCell && ( isForced || this.checkEditBox( e.target.className ) ) ) {
+    if ( this.focusedCell && ( isForced || this.checkEditBox( e.target.className, true ) ) ) {
       rowIndex = this.focusedCell.rowIndex;
       colIndex = this.focusedCell.colIndex;
 
@@ -1828,10 +1828,16 @@ var GridProto = {
       }
     }
   },
-  checkEditBox: function(classNm) {
+  checkEditBox: function( classNm, isEdit ) {
     var result = false;
     if ( classNm === 'w5_grid_editbox' ) {
-      result = true;
+      if ( isEdit ) {
+        if ( !this.$editBox.data('edit') ) {
+          result = true;
+        }
+      } else {
+        result = true;
+      }
     }
     return result;
   },
