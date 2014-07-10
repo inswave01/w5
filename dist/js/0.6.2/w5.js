@@ -5,7 +5,7 @@
  * Copyright 2013 Inswave Foundation and other contributors
  * Released under the LGPLv3.0 license
  *
- * Date: 2014-07-09
+ * Date: 2014-07-10
  */
 
 (function(root, factory) {
@@ -2571,7 +2571,7 @@ var GridProto = {
         isForced = options && options.isForced,
         rowTop;
 
-    if ( this.focusedCell && ( isForced || this.checkEditBox( e.target.className ) ) ) {
+    if ( this.focusedCell && ( isForced || this.checkEditBox( e.target.className, true ) ) ) {
       rowIndex = this.focusedCell.rowIndex;
       colIndex = this.focusedCell.colIndex;
 
@@ -2595,7 +2595,7 @@ var GridProto = {
         isForced = options && options.isForced,
         rowTop, rowNum;
 
-    if ( this.focusedCell && ( isForced || this.checkEditBox( e.target.className ) ) ) {
+    if ( this.focusedCell && ( isForced || this.checkEditBox( e.target.className, true ) ) ) {
       rowIndex = this.focusedCell.rowIndex;
       colIndex = this.focusedCell.colIndex;
 
@@ -2622,7 +2622,7 @@ var GridProto = {
         frozenColumn = this.viewModel.getOption("frozenColumn"),
         i, scrollLeft = 0;
 
-    if ( this.focusedCell && ( isForced || this.checkEditBox( e.target.className ) ) ) {
+    if ( this.focusedCell && ( isForced || this.checkEditBox( e.target.className, true ) ) ) {
       rowIndex = this.focusedCell.rowIndex;
       colIndex = this.focusedCell.colIndex;
 
@@ -2659,7 +2659,7 @@ var GridProto = {
         frozenColumn = this.viewModel.getOption("frozenColumn"),
         i, scrollLeft = 0;
 
-    if ( this.focusedCell && ( isForced || this.checkEditBox( e.target.className ) ) ) {
+    if ( this.focusedCell && ( isForced || this.checkEditBox( e.target.className, true ) ) ) {
       rowIndex = this.focusedCell.rowIndex;
       colIndex = this.focusedCell.colIndex;
 
@@ -2692,17 +2692,24 @@ var GridProto = {
       }
     }
   },
-  checkEditBox: function(classNm) {
+  checkEditBox: function( classNm, isEdit ) {
     var result = false;
     if ( classNm === 'w5_grid_editbox' ) {
-      result = true;
+      if ( isEdit ) {
+        if ( !this.$editBox.data('edit') ) {
+          result = true;
+        }
+      } else {
+        result = true;
+      }
     }
     return result;
   },
   focusWidget: function( e, options ) {
     var displayType,
         $cell,
-        focusSelector;
+        focusSelector,
+        readOnly;
 
     options = options || {};
 
@@ -2712,20 +2719,25 @@ var GridProto = {
           that = this;
 
       displayType = this.viewModel.getMeta( [rowIndex, colIndex], 'displayType' );
+      readOnly = this.viewModel.getMeta( [rowIndex, colIndex], "readOnly");
       if ( options && !options.isSkip && displayType === 'text' ) {
         if ( this.$editBox.data("edit") ) {
           cellObjects["text"].endEdit.call( cellObjects["text"], e, that, { isForced: true } );
         } else {
-          cellObjects["text"].popupEditBox.call( cellObjects["text"], that, rowIndex, colIndex );
+          if ( !readOnly ) {
+            cellObjects["text"].popupEditBox.call( cellObjects["text"], that, rowIndex, colIndex );
+          }
         }
       } else {
-        $cell = this.getTbodyCell( rowIndex - this.rowTop, colIndex - this.startCol );
-        if ( $cell ) {
-          focusSelector = this.viewModel.getMeta( [rowIndex, colIndex], 'focusSelector' );
-          if ( displayType === 'custom' && focusSelector ) {
-            $($cell).find(focusSelector)[0].focus();
-          } else {
-            ( $cell.firstElementChild || $cell.children[0] ).focus();
+        if ( !readOnly ) {
+          $cell = this.getTbodyCell( rowIndex - this.rowTop, colIndex - this.startCol );
+          if ( $cell ) {
+            focusSelector = this.viewModel.getMeta( [rowIndex, colIndex], 'focusSelector' );
+            if ( displayType === 'custom' && focusSelector ) {
+              $( $cell ).find( focusSelector )[0].focus();
+            } else {
+              ( $cell.firstElementChild || $cell.children[0] ).focus();
+            }
           }
         }
       }
@@ -3050,11 +3062,14 @@ var cellProto = {
 cellObjects["text"] = _.defaults({
   getContent : function(grid, data, row, col) {
     var template = grid.viewModel.getMeta([row, col], "template") || "<%=data%>",
-        format = grid.viewModel.getMeta([row, col], "format") || "";
+        format = grid.viewModel.getMeta([row, col], "format") || "",
+        originalFormat = grid.viewModel.getMeta([row, col], "originalFormat") || "",
+        dayInWeek = grid.viewModel.getOption('dayInWeek') || w5.formatter.defaultDayInWeek;
+
     if(_.isString(template)) {
       template = _.template(template);
     }
-    return template( { data: _.isFunction(format) ? format.call( grid, data ) : w5.numberFormatter( data, format ) } );
+    return template( { data: _.isFunction(format) ? format.call( grid, data ) : w5.formatter( data, format, { originalFormat: originalFormat, dayInWeek: dayInWeek } ) } );
   },
   dblclick: function(e, grid, row, col) {
     var readOnly = grid.viewModel.getMeta( [row, col], "readOnly");
@@ -3278,7 +3293,7 @@ cellObjects["custom"] = _.defaults( {
     if ( _.isString( template ) ) {
       template = _.template( template );
     }
-    return template( { data: _.isFunction(format) ? format.call( this, data ) : w5.numberFormatter( data, format ) } );
+    return template( { data: _.isFunction(format) ? format.call( this, data ) : data } );
   },
   dblclick: function(e, grid) {
     grid.focusWidget( e, { isSkip: true } );
@@ -3302,7 +3317,7 @@ w5.dataType = {
   "boolean": Boolean
 };
 
-w5.numberFormatter = function ( value ) {
+w5.formatter = function ( value ) {
   return value;
 };
 return w5;
