@@ -1844,7 +1844,8 @@ var GridProto = {
   focusWidget: function( e, options ) {
     var displayType,
         $cell,
-        focusSelector;
+        focusSelector,
+        readOnly;
 
     options = options || {};
 
@@ -1854,20 +1855,25 @@ var GridProto = {
           that = this;
 
       displayType = this.viewModel.getMeta( [rowIndex, colIndex], 'displayType' );
+      readOnly = this.viewModel.getMeta( [rowIndex, colIndex], "readOnly");
       if ( options && !options.isSkip && displayType === 'text' ) {
         if ( this.$editBox.data("edit") ) {
           cellObjects["text"].endEdit.call( cellObjects["text"], e, that, { isForced: true } );
         } else {
-          cellObjects["text"].popupEditBox.call( cellObjects["text"], that, rowIndex, colIndex );
+          if ( !readOnly ) {
+            cellObjects["text"].popupEditBox.call( cellObjects["text"], that, rowIndex, colIndex );
+          }
         }
       } else {
-        $cell = this.getTbodyCell( rowIndex - this.rowTop, colIndex - this.startCol );
-        if ( $cell ) {
-          focusSelector = this.viewModel.getMeta( [rowIndex, colIndex], 'focusSelector' );
-          if ( displayType === 'custom' && focusSelector ) {
-            $($cell).find(focusSelector)[0].focus();
-          } else {
-            ( $cell.firstElementChild || $cell.children[0] ).focus();
+        if ( !readOnly ) {
+          $cell = this.getTbodyCell( rowIndex - this.rowTop, colIndex - this.startCol );
+          if ( $cell ) {
+            focusSelector = this.viewModel.getMeta( [rowIndex, colIndex], 'focusSelector' );
+            if ( displayType === 'custom' && focusSelector ) {
+              $( $cell ).find( focusSelector )[0].focus();
+            } else {
+              ( $cell.firstElementChild || $cell.children[0] ).focus();
+            }
           }
         }
       }
