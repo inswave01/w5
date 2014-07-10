@@ -1,3 +1,3 @@
-w5.numberFormatter = function ( value ) {
+w5.formatter = function ( value ) {
   return value;
 };

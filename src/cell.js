@@ -7,11 +7,14 @@ var cellProto = {
 cellObjects["text"] = _.defaults({
   getContent : function(grid, data, row, col) {
     var template = grid.viewModel.getMeta([row, col], "template") || "<%=data%>",
-        format = grid.viewModel.getMeta([row, col], "format") || "";
+        format = grid.viewModel.getMeta([row, col], "format") || "",
+        originalFormat = grid.viewModel.getMeta([row, col], "originalFormat") || "",
+        dayInWeek = grid.viewModel.getOption('dayInWeek') || w5.formatter.defaultDayInWeek;
+
     if(_.isString(template)) {
       template = _.template(template);
     }
-    return template( { data: _.isFunction(format) ? format.call( grid, data ) : w5.numberFormatter( data, format ) } );
+    return template( { data: _.isFunction(format) ? format.call( grid, data ) : w5.formatter( data, format, { originalFormat: originalFormat, dayInWeek: dayInWeek } ) } );
   },
   dblclick: function(e, grid, row, col) {
     var readOnly = grid.viewModel.getMeta( [row, col], "readOnly");
@@ -235,7 +238,7 @@ cellObjects["custom"] = _.defaults( {
     if ( _.isString( template ) ) {
       template = _.template( template );
     }
-    return template( { data: _.isFunction(format) ? format.call( this, data ) : w5.numberFormatter( data, format ) } );
+    return template( { data: _.isFunction(format) ? format.call( this, data ) : data } );
   },
   dblclick: function(e, grid) {
     grid.focusWidget( e, { isSkip: true } );
