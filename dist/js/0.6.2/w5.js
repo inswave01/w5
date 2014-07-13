@@ -5,7 +5,7 @@
  * Copyright 2013 Inswave Foundation and other contributors
  * Released under the LGPLv3.0 license
  *
- * Date: 2014-07-10
+ * Date: 2014-07-13
  */
 
 (function(root, factory) {
@@ -949,12 +949,15 @@ var GridProto = {
     if( !this.id && this.$el && this.$el.attr("id") ) {
       this.id = this.$el.attr("id");
     }
-    if( options.collection instanceof Collection ) {
+    if( options.collection instanceof Backbone.Collection ) {
+      _.extend( this.collection.constructor.prototype.model.prototype, w5DataModelProto, w5DataModelProtoPro );
+      _.extend( this.collection.constructor.prototype, w5DataCollectionProto, w5DataCollectionProtoPro );
+
       this.collection.grid = this;
       this.collection.keys = options.collection.keys ? options.collection.keys : keys;
       this.collection.defaults = options.collection.defaults ? options.collection.defaults : defaults;
     } else {
-      this.collection = new Collection(options.collection, {
+      this.collection = new Collection( options.collection, {
         grid: this,
         keys: keys,
         defaults: defaults,
@@ -971,7 +974,7 @@ var GridProto = {
       this.setInValidCallback(options.invalidCallback);
     }
     if ( options.fetch ) {
-      this.viewModel.fetch( this.collection, _.extend( { reset: true, silent: true }, options.fetch ) );
+      this.viewModel.fetch( this.collection, _.extend( { reset: true }, options.fetch ) );
     }
 
     this.tabbableElements = ['checkbox'];
