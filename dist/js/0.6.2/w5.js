@@ -2571,49 +2571,42 @@ var GridProto = {
   },
   moveUp: function ( e, options ) {
     var rowIndex, colIndex,
-        isForced = options && options.isForced,
-        rowTop;
+        isForced = options && options.isForced;
 
     if ( this.focusedCell && ( isForced || this.checkEditBox( e.target.className, true ) ) ) {
-      rowIndex = this.focusedCell.rowIndex;
+      rowIndex = this.focusedCell.rowIndex - 1;
       colIndex = this.focusedCell.colIndex;
 
-      if ( rowIndex > 0 ) {
-        rowTop = this.rowTop + 1;
-
-        if ( rowIndex < rowTop ) {
+      if ( rowIndex > -1 ) {
+        if ( rowIndex < this.rowTop ) {
           this.focusedCell = {
-            rowIndex: rowIndex - 1,
+            rowIndex: rowIndex,
             colIndex: colIndex
           };
-          this.viewModel.setOption( "scrollTop", (rowIndex - 1) * 20 );
+          this.viewModel.setOption( "scrollTop", (rowIndex) * 20 );
         } else {
-          this.setFocusedCell( rowIndex - 1, colIndex );
+          this.setFocusedCell( rowIndex, colIndex );
         }
       }
     }
   },
   moveDown: function ( e, options ) {
     var rowIndex, colIndex,
-        isForced = options && options.isForced,
-        rowTop, rowNum;
+        isForced = options && options.isForced;
 
     if ( this.focusedCell && ( isForced || this.checkEditBox( e.target.className, true ) ) ) {
-      rowIndex = this.focusedCell.rowIndex;
+      rowIndex = this.focusedCell.rowIndex + 1;
       colIndex = this.focusedCell.colIndex;
 
-      if ( rowIndex < this.getRowLength() - 1 ) {
-        rowTop = this.rowTop + 1;
-        rowNum = this.viewModel.getOption('rowNum');
-
-        if ( rowIndex + 3 > rowTop + rowNum ) {
+      if ( rowIndex < this.getRowLength() ) {
+        if ( rowIndex === this.rowTop + this.viewModel.getOption('rowNum') ) {
           this.focusedCell = {
-            rowIndex: rowIndex + 1,
+            rowIndex: rowIndex,
             colIndex: colIndex
           };
-          this.viewModel.setOption( "scrollTop", (rowIndex + 1) * 20 );
+          this.viewModel.setOption( "scrollTop", (rowIndex) * 20 );
         } else {
-          this.setFocusedCell(rowIndex + 1, colIndex);
+          this.setFocusedCell(rowIndex, colIndex);
         }
       }
     }
@@ -2660,7 +2653,9 @@ var GridProto = {
         targetCol = options && options.targetCol,
         isForced = options && options.isForced,
         frozenColumn = this.viewModel.getOption("frozenColumn"),
-        i, scrollLeft = 0;
+        i,
+        curScrollLeft = 0,
+        scrollLeft = 0;
 
     if ( this.focusedCell && ( isForced || this.checkEditBox( e.target.className, true ) ) ) {
       rowIndex = this.focusedCell.rowIndex;
@@ -2677,13 +2672,19 @@ var GridProto = {
             colIndex: targetCol
           };
 
+          curScrollLeft = this.viewModel.getOption( "scrollLeft" );
+
           if ( this.endCol === this.getColLength() - 1 ) {
-            this.setFocusedCell( rowIndex, targetCol );
+            if ( this.wholeTblWidth - this.tableWidth > curScrollLeft ) {
+              this.viewModel.setOption( "scrollLeft", curScrollLeft + this.viewModel.getMeta( ["*", this.endCol], 'width' ) );
+            } else {
+              this.setFocusedCell( rowIndex, targetCol );
+            }
           } else {
             for ( i = this.endCol; i < targetCol + 2; i++ ) {
               scrollLeft += this.viewModel.getMeta( ["*", i], 'width' );
             }
-            this.viewModel.setOption( "scrollLeft", this.viewModel.getOption( "scrollLeft" ) + scrollLeft );
+            this.viewModel.setOption( "scrollLeft", curScrollLeft + scrollLeft );
           }
         } else {
           if ( frozenColumn && frozenColumn === targetCol ) {
