@@ -1789,7 +1789,9 @@ var GridProto = {
         targetCol = options && options.targetCol,
         isForced = options && options.isForced,
         frozenColumn = this.viewModel.getOption("frozenColumn"),
-        i, scrollLeft = 0;
+        i,
+        curScrollLeft = 0,
+        scrollLeft = 0;
 
     if ( this.focusedCell && ( isForced || this.checkEditBox( e.target.className, true ) ) ) {
       rowIndex = this.focusedCell.rowIndex;
@@ -1806,13 +1808,19 @@ var GridProto = {
             colIndex: targetCol
           };
 
-          if ( this.wholeTblWidth === this.tableWidth ) {
-            this.setFocusedCell( rowIndex, targetCol );
+          curScrollLeft = this.viewModel.getOption( "scrollLeft" );
+
+          if ( this.endCol === this.getColLength() - 1 ) {
+            if ( this.wholeTblWidth - this.tableWidth > curScrollLeft ) {
+              this.viewModel.setOption( "scrollLeft", curScrollLeft + this.viewModel.getMeta( ["*", this.endCol], 'width' ) );
+            } else {
+              this.setFocusedCell( rowIndex, targetCol );
+            }
           } else {
             for ( i = this.endCol; i < targetCol + 2; i++ ) {
               scrollLeft += this.viewModel.getMeta( ["*", i], 'width' );
             }
-            this.viewModel.setOption( "scrollLeft", this.viewModel.getOption( "scrollLeft" ) + scrollLeft );
+            this.viewModel.setOption( "scrollLeft", curScrollLeft + scrollLeft );
           }
         } else {
           if ( frozenColumn && frozenColumn === targetCol ) {
