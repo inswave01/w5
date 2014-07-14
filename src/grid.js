@@ -1707,49 +1707,42 @@ var GridProto = {
   },
   moveUp: function ( e, options ) {
     var rowIndex, colIndex,
-        isForced = options && options.isForced,
-        rowTop;
+        isForced = options && options.isForced;
 
     if ( this.focusedCell && ( isForced || this.checkEditBox( e.target.className, true ) ) ) {
-      rowIndex = this.focusedCell.rowIndex;
+      rowIndex = this.focusedCell.rowIndex - 1;
       colIndex = this.focusedCell.colIndex;
 
-      if ( rowIndex > 0 ) {
-        rowTop = this.rowTop + 1;
-
-        if ( rowIndex < rowTop ) {
+      if ( rowIndex > -1 ) {
+        if ( rowIndex < this.rowTop ) {
           this.focusedCell = {
-            rowIndex: rowIndex - 1,
+            rowIndex: rowIndex,
             colIndex: colIndex
           };
-          this.viewModel.setOption( "scrollTop", (rowIndex - 1) * 20 );
+          this.viewModel.setOption( "scrollTop", (rowIndex) * 20 );
         } else {
-          this.setFocusedCell( rowIndex - 1, colIndex );
+          this.setFocusedCell( rowIndex, colIndex );
         }
       }
     }
   },
   moveDown: function ( e, options ) {
     var rowIndex, colIndex,
-        isForced = options && options.isForced,
-        rowTop, rowNum;
+        isForced = options && options.isForced;
 
     if ( this.focusedCell && ( isForced || this.checkEditBox( e.target.className, true ) ) ) {
-      rowIndex = this.focusedCell.rowIndex;
+      rowIndex = this.focusedCell.rowIndex + 1;
       colIndex = this.focusedCell.colIndex;
 
-      if ( rowIndex < this.getRowLength() - 1 ) {
-        rowTop = this.rowTop + 1;
-        rowNum = this.viewModel.getOption('rowNum');
-
-        if ( rowIndex + 3 > rowTop + rowNum ) {
+      if ( rowIndex < this.getRowLength() ) {
+        if ( rowIndex === this.rowTop + this.viewModel.getOption('rowNum') ) {
           this.focusedCell = {
-            rowIndex: rowIndex + 1,
+            rowIndex: rowIndex,
             colIndex: colIndex
           };
-          this.viewModel.setOption( "scrollTop", (rowIndex + 1) * 20 );
+          this.viewModel.setOption( "scrollTop", (rowIndex) * 20 );
         } else {
-          this.setFocusedCell(rowIndex + 1, colIndex);
+          this.setFocusedCell(rowIndex, colIndex);
         }
       }
     }
