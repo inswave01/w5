@@ -5,7 +5,7 @@
  * Copyright 2013 Inswave Foundation and other contributors
  * Released under the LGPLv3.0 license
  *
- * Date: 2014-07-13
+ * Date: 2014-07-14
  */
 
 (function(root, factory) {
