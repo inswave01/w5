@@ -2293,6 +2293,9 @@ var GridProto = {
     this.viewModel.removeRow( index, options );
     return this;
   },
+  removedRow: function () {
+    return this.collection.__removeModels;
+  },
   reset: function(data) {
     data = data || [];
 
@@ -2392,24 +2395,6 @@ var GridProto = {
   getGridData: function () {
     return this.viewModel.getGridData();
   },
-  find: function ( selector, context, results ) {
-    results = results || [];
-    var matched;
-
-    matched = this.matchExp.exec(selector);
-    context = context || this;
-
-    if ( matched && ( matched[1] === 'row' || matched[1] === 'column' ) ) {
-      context = context['collection'];
-
-      if ( matched[2] === 'removed' ) {
-        Array.prototype.push.apply( results, context.__removeModels );
-      }
-    }
-
-    return results;
-  },
-  matchExp: /(cell|row|column):(\S+)/i,
   getChildren: function(parentEls, tagName, attribute) {
     var unique_check = {},
         elems = [],
@@ -2478,23 +2463,28 @@ var GridProto = {
     }
     return elems;
   },
-  select: function(str) {
+  select: function( str, context, results ) {
     var sel = str.match(/[^ ]+/g),
-        parentEls = [["*", "*"]], // start with a table
         els, i;
+
+    context = context || [["*", "*"]]; // default started with a table
+    results = results || [];
+
     for(i = 0; i < sel.length; i++) {
       if(sel[i].match(/^[^\[\s]+\[[^\]]+\]|^[^\[\s]+/g)) {
         var tagName = (sel[i].match(/^[^\[]*/g) || [])[0],
             attribute = (sel[i].match(/\[[^\]]+\]$/g) || [])[0];
 
-        els = this.getChildren(parentEls, tagName, attribute);
-        parentEls = els;
+        els = this.getChildren( context, tagName, attribute);
+        context = els;
       } else {
         els = [];
         break;
       }
     }
-    return new GridSelector(this, els);
+    Array.prototype.push.apply( results, els );
+
+    return new GridSelector( this, results );
   },
   addGridEvent: function(selector, eventFunc) {
     this.options.gridEvents = this.options.gridEvents || {};
