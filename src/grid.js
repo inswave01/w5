@@ -1813,7 +1813,7 @@ var GridProto = {
             colIndex: targetCol
           };
 
-          if ( this.endCol === this.getColLength() - 1 ) {
+          if ( this.wholeTblWidth === this.tableWidth ) {
             this.setFocusedCell( rowIndex, targetCol );
           } else {
             for ( i = this.endCol; i < targetCol + 2; i++ ) {
