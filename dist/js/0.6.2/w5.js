@@ -696,6 +696,18 @@ _.extend( ViewModel.prototype, {
   },
   getGridData: function () {
     return this.collection;
+  },
+  setDefaults: function ( defaults ) {
+    this.collection.defaults = defaults;
+  },
+  getDefaults: function () {
+    var defaults = null;
+    if ( type.isFunction( this.collection.defaults ) ) {
+      defaults = this.collection.defaults();
+    } else if ( type.isObject( this.collection.defaults ) ) {
+      defaults = _.clone( this.collection.defaults );
+    }
+    return defaults;
   }
 });
 
@@ -2397,6 +2409,13 @@ var GridProto = {
   },
   getGridData: function () {
     return this.viewModel.getGridData();
+  },
+  setDefaults: function ( defaults ) {
+    this.viewModel.setDefaults( defaults );
+    return this;
+  },
+  getDefaults: function () {
+    return this.viewModel.getDefaults();
   },
   getChildren: function(parentEls, tagName, attribute) {
     var unique_check = {},
