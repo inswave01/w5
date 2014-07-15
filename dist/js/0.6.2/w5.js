@@ -5,7 +5,7 @@
  * Copyright 2013 Inswave Foundation and other contributors
  * Released under the LGPLv3.0 license
  *
- * Date: 2014-07-14
+ * Date: 2014-07-15
  */
 
 (function(root, factory) {
@@ -2956,16 +2956,12 @@ var GridSelectorApis = {
   alter: function (prop, value1, value2) {
     var args = arguments;
     _(this).each(function(pos) {
-      if(prop === "data") {
-        this.viewModel._setData.apply(this.bobj, [pos].concat([].slice.call(args, 1)));
+      if( args.length === 2 ) {
+        this.viewModel.setMeta(pos, prop, value1, {alter:true});
       } else {
-        if( args.length === 2 ) {
-          this.viewModel.setMeta(pos, prop, value1, {alter:true});
-        } else {
-          var tmpMeta = _.clone(this.viewModel.getMeta(pos, prop)) || {};
-          tmpMeta[value1] = value2;
-          this.viewModel.setMeta(pos, prop, tmpMeta, {alter:true});
-        }
+        var tmpMeta = _.clone(this.viewModel.getMeta(pos, prop)) || {};
+        tmpMeta[value1] = value2;
+        this.viewModel.setMeta(pos, prop, tmpMeta, {alter:true});
       }
     }, this);
     return this;
