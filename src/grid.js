@@ -774,9 +774,10 @@ var GridProto = {
   },
   onModelAddRemove: function ( model, collection, options ) {
     var index = collection.indexOf(model);
-    if(index === -1) {
+    if ( index === -1 ) {
       index = options.index || 0;
     }
+    this.wholeTblHeight = this.getWholeTblHeight();
     this.drawTbody( index );
   },
   onReset: function () {
@@ -1019,10 +1020,11 @@ var GridProto = {
   drawTbody: function (rowStart, rowEnd) {
     var i,
         frozenColumn = this.viewModel.getOption("frozenColumn");
-    rowStart = rowStart || this.rowTop;
+        rowStart = rowStart || this.rowTop;
+
     if(arguments.length < 2) {
       rowEnd = this.rowTop + this.viewModel.getOption('rowNum') - 1;
-    } 
+    }
 
     for ( i = rowStart; i <= rowEnd; i++ ) {
       // frozenColumn 까지
