@@ -1534,6 +1534,13 @@ var GridProto = {
   getGridData: function () {
     return this.viewModel.getGridData();
   },
+  setDefaults: function ( defaults ) {
+    this.viewModel.setDefaults( defaults );
+    return this;
+  },
+  getDefaults: function () {
+    return this.viewModel.getDefaults();
+  },
   getChildren: function(parentEls, tagName, attribute) {
     var unique_check = {},
         elems = [],

@@ -613,6 +613,18 @@ _.extend( ViewModel.prototype, {
   },
   getGridData: function () {
     return this.collection;
+  },
+  setDefaults: function ( defaults ) {
+    this.collection.defaults = defaults;
+  },
+  getDefaults: function () {
+    var defaults = null;
+    if ( type.isFunction( this.collection.defaults ) ) {
+      defaults = this.collection.defaults();
+    } else if ( type.isObject( this.collection.defaults ) ) {
+      defaults = _.clone( this.collection.defaults );
+    }
+    return defaults;
   }
 });
 
