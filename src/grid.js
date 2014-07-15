@@ -92,6 +92,7 @@ var GridProto = {
       this.collection.grid = this;
       this.collection.keys = options.collection.keys ? options.collection.keys : keys;
       this.collection.defaults = options.collection.defaults ? options.collection.defaults : defaults;
+      this.collection.__removeModels = [];
     } else {
       this.collection = new Collection( options.collection, {
         grid: this,
