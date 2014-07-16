@@ -184,7 +184,7 @@
   display: inline-block;
 }
 .gGrid-headerLabel .w5-grid-sort.state-none {
-  background: url("../images/sort-state-none.gif") left top no-repeat;
+  /* background: url("@{image-dir}/sort-state-none.gif") left top no-repeat; */
 }
 .gGrid-headerLabel .w5-grid-sort.state-asc {
   background: url("../images/sort-state-asc.gif") left 3px no-repeat;
