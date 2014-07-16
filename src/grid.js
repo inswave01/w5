@@ -343,7 +343,7 @@ var GridProto = {
           tdCol = $th.index(),
           frozenColumn = this.viewModel.getOption("frozenColumn"),
           col = tdCol < frozenColumn ? tdCol : tdCol + this.startCol - frozenColumn;
-      if ( this.viewModel.hasMeta( ["*", col], "sortable") ){
+      if ( this.viewModel.getMeta( ["*", col], "sortable") !== false ) {
         this.sortColumn.sortColumn.call( this, col );
       }
       $("document").addClass("noselect");
@@ -1057,7 +1057,7 @@ var GridProto = {
 
     if (cell) {
       $labelNode.append(label);
-      if( this.viewModel.hasMeta( ["*", col], "sortable") ){
+      if( this.viewModel.getMeta( ["*", col], "sortable" ) !== false ) {
         $labelNode.append($sortStateNode);
       }
 
