@@ -81,18 +81,24 @@ var GridProto = {
           }
           return model.id || model.headerLabel;
         }),
-        defaults = options.defaults || _.object(keys, _.pluck(options.colModel, "default"));
+        defaults = options.defaults || _.object( keys, _.pluck(options.colModel, "default") ),
+        that = this;
+
     if( !this.id && this.$el && this.$el.attr("id") ) {
       this.id = this.$el.attr("id");
     }
+
     if( options.collection instanceof Backbone.Collection ) {
       _.extend( this.collection.constructor.prototype.model.prototype, w5DataModelProto, w5DataModelProtoPro );
       _.extend( this.collection.constructor.prototype, w5DataCollectionProto, w5DataCollectionProtoPro );
 
-      this.collection.grid = this;
-      this.collection.keys = options.collection.keys ? options.collection.keys : keys;
-      this.collection.defaults = options.collection.defaults ? options.collection.defaults : defaults;
-      this.collection.__removeModels = [];
+      w5DataCollectionProto.initialize.call( this.collection, null, {
+        grid: that,
+        keys: options.collection.keys ? options.collection.keys : keys,
+        url: options.collection.url,
+        urlCUD: options.collection.urlCUD,
+        defaults: options.collection.defaults ? options.collection.defaults : defaults
+      });
     } else {
       this.collection = new Collection( options.collection, {
         grid: this,
