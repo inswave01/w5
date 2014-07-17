@@ -5,7 +5,7 @@
  * Copyright 2013 Inswave Foundation and other contributors
  * Released under the LGPLv3.0 license
  *
- * Date: 2014-07-16
+ * Date: 2014-07-17
  */
 
 (function(root, factory) {
@@ -1229,8 +1229,9 @@ var GridProto = {
           direction = this.collection.sortInfo.direction || [],
           colID = this.viewModel.getColID(col),
           index = _.indexOf( column, colID ),
-          sortState = index === -1 ? 0 : (direction[index] === "asc" ? 1 : 2);
+          sortState = index === -1 ? 0 : ( ( direction[index] || 'asc' ) === "asc" ? 1 : 2 );
       sortState = ( sortState + 1 ) % 3;
+
       if ( sortState === 0 ) { 
         column.splice(index, 1);
         direction.splice(index, 1);
@@ -1960,7 +1961,7 @@ var GridProto = {
         textNode = ["Sort None", "Sort Ascending", "Sort Descending"],
         colID = this.viewModel.getColID(col),
         index = _.indexOf( column, colID ),
-        sortState = index === -1 ? 0 : (direction[index] === "asc" ? 1 : 2);
+        sortState = index === -1 ? 0 : ( ( direction[index] || 'asc' ) === "asc" ? 1 : 2 );
 
     $(cell).find(".w5-grid-sort").addClass(btnClass[sortState])
         .removeClass(btnClass[(sortState + 1) % 3])
