@@ -648,36 +648,3 @@
   height: 100%;
   display: inline-block;
 }
-.bg#ff0000 {
-  background-color: #e11d21;
-}
-.bg#ffa500 {
-  background-color: #eb6420;
-}
-.bg#ffff00 {
-  background-color: #fbca04;
-}
-.bg#008000 {
-  background-color: #009800;
-}
-.bg#0000ff {
-  background-color: #207de5;
-}
-.bg#000080 {
-  background-color: #0052cc;
-}
-.bg#800080 {
-  background-color: #5319e7;
-}
-.bd1 {
-  border: 1px solid #000;
-}
-.f-bold {
-  font-weight: bold;
-}
-.f-underLine {
-  text-decoration: underline;
-}
-.f-italic {
-  font-style: italic;
-}
