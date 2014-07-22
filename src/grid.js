@@ -793,8 +793,7 @@ var GridProto = {
     if ( this.$wrapper_div ) {
       this.viewModel.setOption("scrollLeft", 0, {silent:true});
       this.viewModel.setOption("scrollTop", 0, {silent:true});
-      this.drawHeader();
-      this.drawTbody();
+      this.createTbody();
       this.setResize();
     }
   },
