@@ -172,6 +172,7 @@ var GridProto = {
     this.scrollXHandleMinWidth  = parseInt( this.$scrollXHandle.css('min-width'), 10 );
 
     this.addEvents();
+    this.createTbody();
     this.setResize();
 
     this.headNum = $el.find("thead tr").length;
@@ -1396,7 +1397,8 @@ var GridProto = {
     
     this.startCol = this.endCol = -1;
     
-    this.createTbody();
+    this.drawHeader();
+    this.drawTbody();
     this.drawByScroll();
   },
   checkResize: function() {
