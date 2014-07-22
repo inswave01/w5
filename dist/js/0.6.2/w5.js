@@ -5,7 +5,7 @@
  * Copyright 2013 Inswave Foundation and other contributors
  * Released under the LGPLv3.0 license
  *
- * Date: 2014-07-17
+ * Date: 2014-07-22
  */
 
 (function(root, factory) {
@@ -843,9 +843,9 @@ var w5DataCollectionProto = {
       }
 
       if ( ( dirs[_.indexOf( cols, col )] || 'asc' ).toLowerCase() === 'asc' ) {
-        return item1.attributes[col] > item2.attributes[col] ? 1 : -1;
+        return _.isUndefined(item2.attributes[col]) ? 1 : item1.attributes[col] > item2.attributes[col] ? 1 : -1;
       } else {
-        return item1.attributes[col] < item2.attributes[col] ? 1 : -1;
+        return _.isUndefined(item1.attributes[col]) ? 1 : item1.attributes[col] < item2.attributes[col] ? 1 : -1;
       }
     }
   },
@@ -1048,6 +1048,7 @@ var GridProto = {
     this.scrollXHandleMinWidth  = parseInt( this.$scrollXHandle.css('min-width'), 10 );
 
     this.addEvents();
+    this.createTbody();
     this.setResize();
 
     this.headNum = $el.find("thead tr").length;
@@ -1668,6 +1669,7 @@ var GridProto = {
     if ( this.$wrapper_div ) {
       this.viewModel.setOption("scrollLeft", 0, {silent:true});
       this.viewModel.setOption("scrollTop", 0, {silent:true});
+      this.createTbody();
       this.setResize();
     }
   },
@@ -2272,7 +2274,8 @@ var GridProto = {
     
     this.startCol = this.endCol = -1;
     
-    this.createTbody();
+    this.drawHeader();
+    this.drawTbody();
     this.drawByScroll();
   },
   checkResize: function() {
