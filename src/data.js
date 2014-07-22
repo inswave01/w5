@@ -760,9 +760,9 @@ var w5DataCollectionProto = {
       }
 
       if ( ( dirs[_.indexOf( cols, col )] || 'asc' ).toLowerCase() === 'asc' ) {
-        return item1.attributes[col] > item2.attributes[col] ? 1 : -1;
+        return _.isUndefined(item2.attributes[col]) ? 1 : item1.attributes[col] > item2.attributes[col] ? 1 : -1;
       } else {
-        return item1.attributes[col] < item2.attributes[col] ? 1 : -1;
+        return _.isUndefined(item1.attributes[col]) ? 1 : item1.attributes[col] < item2.attributes[col] ? 1 : -1;
       }
     }
   },
