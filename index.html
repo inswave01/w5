@@ -25,81 +25,164 @@
 </head>
 <body>
     <!-- HEADER -->
-    <div id="header_wrap" class="outer">
-        <header class="inner">
-            <a id="forkme_banner" href="https://github.com/inswave/w5">View on GitHub</a>
+    <header id="header_wrap">
+        <div class="navbar-wrapper">
+          <div class="navbar navbar-inverse navbar-static-top" role="navigation">
+              <div class="navbar-header">
+                <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-collapse">
+                  <span class="sr-only">Toggle navigation</span>
+                  <span class="icon-bar"></span>
+                  <span class="icon-bar"></span>
+                  <span class="icon-bar"></span>
+                </button>
+                <a class="navbar-brand" href="#">
+                  <img src="./_dist/resources/images/w5_w.png" class="logo" alt="W5" />
+              </a>
+              </div>
+              <div class="navbar-collapse collapse">
+                <ul class="nav navbar-nav">
+                  <!--li class="active"><a href="#">Getting started</a></li>
+                  <li class="divider"></li>
+                  <li class="dropdown-header">Nav header</li-->
+                  <li><a href="#" onclick="openAlert(this);">Getting started</a></li>
+                  <li><a href="#" onclick="openAlert(this);">Samples</a></li>
+                  <li><a href="#" onclick="openAlert(this);">API Docs</a></li>
+                  <!--li class="dropdown"-->
+                  <li>
+                    <a href="#" onclick="openAlert(this);">Support</a>
+                    <!--a href="" class="dropdown-toggle" data-toggle="dropdown">Support<b class="caret"></b></a>
+                    <ul class="dropdown-menu">
+                      <li><a href="">Forum</a></li>
+                      <li><a href="">Purchase Options</a></li>
+                    </ul-->
+                  </li>
+                  <!--li class="dropdown"-->
+                  <li>
+                    <a href="#" onclick="openAlert(this);">About</a>
+                    <!--a href="" class="dropdown-toggle" data-toggle="dropdown">About<b class="caret"></b></a>
+                    <ul class="dropdown-menu">
+                      <li><a href="">Company</a></li>
+                      <li><a href="">Contact us</a></li>
+                    </ul-->
+                  </li>
+                </ul>
+              </div>
+          </div>
+        </div>
 
-            <h1 id="project_title">
-            <img src="./images/w5_w.png" class="logo" alt="W5" />
-            </h1>
-            <p class="project_tagline">
-                Lightweight, powerful and intuitive front-end library for easier and
-                faster UI component development.<br/>
-                We first introduce one of our components, <strong>W5Grid</strong>.
-            </p>
-            <section id="downloads">
-              <a class="zip_download_link" href="https://github.com/inswave/w5/archive/master.zip">Download this project as a .zip file</a>
-              <a class="tar_download_link" href="https://github.com/inswave/w5/archive/master.tar.gz">Download this project as a tar.gz file</a>
-            </section>
-        </header>
-    </div>
+        <!-- Carousel
+        ================================================== -->
+        <div id="myCarousel" class="carousel slide" data-ride="carousel">
+          <!-- Indicators -->
+          <ol class="carousel-indicators">
+            <li data-target="#myCarousel" data-slide-to="0" class="active"></li>
+            <!--li data-target="#myCarousel" data-slide-to="1" class=""></li>
+            <li data-target="#myCarousel" data-slide-to="2" class=""></li-->
+          </ol>
+          <div class="carousel-inner">
+            <div class="item active">
+              <div class="container">
+                <div class="carousel-caption">
+                  <h1>W5 Grid</h1>
+                  <p>Lightweight, powerful and intuitive front-end library for easier and
+                    faster UI component development.<br/>
+                    We first introduce one of our components, <strong>W5Grid</strong>.</p>
+                  <p class="ac"><a id="forkme_banner" href="https://github.com/inswave/w5">View on GitHub</a></p>
+                </div>
+              </div>
+            </div>
+            <!--div class="item">
+              <div class="container">
+                <div class="carousel-caption">
+                  <h1>temp title 1</h1>
+                  <p>temp content 1</p>
+                  <p><a class="btn btn-lg btn-primary" href="#" role="button">Learn more</a></p>
+                </div>
+              </div>
+            </div>
+            <div class="item">
+              <div class="container">
+                <div class="carousel-caption">
+                  <h1>temp title 2</h1>
+                  <p>temp content 2</p>
+                  <p><a class="btn btn-lg btn-primary" href="#" role="button">Browse gallery</a></p>
+                </div>
+              </div>
+            </div-->
+          </div>
+          <!--a class="left carousel-control" href="#myCarousel" data-slide="prev"><span class="glyphicon glyphicon-chevron-left"></span></a>
+          <a class="right carousel-control" href="#myCarousel" data-slide="next"><span class="glyphicon glyphicon-chevron-right"></span></a-->
+        </div><!-- /.carousel -->
+    </header>
 
     <!-- MAIN CONTENT -->
-    <div id="main_content_wrap" class="outer">
-        <section id="main_content" class="inner clearfix">
-            <h2>Features</h2>
-            <div class="main_content_fl">
-                <h3>Powerful</h3>
-                <p><strong>Powerful, what you need is here.</strong><br/>
-                    The W5Grid not only provides general grid functions but also infinite scroll, cross tab, grid in grid are available.</p>
-            </div>
-            <div class="main_content_fl">
-                <h3>Highly adaptable</h3>
-                <p><strong>Highly adaptable.</strong><br/>
-                    Various UI components can be used as an inputType in GRID and data gets binding automatically.</p>
-            </div>
-            <div class="main_content_fl">
-                <h3>Intuitive</h3>
-                <p><strong>Intuitive and easy to use.</strong><br/>
-                    Even with strong capabilities various functionalities, W5Grid is very intuitive and easy to use.</p>
-            </div>
-            <div class="main_content_fl">
-                <h3>Customizable</h3>
-                <p><strong>Easy to customize.</strong><br/>
-                    The W5Grid has been developed with LESS, so that you can build your own Theme or even further develop your own style.</p>
-            </div>
-            <div class="main_content_fl">
-                <h3>Display Variation</h3>
-                <p><strong>Support N-Screen.</strong><br/>
-                    Big data can be expressed in multi devices & multi platforms.</p>
-            </div>
-        </section>
-
-        <article id="sample" class="inner">
-            <p data-height="438" data-theme-id="0" data-slug-hash="rjkIn" data-default-tab="result" class='codepen'>See the Pen <a href='http://codepen.io/w5/pen/rjkIn'>W5Grid - 01 convert</a> by w5 (<a href='http://codepen.io/w5'>@w5</a>) on <a href='http://codepen.io'>CodePen</a>.</p>
-            <script async src="//codepen.io/assets/embed/ei.js"></script>
-
-            <p data-height="438" data-theme-id="0" data-slug-hash="xFhqK" data-default-tab="result" class='codepen'>See the Pen <a href='http://codepen.io/w5/pen/xFhqK'>W5Grid - 02 make</a> by w5 (<a href='http://codepen.io/w5'>@w5</a>) on <a href='http://codepen.io'>CodePen</a>.</p>
-            <script async src="//codepen.io/assets/embed/ei.js"></script>
-        </article>
-
-        <!-- FOOTER  -->
-        <div id="footer_wrap" class="outer ar">
-            <footer class="inner clearfix">
-                <div style="width:255px; float:right;">
-                    <a href="//plus.google.com/u/0/105292818602737285330?prsrc=3"
-                       rel="publisher" target="_blank" style="text-decoration:none; display:block; float:left; width:25px;">
-                        <img src="//ssl.gstatic.com/images/icons/gplus-16.png" alt="Google+" style="border:0;width:16px;height:16px;"/>
-                    </a>
-
-                    <a href="https://twitter.com/share" class="twitter-share-button" data-via="w5_io">Tweet</a>
-                    <script>!function(d,s,id){var js,fjs=d.getElementsByTagName(s)[0],p=/^http:/.test(d.location)?'http':'https';if(!d.getElementById(id)){js=d.createElement(s);js.id=id;js.src=p+'://platform.twitter.com/widgets.js';fjs.parentNode.insertBefore(js,fjs);}}(document, 'script', 'twitter-wjs');</script>
-
-                    <a href="https://twitter.com/w5_io" class="twitter-follow-button" data-show-count="false">Follow @w5_io</a>
-                    <script>!function(d,s,id){var js,fjs=d.getElementsByTagName(s)[0],p=/^http:/.test(d.location)?'http':'https';if(!d.getElementById(id)){js=d.createElement(s);js.id=id;js.src=p+'://platform.twitter.com/widgets.js';fjs.parentNode.insertBefore(js,fjs);}}(document, 'script', 'twitter-wjs');</script>
-                </div>
-            </footer>
+    <article id="main_content" class="inner">
+      <p id="downloads">
+        <a class="zip_download_link" href="https://github.com/inswave/w5/archive/master.zip">Download this project as a .zip file</a>
+        <a class="tar_download_link" href="https://github.com/inswave/w5/archive/master.tar.gz">Download this project as a tar.gz file</a>
+      </p>
+      <section class="main_content_group clearfix">
+        <h2>Features</h2>
+        <div class="main_content_fl">
+            <h3>Powerful</h3>
+            <p><strong>Powerful, what you need is here.</strong><br/>
+                The W5Grid not only provides general grid functions but also infinite scroll, cross tab, grid in grid are available.</p>
         </div>
+        <div class="main_content_fl">
+            <h3>Highly adaptable</h3>
+            <p><strong>Highly adaptable.</strong><br/>
+                Various UI components can be used as an inputType in GRID and data gets binding automatically.</p>
+        </div>
+        <div class="main_content_fl">
+            <h3>Intuitive</h3>
+            <p><strong>Intuitive and easy to use.</strong><br/>
+                Even with strong capabilities various functionalities, W5Grid is very intuitive and easy to use.</p>
+        </div>
+        <div class="main_content_fl">
+            <h3>Customizable</h3>
+            <p><strong>Easy to customize.</strong><br/>
+                The W5Grid has been developed with LESS, so that you can build your own Theme or even further develop your own style.</p>
+        </div>
+        <div class="main_content_fl">
+            <h3>Display Variation</h3>
+            <p><strong>Support N-Screen.</strong><br/>
+                Big data can be expressed in multi devices & multi platforms.</p>
+        </div>
+      </section>
+    </article>
+
+    <!-- FOOTER  -->
+    <div id="footer_wrap" class="ar">
+        <footer class="inner clearfix">
+            <div style="width:255px; float:right;">
+                <a href="//plus.google.com/u/0/105292818602737285330?prsrc=3"
+                   rel="publisher" target="_blank" style="text-decoration:none; display:block; float:left; width:25px;">
+                    <img src="//ssl.gstatic.com/images/icons/gplus-16.png" alt="Google+" style="border:0;width:16px;height:16px;"/>
+                </a>
+
+                <a href="https://twitter.com/share" class="twitter-share-button" data-via="w5_io">Tweet</a>
+                <script>!function(d,s,id){var js,fjs=d.getElementsByTagName(s)[0],p=/^http:/.test(d.location)?'http':'https';if(!d.getElementById(id)){js=d.createElement(s);js.id=id;js.src=p+'://platform.twitter.com/widgets.js';fjs.parentNode.insertBefore(js,fjs);}}(document, 'script', 'twitter-wjs');</script>
+
+                <a href="https://twitter.com/w5_io" class="twitter-follow-button" data-show-count="false">Follow @w5_io</a>
+                <script>!function(d,s,id){var js,fjs=d.getElementsByTagName(s)[0],p=/^http:/.test(d.location)?'http':'https';if(!d.getElementById(id)){js=d.createElement(s);js.id=id;js.src=p+'://platform.twitter.com/widgets.js';fjs.parentNode.insertBefore(js,fjs);}}(document, 'script', 'twitter-wjs');</script>
+            </div>
+        </footer>
     </div>
+    <script src="./_dist/resources/js/jquery-1.11.1.min.js"></script>
+    <script src="./_dist/resources/bootstrap/js/bootstrap.min.js"></script>
+    <script type="text/javascript">
+      function openAlert( target ) {
+        var alertParent = $("#header_wrap"),
+            alert, alertLeft = 0;
+
+        alert = $("<div class='alert alert-warning alert-dismissable' style='position:absolute; top:100px; z-index:20;'>" +
+          "<button type='button' class='close' data-dismiss='alert' aria-hidden='true'>&times;</button>" +
+          "<strong>Sorry!</strong> '"+ $(target).text() +"' is under construction." +
+        "</div>");
+        alertParent.append(alert);
+        alertLeft = alertParent.width()/2 - alert.width()/2;
+        alert.css("left", alertLeft);
+      }
+    </script>
 </body>
 </html>
