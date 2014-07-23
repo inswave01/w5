@@ -1,7 +1,0 @@
-@charset "UTF-8";
-
-.clearfix:after { visibility: hidden; display: block; font-size: 0; content: " "; clear: both; height: 0; }
-.clearfix { display: block; }
-* html .clearfix { zoom: 1; } /* IE6 */
-*:first-child+html .clearfix { zoom: 1; } /* IE7 */
-
