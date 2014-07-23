@@ -2,9 +2,6 @@
 .DS_Store
 *.db
 .idea/
-dist/
 js/
 node_modules/
-test/
-test_pro/
 www-root/
