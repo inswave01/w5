@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset='utf-8' />
+    <meta http-equiv="X-UA-Compatible" content="chrome=1" />
+    <meta name="description" content="W5" />
+    <link rel="stylesheet" type="text/css" media="screen" href="./resources/bootstrap/css/bootstrap.min.css">
+    <link rel="stylesheet" type="text/css" media="screen" href="./resources/bootstrap/css/carousel.css">
+    <link rel="stylesheet" type="text/css" media="screen" href="./resources/stylesheets/stylesheet.css">
+    <link rel="stylesheet" type="text/css" media="screen" href="./resources/stylesheets/common.css">
+    <link rel="stylesheet" type="text/css" media="screen" href="./resources/prism/prism.css">
+    <link rel="stylesheet" type="text/css" media="screen" href="./resources/prism/prism-coy.css">
+    <script>
+        (function(i, s, o, g, r, a, m) {
+            i['GoogleAnalyticsObject'] = r;
+            i[r] = i[r] || function() {
+                (i[r].q = i[r].q || []).push(arguments)
+            }, i[r].l = 1 * new Date();
+            a = s.createElement(o), m = s.getElementsByTagName(o)[0];
+            a.async = 1;
+            a.src = g;
+            m.parentNode.insertBefore(a, m)
+        })(window, document, 'script', '//www.google-analytics.com/analytics.js', 'ga');
+        ga('create', 'UA-1212521-12', 'w5.io');
+        ga('send', 'pageview');
+    </script>
+    <title>W5 : template</title>
+</head>
+
+<body>
+    <!-- HEADER -->
+    <header id="header_wrap">
+        <div class="navbar-wrapper">
+            <div class="navbar navbar-inverse navbar-static-top" role="navigation">
+                <div class="navbar-header">
+                    <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-collapse"> <span class="sr-only">Toggle navigation</span>  <span class="icon-bar"></span>  <span class="icon-bar"></span>  <span class="icon-bar"></span> 
+                    </button>
+                    <a class="navbar-brand" href="../../../../index.html">
+                        <img src="../../../resources/images/w5_w.png" class="logo" alt="W5" />
+                    </a>
+                </div>
+                <div class="navbar-collapse collapse">
+                    <ul class="nav navbar-nav">
+                        <!--li class="active"><a href="#">Getting started</a></li>          <li class="divider"></li>          <li class="dropdown-header">Nav header</li-->
+                        <li><a href="../../../gettingStarted/gettingStarted/doc/gettingStarted.html">Getting started</a>
+                        </li>
+                        <li><a href="../../../samples/basic/doc/createW5Grid.html">Samples</a>
+                        </li>
+                        <li><a href="#" onclick="openAlert(this);">API Docs</a>
+                        </li>
+                        <!--li class="dropdown"-->
+                        <li> <a href="#" onclick="openAlert(this);">Support</a> 
+                            <!--a href="" class="dropdown-toggle" data-toggle="dropdown">Support<b class="caret"></b></a>            <ul class="dropdown-menu">              <li><a href="">Forum</a></li>              <li><a href="">Purchase Options</a></li>            </ul-->
+                        </li>
+                        <!--li class="dropdown"-->
+                        <li> <a href="#" onclick="openAlert(this);">About</a> 
+                            <!--a href="" class="dropdown-toggle" data-toggle="dropdown">About<b class="caret"></b></a>            <ul class="dropdown-menu">              <li><a href="">Company</a></li>              <li><a href="">Contact us</a></li>            </ul-->
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+        <div class="visual">
+            <h1>Template test</h1> 
+            <p>W5 Wiki Template test를 위한 페이지 입니다.</p>
+        </div>
+    </header>
+    <!-- MAIN CONTENT -->
+    <div id="main_content" class="inner row content">
+        <aside class="lnb">
+            <nav id="lnbList">
+                <h1>Template test</h1> 
+                <!--ul>                <li><a href=""></a></li>                </ul-->
+            </nav>
+        </aside>
+        <article class="contents">
+            <section>
+                <h1 id="headers">Headers</h1>
+                <h1 id="h1">H1</h1>
+                <h2 id="h2">H2</h2>
+                <h3 id="h3">H3</h3>
+                <h4 id="h4">H4</h4>
+                <h5 id="h5">H5</h5>
+                <h6 id="h6">H6</h6>
+                <h1 id="emphasis">Emphasis</h1>
+                <p>Emphasis, aka italics, with <em>asterisks</em> or <em>underscores</em>.</p>
+                <p>Strong emphasis, aka bold, with <strong>asterisks</strong> or <strong>underscores</strong>.</p>
+                <p>Combined emphasis with <strong>asterisks and <em>underscores</em></strong>.</p>
+                <p>Strikethrough uses two tildes. <del>Scratch this.</del>
+                </p>
+                <h1 id="lists">Lists</h1>
+                <ol>
+                    <li>First ordered list item</li>
+                    <li>Another item
+                        <ul>
+                            <li>Unordered sub-list.</li>
+                        </ul>
+                    </li>
+                    <li>Actual numbers don't matter, just that it's a number</li>
+                    <li>Ordered sub-list</li>
+                    <li>
+                        <p>And another item
+                            <br>You can have properly indented paragraphs within list items. Notice the blank line above, and the leading spaces (at least one, but we'll use three here to also align the raw Markdown).</p>
+                        <p>To have a line break without a paragraph, you will need to use two trailing spaces.
+                            <br>Note that this line is separate, but within the same paragraph.
+                            <br>(This is contrary to the typical GFM line break behaviour, where trailing spaces are not required.)</p>
+                    </li>
+                    <li>
+                        <p>Unordered list can use asterisks</p>
+                    </li>
+                    <li>Or minuses</li>
+                    <li>Or pluses</li>
+                </ol>
+                <h1 id="links">Links</h1>
+                <p><a href="https://www.google.com">I'm an inline-style link</a>
+                </p>
+                <p><a href="https://www.google.com" title="Google's Homepage">I'm an inline-style link with title</a>
+                </p>
+                <p>[I'm a reference-style link][Arbitrary case-insensitive reference text]</p>
+                <p><a href="../blob/master/LICENSE">I'm a relative reference to a repository file</a>
+                </p>
+                <p>[You can use numbers for reference-style link definitions][1]</p>
+                <p>Or leave it empty and use the [link text itself]</p>
+                <h1 id="images">Images</h1>
+                <p>Here's our logo (hover to see the title text):</p>
+                <p>Inline-style:
+                    <img src="https://github.com/adam-p/markdown-here/raw/master/src/common/images/icon48.png" alt="alt text" title="Logo Title Text 1">
+                </p>
+                <h1 id="code-and-syntax-highlighting">Code and Syntax Highlighting</h1>
+                <p>Inline <code class="language-javascript">code</code> has <code class="language-javascript">back-ticks around</code> it.</p>
+                <pre><code class="lang-javascript">var s = "JavaScript syntax highlighting";
+alert(s);
+</code></pre>
+                <h1 id="tables">Tables</h1>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Tables</th>
+                            <th style="text-align:center">Are</th>
+                            <th style="text-align:right">Cool</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>col 3 is</td>
+                            <td style="text-align:center">right-aligned</td>
+                            <td style="text-align:right">$1600</td>
+                        </tr>
+                        <tr>
+                            <td>col 2 is</td>
+                            <td style="text-align:center">centered</td>
+                            <td style="text-align:right">$12</td>
+                        </tr>
+                        <tr>
+                            <td>zebra stripes</td>
+                            <td style="text-align:center">are neat</td>
+                            <td style="text-align:right">$1</td>
+                        </tr>
+                    </tbody>
+                </table>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Markdown</th>
+                            <th>Less</th>
+                            <th>Pretty</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><em>Still</em>
+                            </td>
+                            <td><code class="language-javascript">renders</code>
+                            </td>
+                            <td><strong>nicely</strong>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>1</td>
+                            <td>2</td>
+                            <td>3</td>
+                        </tr>
+                    </tbody>
+                </table>
+                <h1 id="blockquotes">Blockquotes</h1>
+                <blockquote>
+                    <p>This is a very long line that will still be quoted properly when it wraps. Oh boy let's keep writing to make sure this is long enough to actually wrap for everyone. Oh, you can <em>put</em>  <strong>Markdown</strong> into a blockquote.</p>
+                </blockquote>
+                <h1 id="inline-html">Inline HTML</h1>
+                <dl>
+                    <dt>Markdown in HTML</dt>
+                    <dd>Does <em>not</em> work <strong>very</strong> well. Use HTML <em>tags</em>.</dd>
+                </dl>
+
+
+                <h1 id="horizontal-rule">Horizontal Rule</h1>
+                <h2 id="three-or-more-">Three or more...</h2>
+                <p>Hyphens</p>
+                <hr>
+                <p>Asterisks</p>
+                <hr>
+                <p>Underscores</p>
+            </section>
+            <section>
+                <div id="disqus_thread"></div>
+                <script type="text/javascript">
+                    /* * * CONFIGURATION VARIABLES: EDIT BEFORE PASTING INTO YOUR WEBPAGE * * */
+                    var disqus_shortname = 'w5-io'; /* * * DON'T EDIT BELOW THIS LINE * * */
+                    (function() {
+                        var dsq = document.createElement('script');
+                        dsq.type = 'text/javascript';
+                        dsq.async = true;
+                        dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+                        (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+                    })();
+                </script>
+                <noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a>
+                </noscript> <a href="http://disqus.com" class="dsq-brlink">comments powered by <span class="logo-disqus">Disqus</span></a> 
+                <script type="text/javascript">
+                    /* * * CONFIGURATION VARIABLES: EDIT BEFORE PASTING INTO YOUR WEBPAGE * * */
+                    var disqus_shortname = 'w5-io'; /* * * DON'T EDIT BELOW THIS LINE * * */
+                    (function() {
+                        var s = document.createElement('script');
+                        s.async = true;
+                        s.type = 'text/javascript';
+                        s.src = '//' + disqus_shortname + '.disqus.com/count.js';
+                        (document.getElementsByTagName('HEAD')[0] || document.getElementsByTagName('BODY')[0]).appendChild(s);
+                    }());
+                </script>
+            </section>
+        </article>
+    </div>
+    <!-- FOOTER  -->
+    <div id="footer_wrap">
+        <footer class="inner clearfix">
+            <div style="width:255px; float:right;">
+                <a href="//plus.google.com/u/0/105292818602737285330?prsrc=3" rel="publisher" target="_blank" style="text-decoration:none; display:block; float:left; width:25px;">
+                    <img src="//ssl.gstatic.com/images/icons/gplus-16.png" alt="Google+" style="border:0;width:16px;height:16px;" />
+                </a> <a href="https://twitter.com/share" class="twitter-share-button" data-via="w5_io">Tweet</a> 
+                <script>
+                    ! function(d, s, id) {
+                        var js, fjs = d.getElementsByTagName(s)[0],
+                            p = /^http:/.test(d.location) ? 'http' : 'https';
+                        if (!d.getElementById(id)) {
+                            js = d.createElement(s);
+                            js.id = id;
+                            js.src = p + '://platform.twitter.com/widgets.js';
+                            fjs.parentNode.insertBefore(js, fjs);
+                        }
+                    }(document, 'script', 'twitter-wjs');
+                </script> <a href="https://twitter.com/w5_io" class="twitter-follow-button" data-show-count="false">Follow @w5_io</a> 
+                <script>
+                    ! function(d, s, id) {
+                        var js, fjs = d.getElementsByTagName(s)[0],
+                            p = /^http:/.test(d.location) ? 'http' : 'https';
+                        if (!d.getElementById(id)) {
+                            js = d.createElement(s);
+                            js.id = id;
+                            js.src = p + '://platform.twitter.com/widgets.js';
+                            fjs.parentNode.insertBefore(js, fjs);
+                        }
+                    }(document, 'script', 'twitter-wjs');
+                </script>
+            </div>
+        </footer>
+    </div>
+    <script src="../../../resources/js/jquery-1.11.1.min.js"></script>
+    <script src="../../../resources/bootstrap/js/bootstrap.min.js"></script>
+    <script src="../../../resources/prism/prism.js"></script>
+    <script type="text/javascript">
+        function openAlert(target) {
+            var alertParent = $("#header_wrap"),
+                alert, alertLeft = 0;
+            alert = $("<div class='alert alert-warning alert-dismissable' style='position:absolute; top:100px; z-index:20;'>" + "<button type='button' class='close' data-dismiss='alert' aria-hidden='true'>&times;</button>" + "<strong>Sorry!</strong> '" + $(target).text() + "' is under construction." + "</div>");
+            alertParent.append(alert);
+            alertLeft = alertParent.width() / 2 - alert.width() / 2;
+            alert.css("left", alertLeft);
+        }
+        var lnb = $("#lnbList"),
+            menuName = lnb.find("h1").text(),
+            menuList = $("<h2>Basic</h2>" + "<ul>" + "<li><a href='../../basic/doc/createW5Grid.html'>Creating W5 Grid</a></li>" + "<li><a href='../../basic/doc/convertTable.html'>Converting a table to a W5 grid</a></li>" + "<li><a href='../../basic/doc/get-set.html'>.get()/.set() API</a></li>" + "<li><a href='../../basic/doc/requireJS.html'>RequireJS</a></li>" + "</ul>" + "<h2>Column</h2>" + "<ul>" + "<li><a href='../../column/doc/adjustColumn.html'>Adjust Column Width</a></li>" + "<li><a href='../../column/doc/hideShowColumn.html'>Hide/Show Column</a></li>" + "<li><a href='../../column/doc/moveColumn.html'>Moving a column </a></li>" + "<li><a href='../../column/doc/frozenColumn.html'>Frozen column</a></li>" + "</ul>" + "<h2>Navigation</h2>" + "<ul>" + "<li><a href='../../navigation/doc/keyboardNavigation.html'>Keyboard Navigation</a></li>" + "</ul>" + "<h2>Style</h2>" + "<ul>" + "<li><a href='../../style/doc/concept.html'>Concept</a></li>" + "</ul>" + "<h2>Cell</h2>" + "<ul>" + "<li><a href='../../cell/doc/inlineEdit.html'>Inline Edit</a></li>" + "<li><a href='../../cell/doc/displayType.html'>Display Type</a></li>" + "<li><a href='../../cell/doc/customCell.html'>Custom Cell</a></li>" + "<li><a href='../../cell/doc/dataType.html'>Data Type</a></li>" + "</ul>");
+        if (menuName === "Sample") {
+            lnb.append(menuList);
+        }
+    </script>
+</body>
+
+</html>

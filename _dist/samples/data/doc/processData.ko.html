@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset='utf-8' />
+    <meta http-equiv="X-UA-Compatible" content="chrome=1" />
+    <meta name="description" content="W5" />
+    <link rel="stylesheet" type="text/css" media="screen" href="./../../../resources/bootstrap/css/bootstrap.min.css">
+    <link rel="stylesheet" type="text/css" media="screen" href="./../../../resources/bootstrap/css/carousel.css">
+    <link rel="stylesheet" type="text/css" media="screen" href="./../../../resources/stylesheets/stylesheet.css">
+    <link rel="stylesheet" type="text/css" media="screen" href="./../../../resources/stylesheets/common.css">
+    <link rel="stylesheet" type="text/css" media="screen" href="./../../../resources/prism/prism.css">
+    <link rel="stylesheet" type="text/css" media="screen" href="./../../../resources/prism/prism-coy.css">
+    <script>
+        (function(i, s, o, g, r, a, m) {
+            i['GoogleAnalyticsObject'] = r;
+            i[r] = i[r] || function() {
+                (i[r].q = i[r].q || []).push(arguments)
+            }, i[r].l = 1 * new Date();
+            a = s.createElement(o), m = s.getElementsByTagName(o)[0];
+            a.async = 1;
+            a.src = g;
+            m.parentNode.insertBefore(a, m)
+        })(window, document, 'script', '//www.google-analytics.com/analytics.js', 'ga');
+        ga('create', 'UA-1212521-12', 'w5.io');
+        ga('send', 'pageview');
+    </script>
+    <title>W5 : Process Data</title>
+</head>
+
+<body>
+    <!-- HEADER -->
+    <header id="header_wrap">
+        <div class="navbar-wrapper">
+            <div class="navbar navbar-inverse navbar-static-top" role="navigation">
+                <div class="navbar-header">
+                    <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-collapse"> <span class="sr-only">Toggle navigation</span>  <span class="icon-bar"></span>  <span class="icon-bar"></span>  <span class="icon-bar"></span> 
+                    </button>
+                    <a class="navbar-brand" href="../../../../index.html">
+                        <img src="../../../resources/images/w5_w.png" class="logo" alt="W5" />
+                    </a>
+                </div>
+                <div class="navbar-collapse collapse">
+                    <ul class="nav navbar-nav">
+                        <!--li class="active"><a href="#">Getting started</a></li>          <li class="divider"></li>          <li class="dropdown-header">Nav header</li-->
+                        <li><a href="../../../gettingStarted/gettingStarted/doc/gettingStarted.html">Getting started</a>
+                        </li>
+                        <li><a href="../../../samples/basic/doc/createW5Grid.html">Samples</a>
+                        </li>
+                        <li><a href="#" onclick="openAlert(this);">API Docs</a>
+                        </li>
+                        <!--li class="dropdown"-->
+                        <li> <a href="#" onclick="openAlert(this);">Support</a> 
+                            <!--a href="" class="dropdown-toggle" data-toggle="dropdown">Support<b class="caret"></b></a>            <ul class="dropdown-menu">              <li><a href="">Forum</a></li>              <li><a href="">Purchase Options</a></li>            </ul-->
+                        </li>
+                        <!--li class="dropdown"-->
+                        <li> <a href="#" onclick="openAlert(this);">About</a> 
+                            <!--a href="" class="dropdown-toggle" data-toggle="dropdown">About<b class="caret"></b></a>            <ul class="dropdown-menu">              <li><a href="">Company</a></li>              <li><a href="">Contact us</a></li>            </ul-->
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+        <div class="visual">
+            <h1>Sample</h1> 
+            <p>Sample을 통해 w5 Grid의 사용법과 강점을 알아봅니다.</p>
+        </div>
+    </header>
+    <!-- MAIN CONTENT -->
+    <div id="main_content" class="inner row content">
+        <aside class="lnb">
+            <nav id="lnbList">
+                <h1>Sample</h1> 
+                <!--ul>                <li><a href=""></a></li>                </ul-->
+            </nav>
+        </aside>
+        <article class="contents">
+            <section>
+                <h1 id="process-data">Process Data</h1>
+                <p>Cell, Row, Column, Table 단위로 데이타를 조작할 수 있습니다.
+                    <br><a href="../../basic/doc/get-set.ko.html">get/set 가이드</a>를 참조하세요.</p>
+                <h2 id="read">READ</h2>
+                <p>parts selector 로 대상을 선택 후 get() 메소드를 이용해 데이타를 얻습니다.</p>
+                <pre><code class="language-javascript">// 첫 번째 Row 의 첫 번째 Cell 에 대한 Data를 반환합니다.
+// James
+grid1.cell(0,0).get('data');
+
+// 여섯 번째 Row 전체 의 데이타를 Object 로 반환합니다.
+// {"firstName":"Mitsue", "lastName":"Tollner" .... , "web":"http://www.morlongassociates.com"}
+grid1.row(5).get('data');
+
+// Backbone.Collection 을 직접 참조하여 데이타를 조작할 수 있습니다.
+// 바로 위 2개의 명령과 동일한 결과를 반환합니다.
+grid1.collection.at(5).toJSON();
+
+// 위의 명령들과 동일한 데이타를 반환하지만 column ID 는 제외한 data 들만으로 구성된 Array 를 반환합니다.
+// ["Mitsue", "Tollner" .... , "http://www.morlongassociates.com"]
+grid1.row(5).get('data', { type: 'array' });
+
+// 컬럼 중 pick 옵션에 지정한 컬럼들의 데이타만 반환합니다.
+// {"firstName":"Mitsue", "companyName":"....", "city":"....", "phone1":"....", "email":"mitsue_tollner@yahoo.com"}
+grid1.row(5).get('data', { pick: ['firstName', 'companyName', 'city', 'phone1', 'email'] });
+
+// 컬럼 중 omit 옵션에 지정한 컬럼들을 제외한 데이타만 반환합니다.
+// 결과는 바로 위 명령과 동일합니다.
+grid1.row(5).get('data', { omit: ['lastName', 'address', 'county', 'state', 'zip', 'phone2', 'web'] });
+
+// city 컬럼에 대한 데이타만으로 이뤄진 Array로 반환합니다.
+// Array length 는 Row 갯수와 동일합니다.
+// ["New Orleans", "Bridgeport", ".... , "Rockford", "Aston"]
+grid1.col('city').get('data');
+</code></pre>
+                <h2 id="update">UPDATE</h2>
+                <p>대상 선택은 READ 와 동일하며 set() 메소드를 이용해 데이타를 변경합니다.
+                    <br>validation 은 <a href="링크 필요">유료 버전</a>을 참고하세요.
+                    <br>서버와의 동기화는 <a href="링크 필요">여기</a>를 참조하세요.</p>
+                <pre><code class="language-javascript">// 첫 번째 Row 의 companyName 을 'Beck Horizon Builders' 로 수정하고 글자색을 'OrangeRed' 로 변경합니다.
+grid1.cell( 0, 'companyName' ).set( "data", "Beck Horizon Builders" ).set( "style", "color", "OrangeRed" );
+</code></pre>
+                <h2 id="create">CREATE</h2>
+                <p>addRow() 메소드를 이용하여 Row 를 추가합니다.
+                    <br>파라미터로 다음 2가지를 지정할 수 있습니다.</p>
+                <ul>
+                    <li>Index
+                        <ul>
+                            <li>지정하지 않으면 맨 마지막에 삽입된다.</li>
+                            <li>맨 처음에 삽입하기 위해서는 <code class="language-javascript">0</code> 을 삽입한다.</li>
+                        </ul>
+                    </li>
+                    <li>Insert 될 데이타</li>
+                </ul>
+                <p>지원하는 데이타 형태는 다음과 같습니다.</p>
+                <ul>
+                    <li>Object</li>
+                    <li>Array(Only Data)</li>
+                    <li>JSON Array</li>
+                    <li>2차원 Array(Only Data)</li>
+                </ul>
+                <p>defualt value 는 <a href="./defaults.ko.html">Defaults</a>를 참조하세요.
+                    <br>서버와의 동기화는 <a href="링크 필요">여기</a>를 참조하세요.</p>
+                <pre><code class="language-javascript">  // Row 의 총 갯수를 getRowLength() 메소드를 이용해서 가져올 수 있습니다.
+  // 샘플 최초의 갯수는 20 입니다.
+  grid1.getRowLength();
+
+  // 파라미터가 아무 것도 없다면 그리드 맨 마지막에 빈 Row 가 삽입됩니다.
+  // 스크롤을 통해 맨 마직에 Row 가 추가된 것을 확인할 수 있습니다.
+  grid1.addRow();
+
+  // 다시 getRowLength() 메소드를 이용해서 Row 갯수를 가져오면 21 임을 확인할 수 있습니다.
+  grid1.getRowLength();
+
+  // number type 으로 Row 가 삽입될 위치를 지정합니다.
+  // 2번째 Row 에 빈 Row 가 삽입됩니다.
+  grid1.addRow(1);
+
+  // 삽입될 위치와 데이타를 순서대로 지정할 수 있습니다.
+  // 2차원 배열이나 JSON Array 형태로 데이타를 지정하면 한 번에 여러 개의 Row 를 삽입할 수 있습니다.
+  // 2번째와 3번째 Row 에 각각 `Veronika` 와 `Willard` 로 시작하는 Row 가 삽입된다.
+  grid1.addRow( 1, [[ "Veronika", "Inouye", "C 4 Network Inc", "6 Greenleaf Ave", "San Jose", "Santa Clara", "CA", "95111", "408-540-1785", "408-813-4592", "vinouye@aol.com", "http://www.cnetworkinc.com"],
+[ "Willard", "Kolmetz", "Ingalls, Donald R Esq", "618 W Yakima Ave", "Irving", "Dallas", "TX", "75062", "972-303-9197", "972-896-4882", "willard@hotmail.com", "http://www.ingallsdonaldresq.com"]] );
+
+  // 위치 지정없이 데이타만 파라미터로 지정하면 맨 마지막에 Row 가 생성됩니다.
+  // Object 의 property 와 그리드의 Column ID 가 일치하는 컬럼에 데이타가 각각 삽입됩니다.
+  grid1.addRow( { "firstName": "Maryann", "lastName": "Royster", "companyName": "Franklin, Peter L Esq", "address": "74 S Westgate St", "city": "Albany", "county": "Albany", "state": "NY", "zip": "12204", "phone1": "518-966-7987", "phone2": "518-448-8982", "email": "mroyster@royster.com", "web": "http://www.franklinpeterlesq.com" } );
+
+  // 인덱스를 0 을 주면 첫 번째 Row 로 삽입됩니다.
+  // Array 는 별도의 property 가 존재하지 않음으로 데이타 순서대로 컬럼에 데이타가 삽입됩니다.
+  // 컬럼 갯수보다 데이타 숫자가 많은 경우, 넘치는 데이타는 무시됩니다.
+  // 컬럼 갯수보다 데이타 숫자가 적을 경우, 앞 컬럼부터 데이타를 채우고 나머지는 빈 Cell 로 표시됩니다.
+  grid1.addRow( 0, [ "Alisha", "Slusarski", "Wtlz Power 107 Fm", "3273 State St", "Middlesex", "Middlesex", "NJ", "8846", "732-658-3154", "732-635-3453", "alisha@slusarski.com", "http://www.wtlzpowerfm.com" ] );
+</code></pre>
+                <h2 id="delete">DELETE</h2>
+                <p>removeRow() 메소드를 이용하여 Row 를 삭제합니다.
+                    <br>removedRow() 메소드를 이용해서 삭제된 Row 를 얻어 옵니다.
+                    <br>addRow() 메소드를 통해 추가된 Row 는 제외되며 (fetch 로) 그리드 생성 시점의 최초 Row 만 해당됩니다.
+                    <br>서버와의 동기화는 <a href="링크 필요">여기</a>를 참조하세요.</p>
+                <pre><code class="language-javascript">  // 2번째 Row 를 삭제합니다.
+  grid1.removeRow( 1 );
+
+  // 삭제된 Row 를 얻어 옵니다.
+  // return 값은 Array 입니다.
+  // 삭제된 Row 가 있는 경우, Array Item 에 Object 로 존재합니다.
+  // [{"firstName":"James","lastName":"Butt","companyName":"Beck Horizon Builders","address":"6649 N Blue Gum St","city":"New Orleans","county":"Orleans","state":"LA","zip":"70116","phone1":"504-621-8927","phone2":"504-845-1427","email":"jbutt@gmail.com","web":"http://www.bentonjohnbjr.com"}]
+  grid1.removedRow();
+</code></pre>
+                <h2 id="-">직접 해보세요!</h2>
+                <p>그리드 생성 시점에 fetch 를 설정하면 생성과 동시에 fecth 를 통해 데이타를 얻어서 그리드를 그립니다.
+                    <br>자세한 내용은 <a href="http://backbonejs.org/#Collection-fetch">Backbone.Collection 의 fetch</a> 을 참조하세요.</p>
+                <pre><code class="language-javascript">var grid1 = new w5.Grid({
+    .... ,
+    fetch: {
+      success: function() {
+        ....
+      }
+    }
+}).render();
+</code></pre>
+                <p>단, 아래 샘플의 경우에는 샘플 소스와 데이타를 얻어오는 도메인이 달라서 발생하는 'Access-Control-Allow-Origin' 이슈를 처리하기 위해 <code class="language-javascript">jsonp</code> 를 이용합니다.
+                    <br><code class="language-javascript">jsonp</code> callback function 으로 <code class="language-javascript">success</code> 를 사용하고 있지만, 일반적으로는 필요없는 부분입니다.</p>
+                <p>
+                    <p data-height="400" data-theme-id="0" data-slug-hash="fmKcD" data-default-tab="result" class='codepen'>See the Pen <a href='http://codepen.io/w5/pen/fmKcD/'>W5Grid - [Basic] Create w5.Grid from Backbone.Collection - 02</a> by w5 (<a href='http://codepen.io/w5'>@w5</a>) on <a href='http://codepen.io'>CodePen</a>.</p>
+                </p>
+                <script async src="//codepen.io/assets/embed/ei.js"></script>
+            </section>
+            <section>
+                <div id="disqus_thread"></div>
+                <script type="text/javascript">
+                    /* * * CONFIGURATION VARIABLES: EDIT BEFORE PASTING INTO YOUR WEBPAGE * * */
+                    var disqus_shortname = 'w5-io'; /* * * DON'T EDIT BELOW THIS LINE * * */
+                    (function() {
+                        var dsq = document.createElement('script');
+                        dsq.type = 'text/javascript';
+                        dsq.async = true;
+                        dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+                        (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+                    })();
+                </script>
+                <noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a>
+                </noscript> <a href="http://disqus.com" class="dsq-brlink">comments powered by <span class="logo-disqus">Disqus</span></a> 
+                <script type="text/javascript">
+                    /* * * CONFIGURATION VARIABLES: EDIT BEFORE PASTING INTO YOUR WEBPAGE * * */
+                    var disqus_shortname = 'w5-io'; /* * * DON'T EDIT BELOW THIS LINE * * */
+                    (function() {
+                        var s = document.createElement('script');
+                        s.async = true;
+                        s.type = 'text/javascript';
+                        s.src = '//' + disqus_shortname + '.disqus.com/count.js';
+                        (document.getElementsByTagName('HEAD')[0] || document.getElementsByTagName('BODY')[0]).appendChild(s);
+                    }());
+                </script>
+            </section>
+        </article>
+    </div>
+    <!-- FOOTER  -->
+    <div id="footer_wrap">
+        <footer class="inner clearfix">
+            <div style="width:255px; float:right;">
+                <a href="//plus.google.com/u/0/105292818602737285330?prsrc=3" rel="publisher" target="_blank" style="text-decoration:none; display:block; float:left; width:25px;">
+                    <img src="//ssl.gstatic.com/images/icons/gplus-16.png" alt="Google+" style="border:0;width:16px;height:16px;" />
+                </a> <a href="https://twitter.com/share" class="twitter-share-button" data-via="w5_io">Tweet</a> 
+                <script>
+                    ! function(d, s, id) {
+                        var js, fjs = d.getElementsByTagName(s)[0],
+                            p = /^http:/.test(d.location) ? 'http' : 'https';
+                        if (!d.getElementById(id)) {
+                            js = d.createElement(s);
+                            js.id = id;
+                            js.src = p + '://platform.twitter.com/widgets.js';
+                            fjs.parentNode.insertBefore(js, fjs);
+                        }
+                    }(document, 'script', 'twitter-wjs');
+                </script> <a href="https://twitter.com/w5_io" class="twitter-follow-button" data-show-count="false">Follow @w5_io</a> 
+                <script>
+                    ! function(d, s, id) {
+                        var js, fjs = d.getElementsByTagName(s)[0],
+                            p = /^http:/.test(d.location) ? 'http' : 'https';
+                        if (!d.getElementById(id)) {
+                            js = d.createElement(s);
+                            js.id = id;
+                            js.src = p + '://platform.twitter.com/widgets.js';
+                            fjs.parentNode.insertBefore(js, fjs);
+                        }
+                    }(document, 'script', 'twitter-wjs');
+                </script>
+            </div>
+        </footer>
+    </div>
+    <script src="../../../resources/js/jquery-1.11.1.min.js"></script>
+    <script src="../../../resources/bootstrap/js/bootstrap.min.js"></script>
+    <script src="../../../resources/prism/prism.js"></script>
+    <script type="text/javascript">
+        function openAlert(target) {
+            var alertParent = $("#header_wrap"),
+                alert, alertLeft = 0;
+            alert = $("<div class='alert alert-warning alert-dismissable' style='position:absolute; top:100px; z-index:20;'>" + "<button type='button' class='close' data-dismiss='alert' aria-hidden='true'>&times;</button>" + "<strong>Sorry!</strong> '" + $(target).text() + "' is under construction." + "</div>");
+            alertParent.append(alert);
+            alertLeft = alertParent.width() / 2 - alert.width() / 2;
+            alert.css("left", alertLeft);
+        }
+        var lnb = $("#lnbList"),
+            menuName = lnb.find("h1").text(),
+            menuList = $("<h2>Basic</h2>" + "<ul>" + "<li><a href='../../basic/doc/createW5Grid.html'>Creating W5 Grid</a></li>" + "<li><a href='../../basic/doc/convertTable.html'>Converting a table to a W5 grid</a></li>" + "<li><a href='../../basic/doc/get-set.html'>.get()/.set() API</a></li>" + "<li><a href='../../basic/doc/requireJS.html'>RequireJS</a></li>" + "</ul>" + "<h2>Column</h2>" + "<ul>" + "<li><a href='../../column/doc/adjustColumn.html'>Adjust Column Width</a></li>" + "<li><a href='../../column/doc/hideShowColumn.html'>Hide/Show Column</a></li>" + "<li><a href='../../column/doc/moveColumn.html'>Moving a column </a></li>" + "<li><a href='../../column/doc/frozenColumn.html'>Frozen column</a></li>" + "</ul>" + "<h2>Navigation</h2>" + "<ul>" + "<li><a href='../../navigation/doc/keyboardNavigation.html'>Keyboard Navigation</a></li>" + "</ul>" + "<h2>Style</h2>" + "<ul>" + "<li><a href='../../style/doc/concept.html'>Concept</a></li>" + "</ul>" + "<h2>Cell</h2>" + "<ul>" + "<li><a href='../../cell/doc/inlineEdit.html'>Inline Edit</a></li>" + "<li><a href='../../cell/doc/displayType.html'>Display Type</a></li>" + "<li><a href='../../cell/doc/customCell.html'>Custom Cell</a></li>" + "<li><a href='../../cell/doc/dataType.html'>Data Type</a></li>" + "</ul>");
+        if (menuName === "Sample") {
+            lnb.append(menuList);
+        }
+    </script>
+</body>
+
+</html>
