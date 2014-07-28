@@ -25,7 +25,7 @@
         ga('create', 'UA-1212521-12', 'w5.io');
         ga('send', 'pageview');
     </script>
-    <title>W5 : Keyboard Navigation</title>
+    <title>W5 : Sort</title>
 </head>
 
 <body>
@@ -76,129 +76,61 @@
         </aside>
         <article class="contents">
             <section>
-                <h1 id="keyboard">Keyboard</h1>
-                <p>There are broadly two modes ? navigation mode to move among cells, and actionable mode to manipulate the cell data and widget.</p>
-                <h2 id="navigation-mode">Navigation Mode</h2>
-                <ul>
-                    <li>
-                        <p>Right/Left Arrow Key
-                            <br>Column movement. Row change is not allowed.</p>
-                    </li>
-                    <li>
-                        <p>Up/Down Arrow Key
-                            <br>Row movement. Column change is not allowed.</p>
-                    </li>
-                    <li>
-                        <p>Home Key
-                            <br>Moves to the first cell of the current row</p>
-                    </li>
-                    <li>
-                        <p>End Key
-                            <br>Moves to the last cell of the current row</p>
-                    </li>
-                    <li>
-                        <p>Page Up Key
-                            <br>Moves to the first cell of the current column</p>
-                    </li>
-                    <li>
-                        <p>Page Down Key
-                            <br>Moves to the last cell of the current column</p>
-                    </li>
-                </ul>
-                <h3 id="give-it-a-try-01">Give it a try! 01</h3>
-                <p>You can move to the intended cell by navigating fixed columns using the keyboard.</p>
+                <h1 id="sort">Sort</h1>
+                <p>To perform sorting, DoubleClick the header or use sort() API.</p>
+                <h2 id="grid-header">Grid Header</h2>
+                <p>In the initial state, DoubleClicking the grid header will change its order to <code class="language-javascript">Ascending</code>-<code class="language-javascript">Descending</code>.
+                    <br>If you don't want column to be sorted, set <code class="language-javascript">sortable</code>  <code class="language-javascript">false</code> to prevent the column sorting.</p>
+                <pre><code class="language-javascript">  grid1 = new w5.Grid({
+    ....
+    colModel : [{
+      headerLable: "Column 1",
+      sortable: false
+    }]
+  }).render();
+</code></pre>
                 <p>
-                    <p data-height="380" data-theme-id="0" data-slug-hash="rIifB" data-default-tab="result" class='codepen'>See the Pen <a href='http://codepen.io/w5/pen/rIifB/'>W5Grid - 04 Frozen Column</a> by w5 (<a href='http://codepen.io/w5'>@w5</a>) on <a href='http://codepen.io'>CodePen</a>.</p>
+                    <img src="../images/sort.gif" alt="Sort">
+                </p>
+                <h2 id="give-it-a-try-">Give it a try!</h2>
+                <p>
+                    <p data-height="400" data-theme-id="0" data-slug-hash="KagiE" data-default-tab="result" class='codepen'>See the Pen <a href='http://codepen.io/w5/pen/KagiE/'>W5Grid - [Data] Sort 01</a> by w5 (<a href='http://codepen.io/w5'>@w5</a>) on <a href='http://codepen.io'>CodePen</a>.</p>
                 </p>
                 <script async src="//codepen.io/assets/embed/ei.js"></script>
 
-                <h2 id="actionable-mode">Actionable Mode</h2>
-                <h3 id="tab-key">Tab Key</h3>
-                <ul>
-                    <li>Moving to the next actionable item.
-                        <ul>
-                            <li>An actionable item refers to an element that takes focus, switches to an editing state, or can be manipulated.</li>
-                        </ul>
-                    </li>
-                    <li>Switching to actionable mode when moved.
-                        <ul>
-                            <li>The editing mode will be engaged if the <a href="../../cell/doc/displayType.html">DisplayType</a> is <code class="language-javascript">text.</code> 
-                            </li>
-                            <li>If there is a widget in the cell, the widget will be focused.
-                                <ul>
-                                    <li>Focused by the first child.</li>
-                                    <li>You can designate a selector to access the focusing object to the <code class="language-javascript">focusSelector</code> property of the column model object, if the cell is a <a href="../../cell/doc/customCell.html">custom cell</a> and
-                                        the first child is not a tabbable object.</li>
-                                </ul>
-                            </li>
-                        </ul>
-                    </li>
-                    <li>If there is a tabbable object (checkbox) in the cell, use the tab to move between items (checkboxes).
-                        <ul>
-                            <li>Focus moves to the next cell at the last tabbable item.</li>
-                        </ul>
-                    </li>
-                    <li>At the last column, the focus moves to the first column of the next row.</li>
-                    <li>Shift + Tab operates contrary to the Tab.</li>
-                </ul>
-                <h4 id="focusselector">focusSelector</h4>
-                <ul>
-                    <li>Widget structure</li>
-                </ul>
-                <pre><code class="language-javascript">&lt;td&gt;
-  &lt;span class=&quot;widget datetimepicker&quot;&gt;
-    &lt;span class=&quot;picker-wrap&quot;&gt;
-      &lt;input type=&quot;text&quot; data-role=&quot;datetimepicker&quot; class=&quot;input&quot;&gt;
-    &lt;/span&gt;
-  &lt;/span&gt;
-&lt;/td&gt;
+                <h2 id="sort-api">sort API</h2>
+                <p>In the sort() method, give parameters of column to be sorted and the direction.
+                    <br>Column and Direction can be proceed at once by Array.
+                    <br>Column can be set by columnID or Index(starts from <code class="language-javascript">0</code>).
+                    <br>If Direction is not set, it autometically set to <code class="language-javascript">Ascending</code>.
+                    <br>If no parameter exist, it initializes all sorting.
+                    <br>If the User Comparator Function is given to the parameter, the sorting will perform the User Comparator Function.</p>
+                <pre><code class="language-javascript">  // Sort the 'firstName' Column ID.
+  // The default Direction is an Ascending.
+  grid1.sort('firstName');
+
+  // If no parameter exist, it initializes all sorting.
+  grid1.sort();
+
+  // Sort the first column (`firstName`) to Descending.
+  grid1.sort( 0, 'desc' );
+
+  // Sort the 'state' column and 2nd colum('lastName') in order. 
+  grid1.sort( ['state', 1] );
+
+  // Sort 'state', 'city', and the first column(`firstName`) in order with `ascent`, `ascent`, and `descent`.
+  grid1.sort( ['state', 'city', 0], ['asc', 'asc', 'desc'] );
+
+  // Sort can be done by User Comparator.
+  // Sort city, companyName column in order.
+  var comparator = function(item) {
+    return [ item.get("city"), item.get("companyName") ];
+  };
+  grid1.sort(comparator);
 </code></pre>
-                <ul>
-                    <li>focusSelector designation</li>
-                </ul>
-                <pre><code class="language-javascript">  grid1 = new w5.Grid( {
-    Omitted...
-    colModel: [{
-        displayType: "custom",
-        template = "&lt;input type=&apos;text&apos;/&gt;",
-        focusSelector = "input"
-    }]
-  });
-</code></pre>
-                <h3 id="enter-f2-key">Enter, F2 Key</h3>
-                <p>Switching to actionable mode.</p>
-                <h3 id="escape-key">Escape Key</h3>
-                <p>Switching from actionable mode to navigation mode.</p>
-                <h3 id="example">Example</h3>
-                <ul>
-                    <li>checkbox
-                        <ul>
-                            <li>Supports movement among items using Tab / Shift + Tab, like native action.</li>
-                        </ul>
-                    </li>
-                    <li>selectbox
-                        <ul>
-                            <li>Supports movement among items using the up/down arrow key, like native action.</li>
-                        </ul>
-                    </li>
-                    <li>radio
-                        <ul>
-                            <li>Supports movement among items using the left/right (up/down) arrow key, like native action.</li>
-                        </ul>
-                    </li>
-                    <li>custom
-                        <ul>
-                            <li>Among jQuery UI and Kendo UI datepicker that are inserted as a 3rd party widget, the calendar pop-up of the <a href="http://demos.telerik.com/kendo-ui/datetimepicker/keyboard-navigation">Kendo UI</a> can be populated using alt
-                                (option) + down arrow key.</li>
-                        </ul>
-                    </li>
-                </ul>
+                <h2 id="give-it-a-try-">Give it a try!</h2>
                 <p>
-                    <img src="../images/actionable_mode.gif" alt="Actionable Mode">
-                </p>
-                <h3 id="give-it-a-try-02">Give it a try! 02</h3>
-                <p>
-                    <p data-height="490" data-theme-id="0" data-slug-hash="ohebw" data-default-tab="result" class='codepen'>See the Pen <a href='http://codepen.io/w5/pen/ohebw/'>W5Grid - 05 DisplayType</a> by w5 (<a href='http://codepen.io/w5'>@w5</a>) on <a href='http://codepen.io'>CodePen</a>.</p>
+                    <p data-height="400" data-theme-id="0" data-slug-hash="qomjv" data-default-tab="result" class='codepen'>See the Pen <a href='http://codepen.io/w5/pen/qomjv/'>W5Grid - [Data] Sort 02</a> by w5 (<a href='http://codepen.io/w5'>@w5</a>) on <a href='http://codepen.io'>CodePen</a>.</p>
                 </p>
                 <script async src="//codepen.io/assets/embed/ei.js"></script>
             </section>
