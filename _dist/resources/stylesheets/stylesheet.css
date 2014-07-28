@@ -401,13 +401,13 @@ Full-Width Styles
   clear:left;
 }
 .main_content_fl {
-	margin:20px 0px 0px 15px;
-	width:320px;
-	min-height:192px;	
-	float:left;
+  margin:20px 0px 0px 15px;
+  width:320px;
+  min-height:192px; 
+  float:left;
 }
 .main_content_fl:fist-child {
-	margin-left:10px;	
+  margin-left:10px; 
 }
 
 #footer_wrap {
