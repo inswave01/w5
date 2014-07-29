@@ -350,11 +350,12 @@ var GridProto = {
       $("document").addClass("noselect");
     },
     sortColumn : function( col ) {
-      var column = this.collection.sortInfo.column || [],
+      var column = _.isFunction( this.collection.sortInfo.column ) ? [] : this.collection.sortInfo.column || [],
           direction = this.collection.sortInfo.direction || [],
           colID = this.viewModel.getColID(col),
           index = _.indexOf( column, colID ),
           sortState = index === -1 ? 0 : ( ( direction[index] || 'asc' ) === "asc" ? 1 : 2 );
+
       sortState = ( sortState + 1 ) % 3;
 
       if ( sortState === 0 ) { 
