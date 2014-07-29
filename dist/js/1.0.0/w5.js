@@ -5,7 +5,7 @@
  * Copyright 2013 Inswave Foundation and other contributors
  * Released under the LGPLv3.0 license
  *
- * Date: 2014-07-23
+ * Date: 2014-08-06
  */
 
 (function(root, factory) {
@@ -1048,7 +1048,6 @@ var GridProto = {
     this.scrollXHandleMinWidth  = parseInt( this.$scrollXHandle.css('min-width'), 10 );
 
     this.addEvents();
-    this.createTbody();
     this.setResize();
 
     this.headNum = $el.find("thead tr").length;
@@ -1176,6 +1175,7 @@ var GridProto = {
         colgroup = "",
         i, j, $tr, colNum;
 
+    this.$el.find("col").remove();
     this.$el.find("tr").remove();
 
     for( colNum = 0; colNum < visibleCol.length; colNum++ ) {
@@ -1226,11 +1226,12 @@ var GridProto = {
       $("document").addClass("noselect");
     },
     sortColumn : function( col ) {
-      var column = this.collection.sortInfo.column || [],
+      var column = _.isFunction( this.collection.sortInfo.column ) ? [] : this.collection.sortInfo.column || [],
           direction = this.collection.sortInfo.direction || [],
           colID = this.viewModel.getColID(col),
           index = _.indexOf( column, colID ),
           sortState = index === -1 ? 0 : ( ( direction[index] || 'asc' ) === "asc" ? 1 : 2 );
+
       sortState = ( sortState + 1 ) % 3;
 
       if ( sortState === 0 ) { 
@@ -1683,6 +1684,9 @@ var GridProto = {
 
     if( model.hasChanged('width') || model.hasChanged('flex') || model.hasChanged('hidden') ) {
       if( model.type === "column" ) {
+        if ( model.hasChanged('width') ) {
+          model.set('flex', null, {slient: true});
+        }
         this.viewModel.updateVisibleCol();
         this.setResize();
       }
@@ -1850,7 +1854,7 @@ var GridProto = {
       this.drawByScroll();
     }
     if ( model.hasChanged("width") ) {
-      this.$el.css( "width", model.get("option").value["width"] );
+      this.$el.css( "width", model.get("width") );
       this.setResize();
     }
   },
@@ -2228,8 +2232,8 @@ var GridProto = {
         flexSum = 0;
 
     _(this.viewModel.getVisibleCol()).each( function(obj, col) {
-      if ( this.viewModel.hasMeta( ["*", col], "flex") ) {
-        var flex = this.viewModel.getMeta( ["*", col], "flex");
+      var flex = this.viewModel.getMeta( ["*", col], "flex");
+      if ( _.isNumber(flex) ) {
         flexArr.push({
           col : col,
           flex : flex,
@@ -2273,9 +2277,8 @@ var GridProto = {
     this.wholeTblHeight = this.getWholeTblHeight();
     
     this.startCol = this.endCol = -1;
-    
-    this.drawHeader();
-    this.drawTbody();
+
+    this.createTbody();
     this.drawByScroll();
   },
   checkResize: function() {
