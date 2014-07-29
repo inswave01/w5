@@ -975,7 +975,7 @@ var GridProto = {
       this.drawByScroll();
     }
     if ( model.hasChanged("width") ) {
-      this.$el.css( "width", model.get("option").value["width"] );
+      this.$el.css( "width", model.get("width") );
       this.setResize();
     }
   },
