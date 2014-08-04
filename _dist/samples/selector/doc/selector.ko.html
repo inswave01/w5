@@ -25,7 +25,7 @@
         ga('create', 'UA-1212521-12', 'w5.io');
         ga('send', 'pageview');
     </script>
-    <title>W5 : Process Data</title>
+    <title>W5 : Selector</title>
 </head>
 
 <body>
@@ -76,137 +76,23 @@
         </aside>
         <article class="contents">
             <section>
-                <h1 id="process-data">Process Data</h1>
-                <p>Data can be manipulated by Cell, Row, Column, Table unit.
-                    <br>See <a href="../../basic/doc/get-set.html">get/set Guide</a>.</p>
-                <h2 id="read">READ</h2>
-                <p>Select the target with parts selector and obtain the data by get() method.</p>
-                <pre><code class="language-javascript">// Returns the data of the first row of the first cell.
-// James
-grid1.cell(0,0).get('data');
+                <h1 id="selector">Selector</h1>
+                <p>W5 Grid의 <a href="../../basic/doc/get-set.ko.html">.get()/.set() API</a>를 사용하기 위해서는 <a href="../../basic/doc/get-set.ko.html#w5-grid-parts-select-method">W5 Grid parts select method</a>로 원하는 parts를 선택해야 합니다.
+                    <br>하지만 W5 Grid parts select method는 table, col, row, cell 단위로만 처리할 수 있어 다양한 조건의 섬세한 처리에 한계가 있습니다. 그 점을 극복하기 위해서 W5 Grid는 Selector() API를 제공합니다.</p>
+                <h2 id="selector-">Selector의 사용 방법</h2>
+                <p>W5 Grid의 Selector는 CSS Slector 문법과 유사합니다.</p>
+                <p>형태는 다음과 같이 생겼습니다.</p>
+                <blockquote>
+                    <p>grid.<code class="language-javascript">selector( "selector strings")</code>.set(...);</p>
+                    <dl>
+                        <dt></dt>
+                        <dd></dd>
+                    </dl>
 
-// Returns the entire 6th row data in form of an Object.
-// {"firstName":"Mitsue", "lastName":"Tollner" .... , "web":"http://www.morlongassociates.com"}
-grid1.row(5).get('data');
-
-// Can manipulate the data by direct reference to Backbone.Collection.
-// Returns the same result as above 2 commands.
-grid1.collection.at(5).toJSON();
-
-// Returns the same data is above but exclude column ID and returns as an Array form.
-// ["Mitsue", "Tollner" .... , "http://www.morlongassociates.com"]
-grid1.row(5).get('data', { type: 'array' });
-
-// Only returns column data that has "pick" as an option.
-// {"firstName":"Mitsue", "companyName":"....", "city":"....", "phone1":"....", "email":"mitsue_tollner@yahoo.com"}
-grid1.row(5).get('data', { pick: ['firstName', 'companyName', 'city', 'phone1', 'email'] });
-
-// Returns column data except the colums with "opmit" option.
-// The result is same as above command.
-grid1.row(5).get('data', { omit: ['lastName', 'address', 'county', 'state', 'zip', 'phone2', 'web'] });
-
-// Returns data regarding city column in form of an Array.
-// The Array length is same as Row number.
-// ["New Orleans", "Bridgeport", ".... , "Rockford", "Aston"]
-grid1.col('city').get('data');
-</code></pre>
-                <h2 id="update">UPDATE</h2>
-                <p>Select method is same as READ, and data can be changed by set() method. For validation, check out the Pro version
-                    <!--[Pro version](링크 필요)-->.
-                    <br>
-                    <!--For synchronization with server, [Click here](링크 필요).-->
+                </blockquote>
+                <p class="ac">
+                    <img src="" alt="">
                 </p>
-                <pre><code class="language-javascript">// Change the first row of the companyName to `Beck Horizon Builders`, and change its text color to `OrangeRed`.
-grid1.cell( 0, 'companyName' ).set( "data", "Beck Horizon Builders" ).set( "style", "color", "OrangeRed" );
-</code></pre>
-                <h2 id="create">CREATE</h2>
-                <p>Add a new Row by addRow() method.
-                    <br>The followings are the 2 parameters to set.</p>
-                <ul>
-                    <li>Index
-                        <ul>
-                            <li>If the Index is not set, it goes to the last.</li>
-                            <li>To insert the Index in the first, insert <code class="language-javascript">0</code>.</li>
-                        </ul>
-                    </li>
-                    <li>Data to be Inserted</li>
-                </ul>
-                <p>The supported data Format is as follows:</p>
-                <ul>
-                    <li>Object</li>
-                    <li>Array(Only Data)</li>
-                    <li>JSON Array</li>
-                    <li>Two-Dimensional Array(Only Data)</li>
-                </ul>
-                <p>For more information on defualt value, see <a href="./defaults.html">Defaults</a>.
-                    <br>
-                    <!--For synchronization with server, [Click here](링크 필요).-->
-                </p>
-                <pre><code class="language-javascript">  // The total Row number can be obtained by getRowLength() method.
-  // The sample has total of 20 rows.
-  grid1.getRowLength();
-
-  // If no parameter is set, an empty Row is added to the last.
-  // You can see a Row is added by scrolling.
-  grid1.addRow();
-
-  // With getRowlength() method, it returns 21 as total row number.
-  grid1.getRowLength();
-
-  // Set the position of where the number type Row gets added.
-  // An empty row is added to the 2nd row.
-  grid1.addRow(1);
-
-  // You can set the position and the data in order.
-  // Multiple Rows can be added by Two-Dimensional Array or JSON Array.
-  // Row added to 2nd and 3rd row as `Veronika` and `Willard`.
-  grid1.addRow( 1, [[ "Veronika", "Inouye", "C 4 Network Inc", "6 Greenleaf Ave", "San Jose", "Santa Clara", "CA", "95111", "408-540-1785", "408-813-4592", "vinouye@aol.com", "http://www.cnetworkinc.com"],
-[ "Willard", "Kolmetz", "Ingalls, Donald R Esq", "618 W Yakima Ave", "Irving", "Dallas", "TX", "75062", "972-303-9197", "972-896-4882", "willard@hotmail.com", "http://www.ingallsdonaldresq.com"]] );
-
-  // If the parameter has only data without position, the row gets added to the last.
-  // Data inserted to the column where the property of the Object and the Column ID is identical.
-  grid1.addRow( { "firstName": "Maryann", "lastName": "Royster", "companyName": "Franklin, Peter L Esq", "address": "74 S Westgate St", "city": "Albany", "county": "Albany", "state": "NY", "zip": "12204", "phone1": "518-966-7987", "phone2": "518-448-8982", "email": "mroyster@royster.com", "web": "http://www.franklinpeterlesq.com" } );
-
-  // If the Index is 0, a Row inserted at the first.
-  // Array does not have property, so the Data inserted to the column in order.
-  // If the number of the Array data is greater than the number of the column, the left over Array data is ignored.
-  // If the number of the column is greater than the Array data, the rest column stays empty.
-  grid1.addRow( 0, [ "Alisha", "Slusarski", "Wtlz Power 107 Fm", "3273 State St", "Middlesex", "Middlesex", "NJ", "8846", "732-658-3154", "732-635-3453", "alisha@slusarski.com", "http://www.wtlzpowerfm.com" ] );
-</code></pre>
-                <h2 id="delete">DELETE</h2>
-                <p>Row can be deleted by removeRow() method.
-                    <br>Obtain deleted row by removedRow() method.
-                    <br>The row added by addRow() method is excluded, and only includes the very first rows when a grid is created (by fetch).
-                    <!--For the synchronization with server [click here](링크 필요).  -->
-                </p>
-                <pre><code class="language-javascript">  // Delete 2nd row.
-  grid1.removeRow( 1 );
-
-  // Obtain deleted row.
-  // The return value is an Array.
-  // If deleted row exist, it stays in Object form in Array Item.
-  // [{"firstName":"James","lastName":"Butt","companyName":"Beck Horizon Builders","address":"6649 N Blue Gum St","city":"New Orleans","county":"Orleans","state":"LA","zip":"70116","phone1":"504-621-8927","phone2":"504-845-1427","email":"jbutt@gmail.com","web":"http://www.bentonjohnbjr.com"}]
-  grid1.removedRow();
-</code></pre>
-                <h2 id="give-it-a-try-">Give it a try!</h2>
-                <p>If fetch is set when a grid is created, data will be obtained by the fetch and draw a grid.
-                    <br>For more information see <a href="http://backbonejs.org/#Collection-fetch">fetch from Backbone.Collection</a>.</p>
-                <pre><code class="language-javascript">var grid1 = new w5.Grid({
-    .... ,
-    fetch: {
-      success: function() {
-        ....
-      }
-    }
-}).render();
-</code></pre>
-                <p>Below sample uses <code class="language-javascript">jsonp</code> to resolve the 'Access-Control-Allow-Origin' issue, occured due to different domain between the sample source and the data. The sample uses <code class="language-javascript">success</code> with
-                    <code
-                    class="language-javascript">jsonp</code>callbak function, but generally it is not necessary.</p>
-                <p>
-                    <p data-height="400" data-theme-id="0" data-slug-hash="fmKcD" data-default-tab="result" class='codepen'>See the Pen <a href='http://codepen.io/w5/pen/fmKcD/'>W5Grid - [Basic] Create w5.Grid from Backbone.Collection - 02</a> by w5 (<a href='http://codepen.io/w5'>@w5</a>) on <a href='http://codepen.io'>CodePen</a>.</p>
-                </p>
-                <script async src="//codepen.io/assets/embed/ei.js"></script>
             </section>
             <section>
                 <div id="disqus_thread"></div>
