@@ -88,7 +88,8 @@
 grid.row(0).addClass("bd1 f-bold"); // Add bd1 and f-bold classes to the first row.
 </code></pre>
                 <h3 id="-hasclass-classname-">.hasClass(<code class="language-javascript">className</code>)</h3>
-                <p>It returns whether the selected W5 Grid Parts element has the class of which is passed as a parameter or not. **Cannot take multiple classes as parameter" by white space separator.</p>
+                <p>It returns whether the selected W5 Grid Parts element has the class of which is passed as a parameter or not. .hasClass(
+                    <code class="language-javascript">className</code>) only checks the class of which is passed as a <code class="language-javascript">className</code>.</p>
                 <h4 id="example">Example</h4>
                 <pre><code class="lang-javascript">// if the cell(0, 3) has the "f-italic" class, it returns true, if else false.
 grid.cell(0, 3).hasClass("f-italic");
@@ -97,7 +98,7 @@ grid.col("col2").hasClass("f-bold");
 </code></pre>
                 <h3 id="-removeclass-classname-">.removeClass(<code class="language-javascript">className</code>)</h3>
                 <p>Removes class of which is passed as a parameter, <code class="language-javascript">className</code>, from the selected W5 Grid Parts element if the class exist.
-                    <br>The data type of the parameter is a <code class="language-javascript">String</code> and can add multiple classes by white space separator.</p>
+                    <br>The data type of the parameter is a <code class="language-javascript">String</code> and can remove multiple classes by white space separator.</p>
                 <h4 id="example">Example</h4>
                 <pre><code class="lang-javascript">// Remove "f-italic" class from 3rd row.
 grid.row(2).removeClass("f-italic");
@@ -114,7 +115,7 @@ grid.col("col2").removeClass("f-bold");
                 </dl>
 
                 <h4 id="the-2nd-parameter-switch-">The 2nd parameter <code class="language-javascript">switch</code></h4>
-                <p><code class="language-javascript">switch</code>  <strong>is not required.</strong>
+                <p><code class="language-javascript">switch</code>  <strong>is optional parameter.</strong>
                     <br>If the <code class="language-javascript">switch</code> value is true, perform addClass(<code class="language-javascript">className</code>) of <code class="language-javascript">className</code>, if the value is false perform removeClass(
                     <code
                     class="language-javascript">className</code>). If <code class="language-javascript">switch</code> is designated, javacript code can be written as below.</p>

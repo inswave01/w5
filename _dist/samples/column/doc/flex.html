@@ -78,8 +78,42 @@
             <section>
                 <h1 id="flexible-column">Flexible Column</h1>
                 <p>The column width of the Flexible Column is defined by the ratio of the whole grid. Because the width size is defined by the ratio, <strong>horizontal scroll does not appear and if the grid width changes, the width of each column changes automatically.</strong>
-                    <br>The Flex Property of the <a href="../../basic/doc/createW5Grid.html#column-model">Column Model</a> is defined by an integer. Because it is a property of Column model, it can only defined when a grid is created.
-                    <br>Among the Flex columns, if a specific column gets px as a width value, the Flex property gets removed from the column in question and become a normal column. W5 Grid width changes automatically.</p>
+                </p>
+                <pre><code class="lang-javascript">var colModel = [
+        { "flex" : 1, "id" : "col1" },
+        { "flex" : 2, "id" : "col2" },
+        { "flex" : 3, "id" : "col3" },
+        { "flex" : 4, "id" : "col4" }
+    ];
+var grid = new w5.Grid({
+        ...
+        option : {
+            width: "500px"
+        },
+        colModel : colModel,
+        ...
+    });
+</code></pre>
+                <p>As above sample, create W5 Grid with a width of 500px and define flex to the colModel(<a href="../../basic/doc/createW5Grid.html#column-model">Column Model</a>), width of "col2", "col3", and "col4" becomes 100px, 150px, and 200px.</p>
+                <p>After the W5 Grid is being created, if width of the Column changes, it becomes 100px, 200px, 300px, and 400px.</p>
+                <pre><code class="lang-javascript">grid.option().set("width","1000px");
+
+grid.col(0).get("width"); // return 100
+grid.col(1).get("width"); // return 200
+grid.col(2).get("width"); // return 300
+grid.col(3).get("width"); // return 400
+</code></pre>
+                <p>Flexible Column can be defined after W5 Grid is created with <a href="../../basic/doc/get-set.html">.set()/get() API</a>.
+                    <br>If a column defined by Flex changes to fixed unit(px), the rest of columns automatically re-calculates the width size by substracting fixed unit(px) from the whole grid width size.</p>
+                <pre><code class="lang-javascript">grid.option().set("width","500px");
+grid1.col(1).set("width", 100);
+grid1.col(2).set("width", 100);
+
+grid1.col(0).get("width"); // return 60
+grid1.col(1).get("width"); // return 100
+grid1.col(2).get("width"); // return 100
+grid1.col(3).get("width"); // return 240
+</code></pre>
                 <h2 id="give-it-a-try-">Give it a try!</h2>
                 <p>
                     <p data-height="242" data-theme-id="0" data-slug-hash="nCfAr" data-default-tab="result" class='codepen'>See the Pen <a href='http://codepen.io/w5/pen/nCfAr'>W5Grid - [Column] Example for Flexible Column</a> by w5 (<a href='http://codepen.io/w5'>@w5</a>) on <a href='http://codepen.io'>CodePen</a>.</p>
