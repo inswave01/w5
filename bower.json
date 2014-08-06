@@ -1,6 +1,6 @@
 {
   "name": "w5",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "main": "dist/js/1.0.0/w5.min.js",
   "license": "LGPLv3.0",
   "homepage": "http://w5.io",
