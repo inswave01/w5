@@ -808,6 +808,9 @@ var GridProto = {
 
     if( model.hasChanged('width') || model.hasChanged('flex') || model.hasChanged('hidden') ) {
       if( model.type === "column" ) {
+        if ( model.hasChanged('width') ) {
+          model.set('flex', null, {slient: true});
+        }
         this.viewModel.updateVisibleCol();
         this.setResize();
       }
@@ -1353,8 +1356,8 @@ var GridProto = {
         flexSum = 0;
 
     _(this.viewModel.getVisibleCol()).each( function(obj, col) {
-      if ( this.viewModel.hasMeta( ["*", col], "flex") ) {
-        var flex = this.viewModel.getMeta( ["*", col], "flex");
+      var flex = this.viewModel.getMeta( ["*", col], "flex");
+      if ( _.isNumber(flex) ) {
         flexArr.push({
           col : col,
           flex : flex,
