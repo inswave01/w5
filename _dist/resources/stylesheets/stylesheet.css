@@ -401,13 +401,13 @@ Full-Width Styles
   clear:left;
 }
 .main_content_fl {
-  margin:20px 0px 0px 15px;
-  width:320px;
-  min-height:192px; 
-  float:left;
+  margin: 20px 0px 0px 15px;
+  width: 320px;
+  min-height: 192px;
+  float: left;
 }
 .main_content_fl:fist-child {
-  margin-left:10px; 
+	margin-left:10px;	
 }
 
 #footer_wrap {
@@ -415,14 +415,14 @@ Full-Width Styles
   border-top: 1px solid #111;
 }
 #footer_wrap .twitter-share-button{
-    margin: 12px 10px;
-    width: 80px !important; height: 20px !important;
-    float: left;
+  margin: 12px 10px;
+  width: 80px !important; height: 20px !important;
+  float: left;
 }
 #footer_wrap .twitter-follow-button{
-    margin: 12px 0px;
-    width: 103px !important; height: 20px !important;
-    float: left;
+  margin: 12px 0px;
+  width: 103px !important; height: 20px !important;
+  float: left;
 }
 
 
@@ -602,4 +602,7 @@ sub.html styles
 .content .contents pre {
   margin-bottom: 40px;
   word-wrap: normal;
+}
+#disqus_thread {
+  margin-top: 50px;
 }
