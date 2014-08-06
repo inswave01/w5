@@ -89,7 +89,7 @@
                     <li>O : grid.table().set("style", ...) Set the style to the entire of the table</li>
                     <li>▲ : grid.col(3).set("style", ...) Set the style to the specified column</li>
                     <li>◼ : grid.row(2).set("style", ...) Set the style to the specified row</li>
-                    <li>X︎ : grid.cell(3, 2).set("style", ...) Set the style to the specified cell</li>
+                    <li>X︎ : grid.cell(2, 3).set("style", ...) Set the style to the specified cell</li>
                 </ul>
                 <table>
                     <thead>
@@ -139,7 +139,7 @@
                         </tr>
                     </tbody>
                 </table>
-                <p>The table will be shown as above. Pulling the cell(3,2), which all style has been applied, by .get("style") will return the style <code class="language-javascript">Object</code> of <strong>O ▲ ◼ X</strong>.
+                <p>The table will be shown as above. Pulling the cell(2, 3), which all style has been applied, by .get("style") will return the style <code class="language-javascript">Object</code> of <strong>O ▲ ◼ X</strong>.
                     <br>Unlike cell, <a href="../../basic/doc/get-set.html#w5-grid-parts-select-method">table, row, col do not refer to each other, there are separate individual objects and the smallest composition unit is a cell]</a>. Therefore, the cell()
                     can pull all the values but table, row, col can only pull a value set by .set() select method.</p>
                 <pre><code class="lang-javascript">grid.table().get("style");    // Return O
