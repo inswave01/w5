@@ -5,12 +5,12 @@
     <meta charset='utf-8' />
     <meta http-equiv="X-UA-Compatible" content="chrome=1" />
     <meta name="description" content="W5" />
-    <link rel="stylesheet" type="text/css" media="screen" href="./resources/bootstrap/css/bootstrap.min.css">
-    <link rel="stylesheet" type="text/css" media="screen" href="./resources/bootstrap/css/carousel.css">
-    <link rel="stylesheet" type="text/css" media="screen" href="./resources/stylesheets/stylesheet.css">
-    <link rel="stylesheet" type="text/css" media="screen" href="./resources/stylesheets/common.css">
-    <link rel="stylesheet" type="text/css" media="screen" href="./resources/prism/prism.css">
-    <link rel="stylesheet" type="text/css" media="screen" href="./resources/prism/prism-coy.css">
+    <link rel="stylesheet" type="text/css" media="screen" href="./../../../resources/bootstrap/css/bootstrap.min.css">
+    <link rel="stylesheet" type="text/css" media="screen" href="./../../../resources/bootstrap/css/carousel.css">
+    <link rel="stylesheet" type="text/css" media="screen" href="./../../../resources/stylesheets/stylesheet.css">
+    <link rel="stylesheet" type="text/css" media="screen" href="./../../../resources/stylesheets/common.css">
+    <link rel="stylesheet" type="text/css" media="screen" href="./../../../resources/prism/prism.css">
+    <link rel="stylesheet" type="text/css" media="screen" href="./../../../resources/prism/prism-coy.css">
     <script>
         (function(i, s, o, g, r, a, m) {
             i['GoogleAnalyticsObject'] = r;
@@ -25,7 +25,7 @@
         ga('create', 'UA-1212521-12', 'w5.io');
         ga('send', 'pageview');
     </script>
-    <title>W5 : CSS API</title>
+    <title>W5 : 브라우저 Resizing에 대한 반응</title>
 </head>
 
 <body>
@@ -76,68 +76,26 @@
         </aside>
         <article class="contents">
             <section>
-                <h1 id="css-api">CSS API</h1>
-                <p>You will find difficulties when handling CSS Class with <code class="language-javascript">.set("class", className)</code>. <code class="language-javascript">.set("class", className)</code> does not add a new class to the existing, instead
-                    it overrides the existing CSS Class so the existed CSS Class disappears.
-                    <br>In W5 Grid, to handle CSS Class easier, provides .addClass(), .hasClass(), .removeClass(), .toggleClass() API.</p>
-                <h3 id="-addclass-classname-">.addClass(<code class="language-javascript">className</code>)</h3>
-                <p>On the selected W5 Grid Parts element, it adds a class of which passed on as a parameter.
-                    <br>The data type of the parameter is a <code class="language-javascript">String</code> and can add multiple classes by white space separator.</p>
-                <h4 id="example">Example</h4>
-                <pre><code class="lang-javascript">grid.row(0).addClass("bgRed");      // Add bgRed class to the first row.
-grid.row(0).addClass("bd1 f-bold"); // Add bd1 and f-bold classes to the first row.
-</code></pre>
-                <h3 id="-hasclass-classname-">.hasClass(<code class="language-javascript">className</code>)</h3>
-                <p>It returns whether the selected W5 Grid Parts element has the class of which is passed as a parameter or not. **Cannot take multiple classes as parameter" by white space separator.</p>
-                <h4 id="example">Example</h4>
-                <pre><code class="lang-javascript">// if the cell(0, 3) has the "f-italic" class, it returns true, if else false.
-grid.cell(0, 3).hasClass("f-italic");
-// If where the colModel ID is col2 has the "f-bold" class, it returns true, if else false.
-grid.col("col2").hasClass("f-bold");
-</code></pre>
-                <h3 id="-removeclass-classname-">.removeClass(<code class="language-javascript">className</code>)</h3>
-                <p>Removes class of which is passed as a parameter, <code class="language-javascript">className</code>, from the selected W5 Grid Parts element if the class exist.
-                    <br>The data type of the parameter is a <code class="language-javascript">String</code> and can add multiple classes by white space separator.</p>
-                <h4 id="example">Example</h4>
-                <pre><code class="lang-javascript">// Remove "f-italic" class from 3rd row.
-grid.row(2).removeClass("f-italic");
-// Remove "f-bold" class from the column where the colModel ID is col2.
-grid.col("col2").removeClass("f-bold");
-</code></pre>
-                <h3 id="-toggleclass-classname-switch-">.toggleClass(<code class="language-javascript">className</code>, <code class="language-javascript">switch</code>)</h3>
-                <p>If the selected W5 Grid Parts element</p>
-                <dl>
-                    <dt>does not have the <code class="language-javascript">className</code> then perform  </dt>
-                    <dd>.addClass(<code class="language-javascript">className</code>).</dd>
-                    <dt>has <code class="language-javascript">className</code> then perform </dt>
-                    <dd>.removeClass(<code class="language-javascript">className</code>).</dd>
-                </dl>
-
-                <h4 id="the-2nd-parameter-switch-">The 2nd parameter <code class="language-javascript">switch</code></h4>
-                <p><code class="language-javascript">switch</code>  <strong>is not required.</strong>
-                    <br>If the <code class="language-javascript">switch</code> value is true, perform addClass(<code class="language-javascript">className</code>) of <code class="language-javascript">className</code>, if the value is false perform removeClass(
-                    <code
-                    class="language-javascript">className</code>). If <code class="language-javascript">switch</code> is designated, javacript code can be written as below.</p>
-                <pre><code class="lang-javascript">var addOrRemove = grid.cell(0, 0).get("data");
-
-// if addOrRemove is true, than add bgBlue class,
-// or if it is false, remove bgBlue class.
-grid1.col(1).toggleClass("bgBlue", addOrRemove);
-</code></pre>
-                <p>This code is same as follows.</p>
-                <pre><code class="lang-javascript">var addOrRemove = grid.cell(0, 0).get("data");
-
-if ( addOrRemove ){
-    grid.col(0).addClass("bgBlue");
-} else {
-    grid.col(0).removeClass("bgBlue");
-}
-</code></pre>
-                <h3 id="give-it-a-try-">Give it a try!</h3>
-                <p>
-                    <p data-height="242" data-theme-id="0" data-slug-hash="emBnb" data-default-tab="result" class='codepen'>See the Pen <a href='http://codepen.io/w5/pen/emBnb'>W5Grid - [Style] Example for CSS API</a> by w5 (<a href='http://codepen.io/w5'>@w5</a>) on <a href='http://codepen.io'>CodePen</a>.</p>
+                <h1 id="-resizing-">브라우저 Resizing에 대한 반응</h1>
+                <p>W5 Grid는 설정한 width의 단위에 따라 브라우저 Resizing에 대한 반응이 다릅니다.</p>
+                <h2 id="grid-width-">Grid Width가 상대적 크기(%)일 경우</h2>
+                <h3 id="-">일반적인 반응</h3>
+                <p>부모 객체 혹은 브라우저 Window를 기준으로 상대적인 width를 갖습니다. 그에 따라 W5 Grid의 가로 스크롤이 자동으로 계산됩니다.</p>
+                <p class="ac">
+                    <img src="../images/resizing-relative-general.gif" alt="width가 90%로 지정된 W5 Grid. 부모객체 혹은 브라우저 window에 따라 W5 Grid의 width가 변한다.">
                 </p>
-                <script async src="//codepen.io/assets/embed/ei.js"></script>
+
+                <h3 id="-flexible-column-column-doc-flex-ko-html-"><a href="../../column/doc/flex.ko.html">Flexible Column</a>일 경우</h3>
+                <p>부모 객체 혹은 브라우저 window 사이즈에 따라 W5 Grid의 width가 변경되어 flexible column으로 지정된 Column들의 width는 설정된 비율만큼 재계산 됩니다.</p>
+                <p class="ac">
+                    <img src="../images/resizing-relative-flexible.gif" alt="width가 90%로 지정된 W5 Grid. 부모객체 혹은 브라우저 window에 따라 W5 Grid의 width가 변하고 그에 따라 flexible column 으로 설정된 column들이 설정한 비율만큼 재계산된다.">
+                </p>
+
+                <h2 id="grid-width-px-">Grid Width가 절대 크기(px)일 경우</h2>
+                <p>부모 객체 혹은 브라우저 Window의 width가 W5 Grid 보다 작아 졌을 경우 부모 객체 혹은 브라우저 Window에 overflow가 발생하여 가로스크롤이 생깁니다.</p>
+                <p class="ac">
+                    <img src="../images/resizing-absolute.gif" alt="부모객체 혹은 브라우저 window에 따라 W5 Grid의 width가 변하고 그에 따라 flexible column 으로 설정된 column들이 설정한 비율만큼 재계산된다.">
+                </p>
             </section>
             <section>
                 <div id="disqus_thread"></div>
@@ -216,7 +174,7 @@ if ( addOrRemove ){
         }
         var lnb = $("#lnbList"),
             menuName = lnb.find("h1").text(),
-            menuList = $("<h2>Basic</h2>" + "<ul>" + "<li><a href='../../basic/doc/createW5Grid.html'>Creating W5 Grid</a></li>" + "<li><a href='../../basic/doc/convertTable.html'>Converting a table to a W5 grid</a></li>" + "<li><a href='../../basic/doc/get-set.html'>.get()/.set() API</a></li>" + "<li><a href='../../basic/doc/requireJS.html'>RequireJS</a></li>" + "</ul>" + "<h2>Column</h2>" + "<ul>" + "<li><a href='../../column/doc/adjustColumn.html'>Adjust Column Width</a></li>" + "<li><a href='../../column/doc/hideShowColumn.html'>Hide/Show Column</a></li>" + "<li><a href='../../column/doc/moveColumn.html'>Moving a column </a></li>" + "<li><a href='../../column/doc/frozenColumn.html'>Frozen column</a></li>" + "<li><a href='../../column/doc/flex.html'>Flexible column</a></li>" + "</ul>" + "<h2>Navigation</h2>" + "<ul>" + "<li><a href='../../navigation/doc/scroll.html'>Scroll</a></li>" + "<li><a href='../../navigation/doc/scrollArea.html'>Scroll Area</a></li>" + "<li><a href='../../navigation/doc/Wheel.html'>Wheel</a></li>" + "<li><a href='../../navigation/doc/keyboardNavigation.html'>Keyboard Navigation</a></li>" + "</ul>" + "<h2>Style</h2>" + "<ul>" + "<li><a href='../../style/doc/concept.html'>Concept</a></li>" + "<li><a href='../../style/doc/cssAPI.html'>CSS API</a></li>" + "</ul>" + "<h2>Cell</h2>" + "<ul>" + "<li><a href='../../cell/doc/inlineEdit.html'>Inline Edit</a></li>" + "<li><a href='../../cell/doc/displayType.html'>Display Type</a></li>" + "<li><a href='../../cell/doc/customCell.html'>Custom Cell</a></li>" + "<li><a href='../../cell/doc/dataType.html'>Data Type</a></li>" + "</ul>" + "<h2>Data</h2>" + "<ul>" + "<li><a href='../../data/doc/defaults.html'>Defaults</a></li>" + "<li><a href='../../data/doc/expression_format.html'>Expression</a></li>" + "<li><a href='../../data/doc/processData.html'>Process Data</a></li>" + "</ul>" + "<h2>Sort</h2>" + "<ul>" + "<li><a href='../../sort/doc/sort.html'>Sort</a></li>" + "</ul>");
+            menuList = $("<h2>Basic</h2>" + "<ul>" + "<li><a href='../../basic/doc/createW5Grid.html'>Creating W5 Grid</a></li>" + "<li><a href='../../basic/doc/convertTable.html'>Converting a table to a W5 grid</a></li>" + "<li><a href='../../basic/doc/get-set.html'>.get()/.set() API</a></li>" + "<li><a href='../../basic/doc/requireJS.html'>RequireJS</a></li>" + "</ul>" + "<h2>Column</h2>" + "<ul>" + "<li><a href='../../column/doc/adjustColumn.html'>Adjust Column Width</a></li>" + "<li><a href='../../column/doc/hideShowColumn.html'>Hide/Show Column</a></li>" + "<li><a href='../../column/doc/moveColumn.html'>Moving a column </a></li>" + "<li><a href='../../column/doc/frozenColumn.html'>Frozen column</a></li>" + "<li><a href='../../column/doc/flex.html'>Flexible column</a></li>" + "</ul>" + "<h2>Navigation</h2>" + "<ul>" + "<li><a href='../../navigation/doc/scroll.html'>Scroll</a></li>" + "<li><a href='../../navigation/doc/scrollArea.html'>Scroll Area</a></li>" + "<li><a href='../../navigation/doc/wheel.html'>Wheel</a></li>" + "<li><a href='../../navigation/doc/keyboardNavigation.html'>Keyboard Navigation</a></li>" + "</ul>" + "<h2>Style</h2>" + "<ul>" + "<li><a href='../../style/doc/concept.html'>Concept</a></li>" + "<li><a href='../../style/doc/cssAPI.html'>CSS API</a></li>" + "</ul>" + "<h2>Cell</h2>" + "<ul>" + "<li><a href='../../cell/doc/inlineEdit.html'>Inline Edit</a></li>" + "<li><a href='../../cell/doc/displayType.html'>Display Type</a></li>" + "<li><a href='../../cell/doc/customCell.html'>Custom Cell</a></li>" + "<li><a href='../../cell/doc/dataType.html'>Data Type</a></li>" + "</ul>" + "<h2>Data</h2>" + "<ul>" + "<li><a href='../../data/doc/defaults.html'>Defaults</a></li>" + "<li><a href='../../data/doc/expression_format.html'>Expression</a></li>" + "<li><a href='../../data/doc/processData.html'>Process Data</a></li>" + "</ul>" + "<h2>Sort</h2>" + "<ul>" + "<li><a href='../../sort/doc/sort.html'>Sort</a></li>" + "</ul>" + "<h2>etc</h2>" + "<ul>" + "<li><a href='../../etc/doc/resizing.html'>In response to the browser size.</a></li>" + "</ul>");
         if (menuName === "Sample") {
             lnb.append(menuList);
         }

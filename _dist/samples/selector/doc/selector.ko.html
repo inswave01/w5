@@ -78,21 +78,54 @@
             <section>
                 <h1 id="selector">Selector</h1>
                 <p>W5 Grid의 <a href="../../basic/doc/get-set.ko.html">.get()/.set() API</a>를 사용하기 위해서는 <a href="../../basic/doc/get-set.ko.html#w5-grid-parts-select-method">W5 Grid parts select method</a>로 원하는 parts를 선택해야 합니다.
-                    <br>하지만 W5 Grid parts select method는 table, col, row, cell 단위로만 처리할 수 있어 다양한 조건의 섬세한 처리에 한계가 있습니다. 그 점을 극복하기 위해서 W5 Grid는 Selector() API를 제공합니다.</p>
-                <h2 id="selector-">Selector의 사용 방법</h2>
-                <p>W5 Grid의 Selector는 CSS Slector 문법과 유사합니다.</p>
-                <p>형태는 다음과 같이 생겼습니다.</p>
+                    <br>하지만 W5 Grid parts select method는 table, col, row, cell 단위로만 처리할 수 있어 다양한 조건 처리에 한계가 있습니다. 그 점을 극복하기 위해서 W5 Grid는 Selector() API를 제공합니다.</p>
+                <h2 id="select-">select()</h2>
+                <p>select()는 W5 Grid parts select method를 대체할 수 있으므로 일반적으로 set()/get() API 이전에 W5 Grid parts를 선택합니다.</p>
+                <p>형태는 다음과 같습니다.</p>
                 <blockquote>
-                    <p>grid.<code class="language-javascript">selector( "selector strings")</code>.set(...);</p>
-                    <dl>
-                        <dt></dt>
-                        <dd></dd>
-                    </dl>
-
+                    <p>grid.<code class="language-javascript">selector( "selector strings", context, merge parts )</code>.set(...);</p>
                 </blockquote>
-                <p class="ac">
-                    <img src="" alt="">
+                <h3 id="selector-strings">Selector Strings</h3>
+                <p><code class="language-javascript">selector strings</code>는 Selector의 조합으로 특정 parts를 선택합니다.</p>
+                <dl>
+                    <dt>W5 Grid parts selector</dt>
+                    <dd><a href="http://www.w3.org/TR/CSS2/selector.html#type-selectors">CSS Type Selector</a>에서 영감을 얻었습니다. W5 Grid parts인 table, col, row, cell을 선택할 수 있습니다.</dd>
+                    <dt>Descendant selector</dt>
+                    <dd><a href="http://www.w3.org/TR/CSS2/selector.html#descendant-selectors">CSS Descendant Selector</a>에서 영감을 얻었습니다. 특정 parts안에 존재하는 parts를 선택할 수 있습니다.</dd>
+                    <dt>Property selector</dt>
+                    <dd><a href="http://www.w3.org/TR/CSS2/selector.html#attribute-selectors">CSS Atrribute Slector</a>에서 영감을 얻었으며 W5 Grid parts에 이어 바로 []로 <a href="../../basic/doc/get-set.ko.html#-get-set-property-parts">property</a>를 명시하여 <strong>선택한 W5 Grid parts의 특정 Property를 가진 요소들만을 선택</strong>합니다.</dd>
+                </dl>
+
+                <p>예제로 상세히 알아봅시다.</p>
+                <pre><code class="lang-javascript">grid.select("cell[data=a]").set("data", "b");
+// 모든 cell들 중 data가 a"인 parts들을 선택해 data를 "b"로 set합니다.
+grid.select("col[displayType=select] cell[data=0]").set("style", "background", "red");
+// displayType이 select인 column들의 cell중 data가 0인 cell이 있으면 background를 red로 set합니다.
+</code></pre>
+                <h3 id="context">Context</h3>
+                <p>selector()는 기본적으로 모든 cell들을 기본으로 합니다. 그렇기에 더 명확한 조건이 필요할 경우 두번째 인자로 Context를 지정할수 있습니다. Context는 W5 Grid parts method로 지정합니다.</p>
+                <pre><code class="lang-javascript">grid.select( "cell[data=b]", grid1.col('col2') ) // column id가 "col2"인 셀들 중
+    .set( "data", "a" )                         //data가 b인 parts들을 선택하여
+    .set( "style", {                            // data를 a로 변경하고
+        background : "MidnightBlue",            // background를 MidnightBlue로 지정하고,
+        color : "white"                         // 폰트 색상을 white로 set합니다.
+    });
+</code></pre>
+                <h3 id="merge-parts">Merge parts</h3>
+                <p>Merge parts는 이전에 Selector()로 선택한 결과를 선택할 parts들과 merge하여 같이 처리할 수 있게끔 도와줍니다. 이전에 Selector()로 선택했던 parts들을 세번째 인자로 넘겨줍니다.</p>
+                <pre><code class="lang-javascript">var dataA = grid1.select("cell[data=a]");  // data가 a인 셀들을 선택합니다.
+grid.select("cell[data=1], grid.col('col2'), dataA").set(
+    "style", {
+    "background" : "MidnightBlue",
+    "color" : "white"    
+});
+// column id가 col2인 cell들중 data가 1이거나 a인 셀들에 스타일을 적용합니다.
+</code></pre>
+                <h2 id="give-it-a-try-">Give it a try!</h2>
+                <p>
+                    <p data-height="242" data-theme-id="0" data-slug-hash="fFugB" data-default-tab="result" class='codepen'>See the Pen <a href='http://codepen.io/w5/pen/fFugB'>W5Grid - [Selector] Example for Select() API</a> by w5 (<a href='http://codepen.io/w5'>@w5</a>) on <a href='http://codepen.io'>CodePen</a>.</p>
                 </p>
+                <script async src="//codepen.io/assets/embed/ei.js"></script>
             </section>
             <section>
                 <div id="disqus_thread"></div>
@@ -171,7 +204,7 @@
         }
         var lnb = $("#lnbList"),
             menuName = lnb.find("h1").text(),
-            menuList = $("<h2>Basic</h2>" + "<ul>" + "<li><a href='../../basic/doc/createW5Grid.html'>Creating W5 Grid</a></li>" + "<li><a href='../../basic/doc/convertTable.html'>Converting a table to a W5 grid</a></li>" + "<li><a href='../../basic/doc/get-set.html'>.get()/.set() API</a></li>" + "<li><a href='../../basic/doc/requireJS.html'>RequireJS</a></li>" + "</ul>" + "<h2>Column</h2>" + "<ul>" + "<li><a href='../../column/doc/adjustColumn.html'>Adjust Column Width</a></li>" + "<li><a href='../../column/doc/hideShowColumn.html'>Hide/Show Column</a></li>" + "<li><a href='../../column/doc/moveColumn.html'>Moving a column </a></li>" + "<li><a href='../../column/doc/frozenColumn.html'>Frozen column</a></li>" + "<li><a href='../../column/doc/flex.html'>Flexible column</a></li>" + "</ul>" + "<h2>Navigation</h2>" + "<ul>" + "<li><a href='../../navigation/doc/scroll.html'>Scroll</a></li>" + "<li><a href='../../navigation/doc/scrollArea.html'>Scroll Area</a></li>" + "<li><a href='../../navigation/doc/wheel.html'>Wheel</a></li>" + "<li><a href='../../navigation/doc/keyboardNavigation.html'>Keyboard Navigation</a></li>" + "</ul>" + "<h2>Style</h2>" + "<ul>" + "<li><a href='../../style/doc/concept.html'>Concept</a></li>" + "<li><a href='../../style/doc/cssAPI.html'>CSS API</a></li>" + "</ul>" + "<h2>Cell</h2>" + "<ul>" + "<li><a href='../../cell/doc/inlineEdit.html'>Inline Edit</a></li>" + "<li><a href='../../cell/doc/displayType.html'>Display Type</a></li>" + "<li><a href='../../cell/doc/customCell.html'>Custom Cell</a></li>" + "<li><a href='../../cell/doc/dataType.html'>Data Type</a></li>" + "</ul>" + "<h2>Data</h2>" + "<ul>" + "<li><a href='../../data/doc/defaults.html'>Defaults</a></li>" + "<li><a href='../../data/doc/expression_format.html'>Expression</a></li>" + "<li><a href='../../data/doc/processData.html'>Process Data</a></li>" + "</ul>" + "<h2>Sort</h2>" + "<ul>" + "<li><a href='../../sort/doc/sort.html'>Sort</a></li>" + "</ul>");
+            menuList = $("<h2>Basic</h2>" + "<ul>" + "<li><a href='../../basic/doc/createW5Grid.html'>Creating W5 Grid</a></li>" + "<li><a href='../../basic/doc/convertTable.html'>Converting a table to a W5 grid</a></li>" + "<li><a href='../../basic/doc/get-set.html'>.get()/.set() API</a></li>" + "<li><a href='../../basic/doc/requireJS.html'>RequireJS</a></li>" + "</ul>" + "<h2>Column</h2>" + "<ul>" + "<li><a href='../../column/doc/adjustColumn.html'>Adjust Column Width</a></li>" + "<li><a href='../../column/doc/hideShowColumn.html'>Hide/Show Column</a></li>" + "<li><a href='../../column/doc/moveColumn.html'>Moving a column </a></li>" + "<li><a href='../../column/doc/frozenColumn.html'>Frozen column</a></li>" + "<li><a href='../../column/doc/flex.html'>Flexible column</a></li>" + "</ul>" + "<h2>Navigation</h2>" + "<ul>" + "<li><a href='../../navigation/doc/scroll.html'>Scroll</a></li>" + "<li><a href='../../navigation/doc/scrollArea.html'>Scroll Area</a></li>" + "<li><a href='../../navigation/doc/wheel.html'>Wheel</a></li>" + "<li><a href='../../navigation/doc/keyboardNavigation.html'>Keyboard Navigation</a></li>" + "</ul>" + "<h2>Style</h2>" + "<ul>" + "<li><a href='../../style/doc/concept.html'>Concept</a></li>" + "<li><a href='../../style/doc/cssAPI.html'>CSS API</a></li>" + "</ul>" + "<h2>Cell</h2>" + "<ul>" + "<li><a href='../../cell/doc/inlineEdit.html'>Inline Edit</a></li>" + "<li><a href='../../cell/doc/displayType.html'>Display Type</a></li>" + "<li><a href='../../cell/doc/customCell.html'>Custom Cell</a></li>" + "<li><a href='../../cell/doc/dataType.html'>Data Type</a></li>" + "</ul>" + "<h2>Data</h2>" + "<ul>" + "<li><a href='../../data/doc/defaults.html'>Defaults</a></li>" + "<li><a href='../../data/doc/expression_format.html'>Expression</a></li>" + "<li><a href='../../data/doc/processData.html'>Process Data</a></li>" + "</ul>" + "<h2>Sort</h2>" + "<ul>" + "<li><a href='../../sort/doc/sort.html'>Sort</a></li>" + "</ul>" + "<h2>etc</h2>" + "<ul>" + "<li><a href='../../etc/doc/resizing.html'>In response to the browser size.</a></li>" + "</ul>");
         if (menuName === "Sample") {
             lnb.append(menuList);
         }

@@ -25,7 +25,7 @@
         ga('create', 'UA-1212521-12', 'w5.io');
         ga('send', 'pageview');
     </script>
-    <title>W5 : RequireJS</title>
+    <title>W5 : Synchronize Server</title>
 </head>
 
 <body>
@@ -76,41 +76,132 @@
         </aside>
         <article class="contents">
             <section>
-                <h1 id="requirejs">RequireJS</h1>
-                <p>W5 and dependent modules can be managed and utilized, using RequireJS.
-                    <br>W5 is dependent upon the <a href="http://jquery.com/">jQuery</a>, <a href="http://underscorejs.org/">Undersocre.js</a>, <a href="http://backbonejs.org/">Backbone.js</a> module.</p>
-                <h2 id="examples-">Examples:</h2>
-                <p>1 Set the configuration using <a href="http://requirejs.org/docs/api.html#data-main">data-main attribute</a> of the scrip tag that imports RequireJS.</p>
-                <pre><code class="language-javascript">&lt;script src=&quot;js/lib/require.js&quot; data-main=&quot;js/app/requirejs.main&quot;&gt;&lt;/script&gt;
+                <h1 id="synchronize-server">Synchronize Server</h1>
+                <p>Synchronize server and data with Backbone.Collection, Model method, and W5 method. Refer to <a href="http://backbonejs.org/#Sync">sync and fetch provided by Backbone</a>.
+                    <br>Refer to <a href="https://github.com/inswave/w5grid-rest-node">w5grid-rest-node</a> sample.</p>
+                <h2 id="fetch">Fetch</h2>
+                <p>Set the URL for the communication when Backbone.Collection extend, or set it as a property of an object.</p>
+                <pre><code class="language-javascript">  // Set url when defining Collection.
+  var List = Backbone.Collection.extend( { url: '/people' } ),
+      dataCols = new List(),
+      grid1 = new w5.Grid({
+        ....
+        collection : dataCols
+      });
+
+  // After the Collection object is created, set url property.
+  var collection = Backbone.Collection.extend();
+  dataCols = new collection();
+  dataCols.url = '/people';
 </code></pre>
-                <p>2 Set as described below in the JS file used for the data-main entry point.</p>
-                <pre><code class="language-javascript">requirejs.config({
-  baseUrl: 'js/lib/',
-  paths:{
-    jquery:'1.10.2/jquery.min',
-    underscore: '1.6.0/underscore-min',
-    Backbone: '1.1.2/backbone-min',
-    w5: '0.6.0/w5.min'
-  },
-  shim: {
-    w5: ['jquery', 'underscore', 'Backbone']
+                <p>Pull data from server by calling Backbone.Collection and fetch of Modal.</p>
+                <pre><code class="language-javascript">  // Pull grid data by calling Backbone.Collection and fetch method.
+  // reset option Re-renders the whole grid with the data obtained.
+  // According to the result of synchronization, success or failure, proceed post process by setting handler.
+  dataCols.fetch( { reset: true,
+    success: function ( collection, response, options ) {
+      // perform synchronization callback
+    },
+    error: function ( collection, response, options ) {
+      // error process
+    }
+  });
+
+  // Specific Model of Backbone.Collection proceed fetch.
+  dataCols.at(0).fetch({
+    success: function ( model, response, options ) {
+      ....
+    },
+    error: function ( model, response, options ) {
+      ....
+    }
+  });
+</code></pre>
+                <h2 id="save">Save</h2>
+                <p>Setting save option when executing set method edits data and View and synchronizes with server at once. set method proceeds update, thereby communication with server uses HTTP <code class="language-javascript">PUT</code> method. Refer to
+                    <a
+                    href="http://backbonejs.org/#Sync">Backbone.sync</a>for HTTP method.
+                        <br>Unless otherwise directed URL through Model.urlRoot method, URL is created automatically in form of [collection.url]/[id].
+                        <br>Refer to <a href="http://backbonejs.org/#Model-url">Model.url 및 urlRootmodel</a> for URL.</p>
+                <pre><code class="language-javascript">  // Edit the phone1 and phone2 column in the first row, and synchronize with server by save option at once.
+  var data = { phone1: '111-111-1111', phone2: '222-222-2222' };  
+  grid1.row(0).set( 'data', data, { save: true, saved: true } );
+</code></pre>
+                <p>After the success of communication, saved option omits the response data parse phase and uses data that set(update) to Backbone.Model.
+                    <br>saved option is useful when receiving message instead of data of object that uploaded to response data. Refer to <a href="http://backbonejs.org/#Model-parse">Model.parse</a> for phase.
+                    <br><a href="https://github.com/inswave/w5grid-rest-node">w5grid-rest-node</a> example returns following response data as below: { "result": "success", "numberUpdated": 1 }
+                </p>
+                <pre><code class="language-javascript">pick option synchronizes specific column(property) data of Row(Backbone.Model) to server.
+If pick option is used, HTTP method uses `PATCH`.
+</code></pre>
+                <p>// Send phone1 and phone2 column data of the first row to the server. data = { phone1: '504-621-8927', phone2: '504-845-1427' }; grid1.row(0).set( 'data', data, { save: true, saved: true, pick: ['phone1', 'phone2'] } );</p>
+                <pre><code class="language-javascript">
+To perform update and delete, an unique value of property or filed is required. The corresponding element can be different between client and server.  
+For the example of MongoDB, it uses [`_id`](http://docs.mongodb.org/manual/reference/glossary/) as a field similar to primary key.  
+In this case, use [idAttribute](http://backbonejs.org/#Model-idAttribute) of Backbone for mapping.
+</code></pre>
+                <p>// When defining Model, define an id field for server. // Below example defines _id for MongoDB. // When defining Collection, define Model that has been defined as model property. var model = Backbone.Model.extend( { idAttribute: "_id"
+                    } ), List = Backbone.Collection.extend( { model: model, url: '/people' } ),</p>
+                <pre><code class="language-javascript">Server program example is as below:
+</code></pre>
+                <p>// Assign _id field value to a variable. var _id = req.params._id; db.collection( 'people', function ( err, collection ) {</p>
+                <pre><code class="language-javascript">// Among the data received from client, _id as a key, perform update except _id field.
+req.body = _.omit( req.body, '_id');
+collection.update( { _id: ObjectID(_id) }, { $set: req.body }, function ( err, result ) {
+  if (err) {
+    res.json( { result: 'fail',
+      message: err.message } );
+  } else {
+    res.json( { result: 'success',
+      numberUpdated: result } );
   }
 });
 </code></pre>
-                <p>3 Use the exported module.</p>
-                <pre><code class="language-javascript">requirejs( ['jquery', 'w5'], function( $, w5 ) {
-  $("body").append("&lt;div id=&apos;grid1&apos;&gt;");
-  grid1 = new w5.Grid({
-    el : "#grid1",
-    Omitted....
-  }).render();
-});
+                <p>});</p>
+                <pre><code class="language-javascript">When performing addRow method, define save option to synchronize with server.
+Manage process by defining success callback handler.
+Perform create method, thereby uses `POST` HTTP method.
 </code></pre>
-                <h2 id="give-it-a-try-">Give it a try!</h2>
-                <p>
-                    <p data-height="390" data-theme-id="0" data-slug-hash="txygl" data-default-tab="result" class='codepen'>See the Pen <a href='http://codepen.io/w5/pen/txygl/'>W5Grid - 03 requireJS</a> by w5 (<a href='http://codepen.io/w5'>@w5</a>) on <a href='http://codepen.io'>CodePen</a>.</p>
+                <p>data = { "first_name": "shye", "last_name": "lee", "company_name": "inswave", "address": "guro", "city": "seoul", "county": "korea", "state": "guro", "zip": "1234", "phone1": "123-456-1234", "phone2": "789-123-4567", "email": "shye0919@inswave.com",
+                    "web": "<a href="http://www.inswave.com">http://www.inswave.com</a>" };</p>
+                <p>// Add to the first Row and synchronize with Server. // Multiple(Array) add(insert) is same as Single add. grid1.addRow( 0, data, { save: true, success: function ( model, response, options ) {</p>
+                <pre><code class="language-javascript">// success callback takes response data as the second parameter.
+// From the sample, the _id is automatically created when MongoDB performs insert.
+console.log( 'create a Row ', _.omit( response, '_id' ) );
+</code></pre>
+                <p>}} );</p>
+                <pre><code class="language-javascript">Destroy
+-------
+If removeRow takes destroy as an option, it deletes Row and synchronizes with server at once.
+success callback handler can be defined as addRow.
+Perform delete method, thereby uses `DELETE` HTTP method.
+</code></pre>
+                <p>// Deletes the 2nd Row and synchronizes with server. grid1.removeRow( 1, { destroy: true, success: function ( model, response, options ) { console.log( 'removed the Row ', response.result ); }});
                 </p>
-                <script async src="//codepen.io/assets/embed/ei.js"></script>
+                <pre><code class="language-javascript">Sync
+----
+Use `urlCUD` property and  `syncData` method, thereby perform CUD several time, to synchronize with server at once. 
+
+When defining Collection, define urlCUD.
+</code></pre>
+                <p>var List = Backbone.Collection.extend( { model: Model, url: '/people', urlCUD: '/mixed' } );</p>
+                <pre><code class="language-javascript">
+syncData synchronizes the performed CUD to the server at once.
+</code></pre>
+                <p>grid1.addRow( 0, { first_name: 'A' } ); grid1.cell( 2, 1 ).set( 'data', 'BP' ); grid1.removeRow(3); grid1.removeRow(10); grid1.cell( 6, 1 ).set( 'data', 'TD' ); grid1.addRow( 4, { first_name: 'B' } );</p>
+                <p>// Perform server synchronization regarding Add/Edit/Delete at once. grid1.syncData( _.extend( options, { reset: true, success: function ( returnData, status, options ) { // perform callback }, error: function ( collection, response, options
+                    ) { // error process } }));
+                </p>
+                <pre><code class="language-javascript">To use `PATCH` HTTP method, use `pick` option.  
+* excludeCreate : Exclude created item from server synchronization.
+* excludeUpdate : Exclude updated item from server synchronization.
+* excludeDelete : Exclude deleted item from server synchronization.
+</code></pre>
+                <p>// save option synchronizes with server and skips the parse phase. // afterProcess option is only relevant to create method, it can be used to apply the properties, created when create is defined in the server as <em>id, to the Client Model.
+  // The added Object to the create attribute of the - returnData - returend object  has to been defined as an Array format. 
+  grid1.syncData( </em>.extend( options, { reset: true, pick: true, saved: true, excludeUpdate: true, afterProcess: true, success: function ( returnData, status, options ) { // perform callback }, error: function ( collection, response, options ) { //
+                    perform error } })); ```
+                </p>
             </section>
             <section>
                 <div id="disqus_thread"></div>
