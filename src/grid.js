@@ -181,19 +181,19 @@ var GridProto = {
   setGridEvents: function() {
     var events = {},
         i;
-    for(i in this.options.gridEvents) {
-      var eventName = i.split(" ")[0];
-      if(!events[eventName]) {
-        events[eventName] = [];
+    for ( i in this.options.gridEvents ) {
+      var eventKey = i.split(eventSplitter);
+      if ( !events[eventKey[0]] ) {
+        events[eventKey[0]] = [];
       }
-      events[eventName].push({
-        select: i.slice(eventName.length + 1),
+      events[eventKey[0]].push({
+        select: eventKey[1],
         funcName: this.options.gridEvents[i]
       });
     }
     this.gridEventMatch = events;
-    for(i in events) {
-      if(i === "change") {
+    for ( i in events ) {
+      if ( i === "change" ) {
         continue;
       }
       this.events[i + " td"] = "handleCommonEvent";
@@ -208,18 +208,18 @@ var GridProto = {
         cid = this.viewModel.getDataCID(row),
         frozenColumn = this.viewModel.getOption("frozenColumn"),
         i, j, elems;
-    if(col >= frozenColumn) {
+    if ( col >= frozenColumn ) {
       col += this.startCol;
     }
     col = this.viewModel.getColID(col, true); 
-    for(i = 0; i < events.length; i++) {
+    for ( i = 0; i < events.length; i++ ) {
       elems = this.select(events[i].select);
-      for(j = 0; j < elems.length; j++) {
-        if(this.viewModel.getDataCID(elems[j][0]) === cid && elems[j][1] === col) {
-          if(_.isString(events[i].funcName)) {
-            this.options[events[i].funcName].call(this, e, row, col);
-          } else if(_.isFunction(events[i].funcName)) {
-            events[i].funcName.call(this, e, row, col);
+      for ( j = 0; j < elems.length; j++ ) {
+        if ( this.viewModel.getDataCID(elems[j][0]) === cid && elems[j][1] === col ) {
+          if ( _.isString(events[i].funcName ) ) {
+            this.options[events[i].funcName].call( this, e, row, col );
+          } else if ( _.isFunction( events[i].funcName ) ) {
+            events[i].funcName.call( this, e, row, col );
           }
         }
       }
@@ -2051,3 +2051,5 @@ var GridProto = {
     }
   }
 };
+
+var eventSplitter = /\s+/;
