@@ -1748,7 +1748,7 @@ var GridProto = {
       colIndex = this.focusedCell.colIndex;
 
       if ( rowIndex < this.getRowLength() ) {
-        if ( rowIndex === this.rowTop + this.viewModel.getOption('rowNum') ) {
+        if ( rowIndex >= this.rowTop + this.viewModel.getOption('rowNum') ) {
           this.focusedCell = {
             rowIndex: rowIndex,
             colIndex: colIndex
