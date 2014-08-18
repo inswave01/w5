@@ -89,8 +89,7 @@ grid.row(0).addClass("bd1 f-bold"); // 첫번째 row에 bd1과 f-bold 클래스�
 </code></pre>
                 <h3 id="-hasclass-classname-">.hasClass(<code class="language-javascript">className</code>)</h3>
                 <p>W5 Grid Parts Select Method로 선택한 요소가 해당 class를 가지고 있는지 여부를 반환합니다.
-                    <br>white space를 구분으로 <strong>여러개의 class 지정하지 못합니다.</strong>
-                </p>
+                    <br><code class="language-javascript">className</code>으로 준 <strong>하나의 class에 대해서만 체크</strong>합니다.</p>
                 <h4 id="example">Example</h4>
                 <pre><code class="lang-javascript">// cell(0, 3)이 "f-italic"란 클래스를 갖고 있으면 return true, 아니면 false
 grid.cell(0, 3).hasClass("f-italic");
@@ -99,7 +98,7 @@ grid.col("col2").hasClass("f-bold");
 </code></pre>
                 <h3 id="-removeclass-classname-">.removeClass(<code class="language-javascript">className</code>)</h3>
                 <p>선택한 W5 Grid Parts 요소의 Class중 <code class="language-javascript">className</code>에 해당하는 class가 있으면 해당 class만 제거합니다.
-                    <br>매개변수의 data type은 <code class="language-javascript">Stirng</code>으로 white space를 구분으로 여러개의 class를 추가할 수 있습니다.</p>
+                    <br>매개변수의 data type은 <code class="language-javascript">Stirng</code>으로 white space를 구분으로 여러개의 class를 삭제할 수 있습니다.</p>
                 <h4 id="example">Example</h4>
                 <pre><code class="lang-javascript">// 세번째 row의 "f-italic"이란 class를 삭제한다.
 grid.row(2).removeClass("f-italic");
@@ -116,7 +115,7 @@ grid.col("col2").removeClass("f-bold");
                 </dl>
 
                 <h4 id="-switch-">두번째 인자 <code class="language-javascript">switch</code></h4>
-                <p><code class="language-javascript">switch</code>는 <strong>필수 인자는 아닙니다.</strong>
+                <p><code class="language-javascript">switch</code>는 <strong>옵션입니다.</strong>
                     <br><code class="language-javascript">switch</code>의 값이 true이면 <code class="language-javascript">className</code>을 addClass(<code class="language-javascript">className</code>)하고, false면 removeClass(<code class="language-javascript">className</code>)합니다.
                     <code class="language-javascript">switch</code>를 지정하면 아래와 같 javascript code를 작성할 수 있습니다.</p>
                 <pre><code class="lang-javascript">var addOrRemove = grid.cell(0, 0).get("data");
@@ -217,7 +216,7 @@ if ( addOrRemove ){
         }
         var lnb = $("#lnbList"),
             menuName = lnb.find("h1").text(),
-            menuList = $("<h2>Basic</h2>" + "<ul>" + "<li><a href='../../basic/doc/createW5Grid.html'>Creating W5 Grid</a></li>" + "<li><a href='../../basic/doc/convertTable.html'>Converting a table to a W5 grid</a></li>" + "<li><a href='../../basic/doc/get-set.html'>.get()/.set() API</a></li>" + "<li><a href='../../basic/doc/requireJS.html'>RequireJS</a></li>" + "</ul>" + "<h2>Column</h2>" + "<ul>" + "<li><a href='../../column/doc/adjustColumn.html'>Adjust Column Width</a></li>" + "<li><a href='../../column/doc/hideShowColumn.html'>Hide/Show Column</a></li>" + "<li><a href='../../column/doc/moveColumn.html'>Moving a column </a></li>" + "<li><a href='../../column/doc/frozenColumn.html'>Frozen column</a></li>" + "<li><a href='../../column/doc/flex.html'>Flexible column</a></li>" + "</ul>" + "<h2>Navigation</h2>" + "<ul>" + "<li><a href='../../navigation/doc/scroll.html'>Scroll</a></li>" + "<li><a href='../../navigation/doc/scrollArea.html'>Scroll Area</a></li>" + "<li><a href='../../navigation/doc/wheel.html'>Wheel</a></li>" + "<li><a href='../../navigation/doc/keyboardNavigation.html'>Keyboard Navigation</a></li>" + "</ul>" + "<h2>Style</h2>" + "<ul>" + "<li><a href='../../style/doc/concept.html'>Concept</a></li>" + "<li><a href='../../style/doc/cssAPI.html'>CSS API</a></li>" + "</ul>" + "<h2>Cell</h2>" + "<ul>" + "<li><a href='../../cell/doc/inlineEdit.html'>Inline Edit</a></li>" + "<li><a href='../../cell/doc/displayType.html'>Display Type</a></li>" + "<li><a href='../../cell/doc/customCell.html'>Custom Cell</a></li>" + "<li><a href='../../cell/doc/dataType.html'>Data Type</a></li>" + "</ul>" + "<h2>Data</h2>" + "<ul>" + "<li><a href='../../data/doc/defaults.html'>Defaults</a></li>" + "<li><a href='../../data/doc/expression_format.html'>Expression</a></li>" + "<li><a href='../../data/doc/processData.html'>Process Data</a></li>" + "</ul>" + "<h2>Sort</h2>" + "<ul>" + "<li><a href='../../sort/doc/sort.html'>Sort</a></li>" + "</ul>");
+            menuList = $("<h2>Basic</h2>" + "<ul>" + "<li><a href='../../basic/doc/createW5Grid.html'>Creating W5 Grid</a></li>" + "<li><a href='../../basic/doc/convertTable.html'>Converting a table to a W5 grid</a></li>" + "<li><a href='../../basic/doc/get-set.html'>.get()/.set() API</a></li>" + "<li><a href='../../basic/doc/requireJS.html'>RequireJS</a></li>" + "</ul>" + "<h2>Column</h2>" + "<ul>" + "<li><a href='../../column/doc/adjustColumn.html'>Adjust Column Width</a></li>" + "<li><a href='../../column/doc/hideShowColumn.html'>Hide/Show Column</a></li>" + "<li><a href='../../column/doc/moveColumn.html'>Moving a column </a></li>" + "<li><a href='../../column/doc/frozenColumn.html'>Frozen column</a></li>" + "<li><a href='../../column/doc/flex.html'>Flexible column</a></li>" + "</ul>" + "<h2>Navigation</h2>" + "<ul>" + "<li><a href='../../navigation/doc/scroll.html'>Scroll</a></li>" + "<li><a href='../../navigation/doc/scrollArea.html'>Scroll Area</a></li>" + "<li><a href='../../navigation/doc/wheel.html'>Wheel</a></li>" + "<li><a href='../../navigation/doc/keyboardNavigation.html'>Keyboard Navigation</a></li>" + "</ul>" + "<h2>Style</h2>" + "<ul>" + "<li><a href='../../style/doc/concept.html'>Concept</a></li>" + "<li><a href='../../style/doc/cssAPI.html'>CSS API</a></li>" + "</ul>" + "<h2>Cell</h2>" + "<ul>" + "<li><a href='../../cell/doc/inlineEdit.html'>Inline Edit</a></li>" + "<li><a href='../../cell/doc/displayType.html'>Display Type</a></li>" + "<li><a href='../../cell/doc/customCell.html'>Custom Cell</a></li>" + "<li><a href='../../cell/doc/dataType.html'>Data Type</a></li>" + "</ul>" + "<h2>Data</h2>" + "<ul>" + "<li><a href='../../data/doc/defaults.html'>Defaults</a></li>" + "<li><a href='../../data/doc/expression_format.html'>Expression</a></li>" + "<li><a href='../../data/doc/processData.html'>Process Data</a></li>" + "</ul>" + "<h2>Sort</h2>" + "<ul>" + "<li><a href='../../sort/doc/sort.html'>Sort</a></li>" + "</ul>" + "<h2>etc</h2>" + "<ul>" + "<li><a href='../../etc/doc/resizing.html'>In response to the browser size.</a></li>" + "</ul>");
         if (menuName === "Sample") {
             lnb.append(menuList);
         }

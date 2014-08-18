@@ -78,8 +78,42 @@
             <section>
                 <h1 id="flexible-column">Flexible Column</h1>
                 <p>The column width of the Flexible Column is defined by the ratio of the whole grid. Because the width size is defined by the ratio, <strong>horizontal scroll does not appear and if the grid width changes, the width of each column changes automatically.</strong>
-                    <br>The Flex Property of the <a href="../../basic/doc/createW5Grid.html#column-model">Column Model</a> is defined by an integer. Because it is a property of Column model, it can only defined when a grid is created.
-                    <br>Among the Flex columns, if a specific column gets px as a width value, the Flex property gets removed from the column in question and become a normal column. W5 Grid width changes automatically.</p>
+                </p>
+                <pre><code class="lang-javascript">var colModel = [
+        { "flex" : 1, "id" : "col1" },
+        { "flex" : 2, "id" : "col2" },
+        { "flex" : 3, "id" : "col3" },
+        { "flex" : 4, "id" : "col4" }
+    ];
+var grid = new w5.Grid({
+        ...
+        option : {
+            width: "500px"
+        },
+        colModel : colModel,
+        ...
+    });
+</code></pre>
+                <p>As above sample, create W5 Grid with a width of 500px and define flex to the colModel(<a href="../../basic/doc/createW5Grid.html#column-model">Column Model</a>), width of "col2", "col3", and "col4" becomes 100px, 150px, and 200px.</p>
+                <p>After the W5 Grid is being created, if width of the Column changes, it becomes 100px, 200px, 300px, and 400px.</p>
+                <pre><code class="lang-javascript">grid.option().set("width","1000px");
+
+grid.col(0).get("width"); // return 100
+grid.col(1).get("width"); // return 200
+grid.col(2).get("width"); // return 300
+grid.col(3).get("width"); // return 400
+</code></pre>
+                <p>Flexible Column can be defined after W5 Grid is created with <a href="../../basic/doc/get-set.html">.set()/get() API</a>.
+                    <br>If a column defined by Flex changes to fixed unit(px), the rest of columns automatically re-calculates the width size by substracting fixed unit(px) from the whole grid width size.</p>
+                <pre><code class="lang-javascript">grid.option().set("width","500px");
+grid1.col(1).set("width", 100);
+grid1.col(2).set("width", 100);
+
+grid1.col(0).get("width"); // return 60
+grid1.col(1).get("width"); // return 100
+grid1.col(2).get("width"); // return 100
+grid1.col(3).get("width"); // return 240
+</code></pre>
                 <h2 id="give-it-a-try-">Give it a try!</h2>
                 <p>
                     <p data-height="242" data-theme-id="0" data-slug-hash="nCfAr" data-default-tab="result" class='codepen'>See the Pen <a href='http://codepen.io/w5/pen/nCfAr'>W5Grid - [Column] Example for Flexible Column</a> by w5 (<a href='http://codepen.io/w5'>@w5</a>) on <a href='http://codepen.io'>CodePen</a>.</p>
@@ -163,7 +197,7 @@
         }
         var lnb = $("#lnbList"),
             menuName = lnb.find("h1").text(),
-            menuList = $("<h2>Basic</h2>" + "<ul>" + "<li><a href='../../basic/doc/createW5Grid.html'>Creating W5 Grid</a></li>" + "<li><a href='../../basic/doc/convertTable.html'>Converting a table to a W5 grid</a></li>" + "<li><a href='../../basic/doc/get-set.html'>.get()/.set() API</a></li>" + "<li><a href='../../basic/doc/requireJS.html'>RequireJS</a></li>" + "</ul>" + "<h2>Column</h2>" + "<ul>" + "<li><a href='../../column/doc/adjustColumn.html'>Adjust Column Width</a></li>" + "<li><a href='../../column/doc/hideShowColumn.html'>Hide/Show Column</a></li>" + "<li><a href='../../column/doc/moveColumn.html'>Moving a column </a></li>" + "<li><a href='../../column/doc/frozenColumn.html'>Frozen column</a></li>" + "<li><a href='../../column/doc/flex.html'>Flexible column</a></li>" + "</ul>" + "<h2>Navigation</h2>" + "<ul>" + "<li><a href='../../navigation/doc/scroll.html'>Scroll</a></li>" + "<li><a href='../../navigation/doc/scrollArea.html'>Scroll Area</a></li>" + "<li><a href='../../navigation/doc/wheel.html'>Wheel</a></li>" + "<li><a href='../../navigation/doc/keyboardNavigation.html'>Keyboard Navigation</a></li>" + "</ul>" + "<h2>Style</h2>" + "<ul>" + "<li><a href='../../style/doc/concept.html'>Concept</a></li>" + "<li><a href='../../style/doc/cssAPI.html'>CSS API</a></li>" + "</ul>" + "<h2>Cell</h2>" + "<ul>" + "<li><a href='../../cell/doc/inlineEdit.html'>Inline Edit</a></li>" + "<li><a href='../../cell/doc/displayType.html'>Display Type</a></li>" + "<li><a href='../../cell/doc/customCell.html'>Custom Cell</a></li>" + "<li><a href='../../cell/doc/dataType.html'>Data Type</a></li>" + "</ul>" + "<h2>Data</h2>" + "<ul>" + "<li><a href='../../data/doc/defaults.html'>Defaults</a></li>" + "<li><a href='../../data/doc/expression_format.html'>Expression</a></li>" + "<li><a href='../../data/doc/processData.html'>Process Data</a></li>" + "</ul>" + "<h2>Sort</h2>" + "<ul>" + "<li><a href='../../sort/doc/sort.html'>Sort</a></li>" + "</ul>");
+            menuList = $("<h2>Basic</h2>" + "<ul>" + "<li><a href='../../basic/doc/createW5Grid.html'>Creating W5 Grid</a></li>" + "<li><a href='../../basic/doc/convertTable.html'>Converting a table to a W5 grid</a></li>" + "<li><a href='../../basic/doc/get-set.html'>.get()/.set() API</a></li>" + "<li><a href='../../basic/doc/requireJS.html'>RequireJS</a></li>" + "</ul>" + "<h2>Column</h2>" + "<ul>" + "<li><a href='../../column/doc/adjustColumn.html'>Adjust Column Width</a></li>" + "<li><a href='../../column/doc/hideShowColumn.html'>Hide/Show Column</a></li>" + "<li><a href='../../column/doc/moveColumn.html'>Moving a column </a></li>" + "<li><a href='../../column/doc/frozenColumn.html'>Frozen column</a></li>" + "<li><a href='../../column/doc/flex.html'>Flexible column</a></li>" + "</ul>" + "<h2>Navigation</h2>" + "<ul>" + "<li><a href='../../navigation/doc/scroll.html'>Scroll</a></li>" + "<li><a href='../../navigation/doc/scrollArea.html'>Scroll Area</a></li>" + "<li><a href='../../navigation/doc/wheel.html'>Wheel</a></li>" + "<li><a href='../../navigation/doc/keyboardNavigation.html'>Keyboard Navigation</a></li>" + "</ul>" + "<h2>Style</h2>" + "<ul>" + "<li><a href='../../style/doc/concept.html'>Concept</a></li>" + "<li><a href='../../style/doc/cssAPI.html'>CSS API</a></li>" + "</ul>" + "<h2>Cell</h2>" + "<ul>" + "<li><a href='../../cell/doc/inlineEdit.html'>Inline Edit</a></li>" + "<li><a href='../../cell/doc/displayType.html'>Display Type</a></li>" + "<li><a href='../../cell/doc/customCell.html'>Custom Cell</a></li>" + "<li><a href='../../cell/doc/dataType.html'>Data Type</a></li>" + "</ul>" + "<h2>Data</h2>" + "<ul>" + "<li><a href='../../data/doc/defaults.html'>Defaults</a></li>" + "<li><a href='../../data/doc/expression_format.html'>Expression</a></li>" + "<li><a href='../../data/doc/processData.html'>Process Data</a></li>" + "</ul>" + "<h2>Sort</h2>" + "<ul>" + "<li><a href='../../sort/doc/sort.html'>Sort</a></li>" + "</ul>" + "<h2>etc</h2>" + "<ul>" + "<li><a href='../../etc/doc/resizing.html'>In response to the browser size.</a></li>" + "</ul>");
         if (menuName === "Sample") {
             lnb.append(menuList);
         }
