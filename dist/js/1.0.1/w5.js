@@ -5,7 +5,7 @@
  * Copyright 2013 Inswave Foundation and other contributors
  * Released under the LGPLv3.0 license
  *
- * Date: 2014-08-06
+ * Date: 2014-08-18
  */
 
 (function(root, factory) {
@@ -2624,7 +2624,7 @@ var GridProto = {
       colIndex = this.focusedCell.colIndex;
 
       if ( rowIndex < this.getRowLength() ) {
-        if ( rowIndex === this.rowTop + this.viewModel.getOption('rowNum') ) {
+        if ( rowIndex >= this.rowTop + this.viewModel.getOption('rowNum') ) {
           this.focusedCell = {
             rowIndex: rowIndex,
             colIndex: colIndex
