@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html>
+<html lang="ko">
 <head>
     <meta charset="utf-8" />
     <meta http-equiv="X-UA-Compatible" content="chrome=1" />
@@ -69,7 +69,7 @@
                   <label for="select-langue">Language</label>
                   <select id="select-langue" class="ml10">
                     <option value="en">English</option>
-                    <option value="ko">Korean</option>
+                    <option value="ko" selected="true">Korean</option>
                   </select>
                 </div>
               </div>
@@ -185,22 +185,6 @@
     <script src="./_dist/resources/js/jquery-1.11.1.min.js"></script>
     <script src="./_dist/resources/bootstrap/js/bootstrap.min.js"></script>
     <script type="text/javascript">
-      $("document").ready( function() {
-        var language = navigator.language || navigator.browserLanguage;
-
-        if( language.indexOf("-") > -1 ) {
-          language = language.substring(0, language.indexOf("-"));
-        }
-
-        $("html").attr( "lang", language );
-        $("#select-langue").val( language );
-      
-      //   if( document.cookie.length === 0 ) {
-      //     document.coockie = "w5-auto-location";
-      //     $("#select-langue").val( language ).change();
-      //   }
-      });
-
       $("#select-langue").change( function() {
         var target;
         
@@ -208,9 +192,9 @@
         $(target).attr("selected", true);
 
         if ( $(this).val() === "ko" ){
-          document.location.href = "http://w5.io/index.ko.html";
+          document.location.href = "http://w5.io/index.html?lang=ko";
         } else {
-          document.location.href = "http://w5.io/index.html";
+          document.location.href = "http://w5.io/index.html?lang=en";
         }
       });
 

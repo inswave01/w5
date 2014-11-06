@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
     <meta charset="utf-8" />
     <meta http-equiv="X-UA-Compatible" content="chrome=1" />
@@ -68,7 +68,7 @@
                 <div class="language">
                   <label for="select-langue">Language</label>
                   <select id="select-langue" class="ml10">
-                    <option value="en">English</option>
+                    <option value="en" selected="true">English</option>
                     <option value="ko">Korean</option>
                   </select>
                 </div>
@@ -177,6 +177,30 @@
     <script src="./_dist/resources/js/jquery-1.11.1.min.js"></script>
     <script src="./_dist/resources/bootstrap/js/bootstrap.min.js"></script>
     <script type="text/javascript">
+      $("document").ready( function() {
+        var param = window.location.search.substring(1).split("="),
+            language = navigator.language || navigator.browserLanguage;
+
+        if( language.indexOf("-") > -1 ) {
+          language = language.substring(0, language.indexOf("-"));
+        }
+
+        if ( param.length > 1 ){
+          if ( param[1] === "ko" ){
+            document.location.href = "http://w5.io/index.ko.html";
+          }
+          else {
+            return;
+          }
+        } else {
+          if ( language === "ko" ){
+            document.location.href = "http://w5.io/index.ko.html";
+          } else {
+            document.location.href = "http://w5.io/index.html?lang=en";
+          }
+        }
+      });
+
       $("#select-langue").change( function() {
         var target;
         
@@ -184,24 +208,9 @@
         $(target).attr("selected", true);
 
         if ( $(this).val() === "ko" ){
-          document.location.href = "http://w5.io/index.ko.html";
+          document.location.href = "http://w5.io/index.html?lang=ko";
         } else {
-          document.location.href = "http://w5.io/index.html";
-        }
-      });
-
-      $("#select-langue").change( function() {
-        var location, target;
-        
-        target = $(this).children()[this.selectedIndex];
-        $(target).attr("selected", true);
-
-        if ( $(this).val() === "ko" ){
-          location = document.location.href.substring( 0, document.location.href.length-5 );
-          document.location.href = location + ".ko.html";
-        } else {
-          location = document.location.href.substring( 0, document.location.href.length-8 );
-          document.location.href = location + ".html";
+          document.location.href = "http://w5.io/index.html?lang=en";
         }
       });
 
