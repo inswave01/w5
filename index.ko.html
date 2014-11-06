@@ -22,7 +22,7 @@
 
     <title>W5</title>
 </head>
-<body>
+<body class="ko">
     <!-- HEADER -->
     <header id="header_wrap">
         <div class="navbar-wrapper">
@@ -90,9 +90,8 @@
               <div class="container">
                 <div class="carousel-caption">
                   <h1>W5 Grid</h1>
-                  <p>Lightweight, powerful and intuitive front-end library for easier and
-                    faster UI component development.<br/>
-                    We first introduce one of our components, <strong>W5Grid</strong>.</p>
+                  <p>Controler 가 Model 과 View 에 대해 listen 하는 구조로<br/>
+                    데이터 및 이벤트 binding 및 sync 처리를 간단하게 처리할 수 있습니다.</p>
                   <p class="ac"><a id="forkme_banner" href="https://github.com/inswave/w5">View on GitHub</a></p>
                 </div>
               </div>
@@ -128,31 +127,40 @@
         <a class="tar_download_link" href="https://github.com/inswave/w5/archive/master.tar.gz">Download this project as a tar.gz file</a>
       </p>
       <section class="main_content_group clearfix">
-        <h2>Features</h2>
+        <h2>개요</h2>
+        <p>
+          W5 그리드는 데이터와 DOM 구조가 밀결합되는 웹표준 데이터 그리드의 한계를<br/>
+          MVC 모델을 도입함으로써 데이터 처리와 DOM 핸들링 간에 느스한 연결을 통해 넘어서고 <br/>
+          강력한 성능과 확장성 및 유연성을 동시에 제공합니다.
+        </p>
+        <div class="ac"><img src="./_dist/resources/images/img-main-mvc.gif" alt="w5 Grid는 Model-View-Controler 모델을 도입했습니다. Controler가 model, view를 상호간 Listen 하고 있는 형태이다." /></div>
+        <p>
+          Controler 가 Model 과 View 에 대해 listen 하는 구조로
+          데이터 및 이벤트 binding 및 sync 처리를 간단하게 처리할 수 있습니다.
+        </p>
+
+        <h2 style="margin-top:35px;">특징</h2>
         <div class="main_content_fl">
-            <h3>Powerful</h3>
-            <p><strong>Powerful, what you need is here.</strong><br/>
-                The W5Grid not only provides general grid functions but also infinite scroll, cross tab, grid in grid are available.</p>
+            <div class="ac">
+              <img src="./_dist/resources/images/img-main-performance.png" alt="" />
+            </div>
+            <h3 class="ac">성능</h3>
+            <p>정렬, 필터, 그룹, infinite 스크롤 등 대용량 데이타 처리 성능 보장</p>
         </div>
         <div class="main_content_fl">
-            <h3>Highly adaptable</h3>
-            <p><strong>Highly adaptable.</strong><br/>
-                Various UI components can be used as an inputType in GRID and data gets binding automatically.</p>
+            <div class="ac"><img src="./_dist/resources/images/img-main-convenience.png" alt="" /></div>
+            <h3 class="ac">편리성</h3>
+            <p>다양한 설정과 일관된 UI 및 API를 이용한 직관적인 사용</p>
         </div>
         <div class="main_content_fl">
-            <h3>Intuitive</h3>
-            <p><strong>Intuitive and easy to use.</strong><br/>
-                Even with strong capabilities various functionalities, W5Grid is very intuitive and easy to use.</p>
+            <div class="ac"><img src="./_dist/resources/images/img-main-expandanbility.png" alt="" /></div>
+            <h3 class="ac">확장성</h3>
+            <p>기본으로 제공하는 컴포넌트 외에 강력한 3rd party 컴포넌트 및 솔루션 들을 결합한 활용의 극대화</p>
         </div>
         <div class="main_content_fl">
-            <h3>Customizable</h3>
-            <p><strong>Easy to customize.</strong><br/>
-                The W5Grid has been developed with LESS, so that you can build your own Theme or even further develop your own style.</p>
-        </div>
-        <div class="main_content_fl">
-            <h3>Display Variation</h3>
-            <p><strong>Support N-Screen.</strong><br/>
-                Big data can be expressed in multi devices & multi platforms.</p>
+            <div class="ac"><img src="./_dist/resources/images/img-main-flexibility.png" alt=""/ ></div>
+            <h3 class="ac">유연성</h3>
+            <p>다양한 디바이스와 해상도에 <br/> 적절한 이벤트 처리 및 화면 배치</p>
         </div>
       </section>
     </article>
@@ -177,6 +185,22 @@
     <script src="./_dist/resources/js/jquery-1.11.1.min.js"></script>
     <script src="./_dist/resources/bootstrap/js/bootstrap.min.js"></script>
     <script type="text/javascript">
+      $("document").ready( function() {
+        var language = navigator.language || navigator.browserLanguage;
+
+        if( language.indexOf("-") > -1 ) {
+          language = language.substring(0, language.indexOf("-"));
+        }
+
+        $("html").attr( "lang", language );
+        $("#select-langue").val( language );
+      
+      //   if( document.cookie.length === 0 ) {
+      //     document.coockie = "w5-auto-location";
+      //     $("#select-langue").val( language ).change();
+      //   }
+      });
+
       $("#select-langue").change( function() {
         var target;
         
@@ -187,21 +211,6 @@
           document.location.href = "./index.ko.html";
         } else {
           document.location.href = "./index.html";
-        }
-      });
-
-      $("#select-langue").change( function() {
-        var location, target;
-        
-        target = $(this).children()[this.selectedIndex];
-        $(target).attr("selected", true);
-
-        if ( $(this).val() === "ko" ){
-          location = document.location.href.substring( 0, document.location.href.length-5 );
-          document.location.href = location + ".ko.html";
-        } else {
-          location = document.location.href.substring( 0, document.location.href.length-8 );
-          document.location.href = location + ".html";
         }
       });
 

@@ -25,7 +25,7 @@
         ga('create', 'UA-1212521-12', 'w5.io');
         ga('send', 'pageview');
     </script>
-    <title>W5 : Getting Started</title>
+    <title>W5 : 시작하기</title>
 </head>
 
 <body>
@@ -43,9 +43,9 @@
                 <div class="navbar-collapse collapse">
                     <ul class="nav navbar-nav">
                         <!--li class="active"><a href="#">Getting started</a></li>          <li class="divider"></li>          <li class="dropdown-header">Nav header</li-->
-                        <li><a href="../../../gettingStarted/gettingStarted/doc/gettingStarted.html">Getting started</a>
+                        <li><a href="../../../gettingStarted/gettingStarted/doc/gettingStarted.ko.html">시작하기</a>
                         </li>
-                        <li><a href="../../../samples/basic/doc/createW5Grid.html">Samples</a>
+                        <li><a href="../../../samples/basic/doc/createW5Grid.ko.html">Samples</a>
                         </li>
                         <li><a href="#" onclick="openAlert(this);">API Docs</a>
                         </li>
@@ -62,24 +62,24 @@
             </div>
         </div>
         <div class="visual">
-            <h1>Getting Started</h1> 
-            <p>To get started with W5 Grid, let's go through step by step</p>
+            <h1>시작하기</h1> 
+            <p>W5 Grid를 사용하려면, 다음과 같은 선행 작업이 있어야 합니다.</p>
         </div>
     </header>
     <!-- MAIN CONTENT -->
     <div id="main_content" class="inner row content">
         <aside class="lnb">
             <nav id="lnbList">
-                <h1>Getting Started</h1> 
+                <h1>시작하기</h1> 
                 <!--ul>                <li><a href=""></a></li>                </ul-->
             </nav>
         </aside>
         <article class="contents">
             <section>
-                <h1 id="getting-started">Getting Started</h1>
-                <h2 id="obtaining-w5grid" style="margin-top:15px;">Obtaining W5Grid</h2>
-                <p>W5Grid has several methods that let the user start quickly.
-                    <br>Select a method that fits your environment and purpose.
+                <h1 id="getting-started">시작하기</h1>
+                <h2 id="obtaining-w5grid" style="margin-top:15px;">W5 Grid 다운로드</h2>
+                <p>W5Grid는 빨리 시작할 수 있는 몇 가지 방법을 가지고 있습니다.
+                    <br>사용 환경과 목적에 적합한 방법을 선택하세요.
                     <!--</p>
 <h4 id="download-minified-w5grid">Download Minified W5Grid</h4>
 <p>The fastest way to use W5Grid is to download the minified CSS and JavaScript version. </p>
@@ -91,14 +91,13 @@ COMMENT END</p>
 <p>-->
                 </p>
                 <h3 id="-download-source-code-https-github-com-inswave-w5-archive-master-zip-"><a href="https://github.com/inswave/w5/archive/master.zip">Download source code</a></h3>
-                <p>You can obtain the latest LESS and JavaScript source code of W5Grid directly from GitHub.</p>
+                <p><a href="https://github.com/inswave/w5.git">GitHub</a>로부터 직접 W5Grid의 최종 LESS 와 JavaScript 소스 코드를 얻을 수 있습니다.</p>
                 <h3 id="clone-or-fork-via-github">Clone or fork via GitHub</h3>
-                <p>You can clone or fork the W5Grid project by visiting <a href="https://github.com/inswave/w5.git">GitHub</a>.</p>
-                <h3 id="install-with">Install with</h3>
-                <p>You can install and manage W5Grid styles, JavaScript, and documentation using <a href="http://bower.io/">Bower</a>.
-                    <br>Using Bower is recommended if you want to avoid cumbersome dependency management.</p>
-                <pre><code class="language-javascript">$ bower install w5
-</code></pre>
+                <p><a href="https://github.com/inswave/w5.git">GitHub</a>에 방문해서 W5Grid 프로젝트를 clone 하거나 fork 할 수 있습니다.</p>
+                <h3 id="install-with">Install with <a href="http://bower.io/">Bower</a></h3>
+                <p>Bower를 이용하여 W2Grid의 styles, JavaScript, documentation 을 설치하고 관리할 수 있습니다.<br/>
+                    귀찮은 종속성 관리를 피하고 싶다면 Bower 를 통한 방식을 추천합니다.</p>
+                <pre><code class="language-javascript">$ bower install w5</code></pre>
                 <!--
 #### W5Grid CDN
 
@@ -121,25 +120,25 @@ Use the [W5Grid CDN](http://) links described below.
 -->
 
                 <h2 id="project-structure">Project Structure</h2>
-                <p>The structure of the distributed Zip file is as follows:</p>
-                <div class="clearfix block-center" style="width:460px;">
+                <p>배포된 zip 파일의 구조는 다음과 같습니다. :</p>
+                <div class="clearfix block-center" style="margin-bottom:20px; width:460px;">
                     <p class="ac fl">
                         <img src="../images/gettingStarted01.png" alt="w5-master project structure">
                     </p>
                     <dl class="ml20 fl">
                         <dt>dist/</dt>
-                        <dd>Minified distribution version</dd>
+                        <dd>Minified 된 배포 버전</dd>
                         <dt>resources/</dt>
-                        <dd>source code for CSS</dd>
+                        <dd>CSS에 관련된 소스코드 및 이미지</dd>
                         <dt>src/</dt>
-                        <dd>complete JS source code
-                            <br>Not available in the trial distribution
+                        <dd>Minified 되지 않은 원본 JS 파일.<br/>
+                            Trial 버전에선 제공하지 않습니다.
                         </dd>
                     </dl>
                 </div>
 
-                <h3 id="dependencies-and-installation">Dependencies and Installation</h3>
-                <p>W5Grid has a few dependencies:</p>
+                <h3 id="dependencies-and-installation">Dependencies 및 설치</h3>
+                <p>W5Grid는 다음과 같은 dependencies를 가집니다. :</p>
                 <ul>
                     <li><a href="http://jquery.com/">jQuery</a>
                     </li>
@@ -148,9 +147,9 @@ Use the [W5Grid CDN](http://) links described below.
                     <li><a href="http://backbonejs.org/">Backbone.js</a>
                     </li>
                 </ul>
-                <p>Your webpage will be updated to load these resources together with W5Grid CSS and JS.
-                    <br>Put <code class="language-javascript">&lt;script&gt;</code> tags right before closing a <code class="language-javascript">&lt;/body&gt;</code> tag in the following order.</p>
-                <p>If the library has been used, it can be excluded.</p>
+                <p>이 리소스들을 W5Grid의 CSS, JS를 사용하려는 웹페이지에 다음과 같은 소스코드를 삽입합니다.
+                    <br><code class="language-javascript">&lt;script&gt;</code>태그는 <code class="language-javascript">&lt;/body&gt;</code>태그가 닫히기 바로 전에 아래 순서대로 위치 시킵니다.</p>
+                <p>기존에 사용하고 있는 라이브러리가 있으면 해당 라이브러리는 제외할 수 있습니다.</p>
                 <pre><code class="lang-markup">&lt;!-- ... additional lines truncated for brevity ... --&gt;
 &lt;head&gt;
 &lt;link rel=&quot;stylesheet&quot; href=&quot;w5.min.css&quot;&gt;
@@ -162,7 +161,7 @@ Use the [W5Grid CDN](http://) links described below.
 &lt;script src=&quot;w5.min.js&quot;&gt;&lt;/script&gt;
 &lt;/body&gt;
 </code></pre>
-                <h2 id="supported-browsers">Supported browsers</h2>
+                <h2 id="supported-browsers">지원 브라우저</h2>
                 <!-- Is it better to separate the desktop from mobile?(http://docs.kendoui.com/getting-started/dataviz/
 
 supported-browsers)-->

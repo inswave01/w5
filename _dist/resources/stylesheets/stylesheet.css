@@ -301,6 +301,13 @@ Full-Width Styles
   margin: 0;
   height: 30px;
 }
+#header_wrap .navbar .language {
+  margin-top: 16px;
+  font-size: 12px;
+  font-weight: bold;
+  color: #fff;
+  float: right;
+}
 #header_wrap .carousel-indicators {
   bottom: 15px;
 }
@@ -408,6 +415,12 @@ Full-Width Styles
 }
 .main_content_fl:fist-child {
 	margin-left:10px;	
+}
+.ko .main_content_fl {
+  margin: 20px 0px 0px 16px;
+  width: 240px;
+  min-height: 192px;
+  float: left;
 }
 
 #footer_wrap {
