@@ -58,19 +58,26 @@
                             <!--a href="" class="dropdown-toggle" data-toggle="dropdown">About<b class="caret"></b></a>            <ul class="dropdown-menu">              <li><a href="">Company</a></li>              <li><a href="">Contact us</a></li>            </ul-->
                         </li>
                     </ul>
+                    <div class="language">
+                        <label for="select-langue">Language</label>
+                        <select id="select-langue" class="ml10">
+                            <option value="en" selected="true">English</option>
+                            <option value="ko">Korean</option>
+                        </select>
+                    </div>
                 </div>
             </div>
         </div>
         <div class="visual">
-            <h1>Sample</h1> 
-            <p>Learn how to use and how powerful the w5 Grid is</p>
+            <h1></h1> 
+            <p></p>
         </div>
     </header>
     <!-- MAIN CONTENT -->
     <div id="main_content" class="inner row content">
         <aside class="lnb">
             <nav id="lnbList">
-                <h1>Sample</h1> 
+                <h1></h1> 
                 <!--ul>                <li><a href=""></a></li>                </ul-->
             </nav>
         </aside>
@@ -112,7 +119,7 @@
         <footer class="inner clearfix">
             <div style="width:255px; float:right;">
                 <a href="//plus.google.com/u/0/105292818602737285330?prsrc=3" rel="publisher" target="_blank" style="text-decoration:none; display:block; float:left; width:25px;">
-                    <img src="//ssl.gstatic.com/images/icons/gplus-16.png" alt="Google+" style="border:0;width:16px;height:16px;" />
+                    <img src="//ssl.gstatic.com/images/icons/gplus-16.png" alt="Google+" style="border:0;width:25px;height:25px;" />
                 </a> <a href="https://twitter.com/share" class="twitter-share-button" data-via="w5_io">Tweet</a> 
                 <script>
                     ! function(d, s, id) {
@@ -156,7 +163,7 @@
         var lnb = $("#lnbList"),
             menuName = lnb.find("h1").text(),
             menuList = $("<h2>Basic</h2>" + "<ul>" + "<li><a href='../../basic/doc/createW5Grid.html'>Creating W5 Grid</a></li>" + "<li><a href='../../basic/doc/convertTable.html'>Converting a table to a W5 grid</a></li>" + "<li><a href='../../basic/doc/get-set.html'>.get()/.set() API</a></li>" + "<li><a href='../../basic/doc/requireJS.html'>RequireJS</a></li>" + "</ul>" + "<h2>Column</h2>" + "<ul>" + "<li><a href='../../column/doc/adjustColumn.html'>Adjust Column Width</a></li>" + "<li><a href='../../column/doc/hideShowColumn.html'>Hide/Show Column</a></li>" + "<li><a href='../../column/doc/moveColumn.html'>Moving a column </a></li>" + "<li><a href='../../column/doc/frozenColumn.html'>Frozen column</a></li>" + "<li><a href='../../column/doc/flex.html'>Flexible column</a></li>" + "</ul>" + "<h2>Navigation</h2>" + "<ul>" + "<li><a href='../../navigation/doc/scroll.html'>Scroll</a></li>" + "<li><a href='../../navigation/doc/scrollArea.html'>Scroll Area</a></li>" + "<li><a href='../../navigation/doc/wheel.html'>Wheel</a></li>" + "<li><a href='../../navigation/doc/keyboardNavigation.html'>Keyboard Navigation</a></li>" + "</ul>" + "<h2>Style</h2>" + "<ul>" + "<li><a href='../../style/doc/concept.html'>Concept</a></li>" + "<li><a href='../../style/doc/cssAPI.html'>CSS API</a></li>" + "</ul>" + "<h2>Cell</h2>" + "<ul>" + "<li><a href='../../cell/doc/inlineEdit.html'>Inline Edit</a></li>" + "<li><a href='../../cell/doc/displayType.html'>Display Type</a></li>" + "<li><a href='../../cell/doc/customCell.html'>Custom Cell</a></li>" + "<li><a href='../../cell/doc/dataType.html'>Data Type</a></li>" + "</ul>" + "<h2>Data</h2>" + "<ul>" + "<li><a href='../../data/doc/defaults.html'>Defaults</a></li>" + "<li><a href='../../data/doc/expression_format.html'>Expression</a></li>" + "<li><a href='../../data/doc/processData.html'>Process Data</a></li>" + "</ul>" + "<h2>Sort</h2>" + "<ul>" + "<li><a href='../../sort/doc/sort.html'>Sort</a></li>" + "</ul>" + "<h2>etc</h2>" + "<ul>" + "<li><a href='../../etc/doc/resizing.html'>In response to the browser size.</a></li>" + "</ul>");
-        if (menuName === "Sample") {
+        if (menuName === "Samples") {
             lnb.append(menuList);
         }
     </script>

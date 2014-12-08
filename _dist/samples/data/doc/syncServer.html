@@ -309,56 +309,6 @@
     <script src="../../../resources/bootstrap/js/bootstrap.min.js"></script>
     <script src="../../../resources/prism/prism.js"></script>
     <script type="text/javascript">
-        $("document").ready(function() {
-            var gnbHref = $(".navbar-nav a[href!='#']"),
-                tmpHref = "",
-                lnb = $("#lnbList"),
-                menuName = lnb.find("h1").text(),
-                menuListEN = $("<h2>Basic</h2>" + "<ul>" + "<li><a href='../../basic/doc/createW5Grid.html'>Creating W5 Grid</a></li>" + "<li><a href='../../basic/doc/convertTable.html'>Converting a table to a W5 grid</a></li>" + "<li><a href='../../basic/doc/requireJS.html'>RequireJS</a></li>" + "</ul>" + "<h2>Cell</h2>" + "<ul>" + "<li><a href='../../cell/doc/displayType.html'>Display Type</a></li>" + "</ul>");
-            menuListKO = $("<h2>Basic</h2>" + "<ul>" + "<li><a href='../../basic/doc/createW5Grid.ko.html'>W5 Grid 생성하기</a></li>" + "<li><a href='../../basic/doc/convertTable.ko.html'>Table을 W5 Grid로 변환하기</a></li>" + "<li><a href='../../basic/doc/requireJS.ko.html'>RequireJS</a></li>" + "</ul>" + "<h2>Cell</h2>" + "<ul>" + "<li><a href='../../cell/doc/displayType.ko.html'>Display Type</a></li>" + "</ul>"), language = document.location.href;
-            if (language.indexOf(".ko.") > -1) {
-                language = "ko";
-                for (var i = 0; i < gnbHref.length; i++) {
-                    tmpHref = gnbHref[i].href.substring(0, gnbHref[i].href.length - 5);
-                    gnbHref[i].href = tmpHref + ".ko.html";
-                }
-            } else {
-                language = "en";
-            }
-            $("html").attr("lang", language);
-            $("#select-langue").val(language);
-            if (menuName === "Samples") {
-                switch (language) {
-                    case "en":
-                        lnb.append(menuListEN);
-                        break;
-                    case "ko":
-                        lnb.append(menuListKO);
-                        break;
-                    default:
-                        lnb.append(menuListEN);
-                        break;
-                }
-            }
-        });
-        $("#select-langue").change(function() {
-            var target, location, language;
-            location = document.location.href;
-            if (location.indexOf(".ko.") > -1) {
-                language = "ko";
-            } else {
-                language = "en";
-            } if (language === $(this).val()) {
-                return;
-            } else {
-                if ($(this).val() === "ko") {
-                    document.location.href = location.substring(0, location.length - 5) + ".ko.html";
-                } else {
-                    document.location.href = location.substring(0, location.length - 8) + ".html";
-                }
-            }
-        });
-
         function openAlert(target) {
             var alertParent = $("#header_wrap"),
                 alert, alertLeft = 0;
@@ -366,6 +316,12 @@
             alertParent.append(alert);
             alertLeft = alertParent.width() / 2 - alert.width() / 2;
             alert.css("left", alertLeft);
+        }
+        var lnb = $("#lnbList"),
+            menuName = lnb.find("h1").text(),
+            menuList = $("<h2>Basic</h2>" + "<ul>" + "<li><a href='../../basic/doc/createW5Grid.html'>Creating W5 Grid</a></li>" + "<li><a href='../../basic/doc/convertTable.html'>Converting a table to a W5 grid</a></li>" + "<li><a href='../../basic/doc/get-set.html'>.get()/.set() API</a></li>" + "<li><a href='../../basic/doc/requireJS.html'>RequireJS</a></li>" + "</ul>" + "<h2>Column</h2>" + "<ul>" + "<li><a href='../../column/doc/adjustColumn.html'>Adjust Column Width</a></li>" + "<li><a href='../../column/doc/hideShowColumn.html'>Hide/Show Column</a></li>" + "<li><a href='../../column/doc/moveColumn.html'>Moving a column </a></li>" + "<li><a href='../../column/doc/frozenColumn.html'>Frozen column</a></li>" + "<li><a href='../../column/doc/flex.html'>Flexible column</a></li>" + "</ul>" + "<h2>Navigation</h2>" + "<ul>" + "<li><a href='../../navigation/doc/scroll.html'>Scroll</a></li>" + "<li><a href='../../navigation/doc/scrollArea.html'>Scroll Area</a></li>" + "<li><a href='../../navigation/doc/wheel.html'>Wheel</a></li>" + "<li><a href='../../navigation/doc/keyboardNavigation.html'>Keyboard Navigation</a></li>" + "</ul>" + "<h2>Style</h2>" + "<ul>" + "<li><a href='../../style/doc/concept.html'>Concept</a></li>" + "<li><a href='../../style/doc/cssAPI.html'>CSS API</a></li>" + "</ul>" + "<h2>Cell</h2>" + "<ul>" + "<li><a href='../../cell/doc/inlineEdit.html'>Inline Edit</a></li>" + "<li><a href='../../cell/doc/displayType.html'>Display Type</a></li>" + "<li><a href='../../cell/doc/customCell.html'>Custom Cell</a></li>" + "<li><a href='../../cell/doc/dataType.html'>Data Type</a></li>" + "</ul>" + "<h2>Data</h2>" + "<ul>" + "<li><a href='../../data/doc/defaults.html'>Defaults</a></li>" + "<li><a href='../../data/doc/expression_format.html'>Expression</a></li>" + "<li><a href='../../data/doc/processData.html'>Process Data</a></li>" + "</ul>" + "<h2>Sort</h2>" + "<ul>" + "<li><a href='../../sort/doc/sort.html'>Sort</a></li>" + "</ul>" + "<h2>etc</h2>" + "<ul>" + "<li><a href='../../etc/doc/resizing.html'>In response to the browser size.</a></li>" + "</ul>");
+        if (menuName === "Samples") {
+            lnb.append(menuList);
         }
     </script>
 </body>
