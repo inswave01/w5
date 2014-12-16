@@ -274,7 +274,8 @@ Full-Width Styles
 }
 
 #header_wrap {
-  height: 310px;
+  padding-top:20px;
+  height: 290px;
   position: relative;
   background: #2450B4;
   border-bottom: 1px solid #111;
@@ -286,9 +287,13 @@ Full-Width Styles
 
 /* override define css in bootstrap.min.css */
 #header_wrap .navbar-wrapper {
-  margin: 20px auto 0;
+  margin: 0px auto 0;
   max-width: 1024px;
   font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+  position: static;
+  top: auto;
+  right: auto;
+  left: auto;
 }
 #header_wrap .navbar {
   margin-bottom: 0px;
@@ -301,8 +306,27 @@ Full-Width Styles
   margin: 0;
   height: 30px;
 }
+#header_wrap .navbar .language {
+  margin-top: 16px;
+  font-size: 12px;
+  font-weight: bold;
+  color: #fff;
+  float: right;
+}
+#header_wrap .carousel {
+  height: 220px;
+}
 #header_wrap .carousel-indicators {
-  bottom: 15px;
+  bottom: 10px;
+}
+#header_wrap .carousel .item {
+  height: 220px;
+}
+#header_wrap .carousel-control .icon-prev, 
+#header_wrap .carousel-control .icon-next,
+#header_wrap .carousel-control .glyphicon-chevron-left,
+#header_wrap .carousel-control .glyphicon-chevron-right {
+  top: 40%;
 }
 #header_wrap h1 {
   color: #fff;
@@ -314,7 +338,7 @@ Full-Width Styles
   line-height: 1.3;
 }
 #header_wrap .carousel-caption {
-  margin: 105px auto 0;
+  margin: 35px auto 0;
   padding: 0px 40px;
   max-width: 860px;
   text-align: left;
@@ -409,6 +433,12 @@ Full-Width Styles
 .main_content_fl:fist-child {
 	margin-left:10px;	
 }
+.ko .main_content_fl {
+  margin: 20px 0px 0px 16px;
+  width: 240px;
+  min-height: 192px;
+  float: left;
+}
 
 #footer_wrap {
   background: #212121;
@@ -497,7 +527,7 @@ sub.html styles
 *******************************************************************************/
 #header_wrap .visual {
   margin: 0 auto;
-  padding: 105px 40px 0px;
+  padding: 35px 40px 0px;
   width: 960px;
   color: #fff;
 }
