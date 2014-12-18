@@ -12,5 +12,6 @@ w5.dataType = {
   "auto": function(value) { return value; },
   "string": String,
   "number": Number,
-  "boolean": Boolean
+  "boolean": Boolean,
+  "date": function(value) { return value; }
 };

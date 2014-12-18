@@ -101,7 +101,8 @@ module.exports = function(grunt) {
           boss: true,
           eqnull: true,
           node: true,
-          browser: true             // use document
+          browser: true,             // use document
+          evil: true
         }
       }
     },

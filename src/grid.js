@@ -1,6 +1,10 @@
+var eventSplitter = /\s+/,
+    selectorPattern = [/^[^\[\s]+\[[^\]]+\]|^[^\[\s]+/g, /(^[^\[\]:]*)(\[[^\]]+\])?(?::(\w+$))?/g],
+    BView = Backbone.View.prototype;
+
 var GridProto = {
   template: _.template(
-    "<<%= tagName %> id='<%= id %>' class='gGrid<%= className %>' style='width:<%= width %>'>" +
+    "<<%= tagName %> id='<%= id %>' class='gGrid<%= className %>' style='width:<%= width %>;" + "<%= style %>'>" +
       "<div class='gGrid-setTable'>" +
         "<div class='w5_grid_editbox' contenteditable='true'></div>" +
         "<table class='gGrid-table' style='width:0'>" +
@@ -9,6 +13,7 @@ var GridProto = {
           "<thead></thead>" +
           "<tbody></tbody>" +
         "</table>" +
+        "<div class='w5-grid-select-area hide'></div>" +
         "<div class='w5-grid-focused-cell border-top hide'></div>" +
         "<div class='w5-grid-focused-cell border-right hide'></div>" +
         "<div class='w5-grid-focused-cell border-bottom hide'>" +
@@ -20,7 +25,7 @@ var GridProto = {
         "<div class='frozenHandle-move hide'></div>" +
         "<div class='columnMove-start hide'></div>" +
         "<div class='columnMove-move hide'></div>" +
-        "<div class='columnMove-indicator hide'>"+
+        "<div class='columnMove-indicator hide'>" +
           "<span class='columnMove-indicator-arrow'></span>"+
           "<span class='columnMove-indicator-bar'></span>"+
         "</div>" +
@@ -36,19 +41,21 @@ var GridProto = {
         "<div class='gScroll-h'>" +
           "<button class='scrollHandler'>Move horizontal scroll</button>" +
         "</div>" +
-      "</div>" + 
+      "</div>" +
     "</<%= tagName %>>"
   ),
   events: {
-    "dblclick .gGrid-table thead" : function(e) { this.sortColumn.dblClickEvent.call( this, e ); },
-    "mousedown .gGrid-table thead" : function(e){ this.columnMove.downEvent.call( this, e ); },
-    "click .gGrid-table tbody" : function(e){ this.clickCell.clickEvent.call( this, e ); },
-    "dblclick .gGrid-table tbody" : function(e){ this.clickCell.clickEvent.call( this, e ); },
+    "dblclick .gGrid-table>thead" : function(e) { this.sortColumn.dblClickEvent.call( this, e ); },
+    "mousedown .gGrid-table>thead" : function(e){ this.columnMove.downEvent.call( this, e ); },
+    "click .gGrid-table>tbody" : function(e){ this.clickCell.clickEvent.call( this, e ); },
+    "dblclick .gGrid-table>tbody" : function(e){ this.clickCell.clickEvent.call( this, e ); },
     "mousedown .frozenHandle" : function(e){ this.frozenColumn.downEvent.call( this, e ); },
     "mousedown .gScroll-v" : function(e) { this.verticalScroll.areaDownEvent.call( this, e ); },
     "mousedown .gScroll-v .scrollHandler" : function(e) { this.verticalScroll.handleDownEvent.call( this, e ); },
+    "touchstart .gScroll-v .scrollHandler" : function(e) { this.verticalScroll.handleDownEvent.call( this, e ); },
     "mousedown .gScroll-h" : function(e) { this.horizontalScroll.areaDownEvent.call( this, e ); },
     "mousedown .gScroll-h .scrollHandler" : function(e) { this.horizontalScroll.handleDownEvent.call( this, e ); },
+    "touchstart .gScroll-h .scrollHandler" : function(e) { this.horizontalScroll.handleDownEvent.call( this, e ); },
     "mousewheel" : function(e) { this.scrollByWheel.wheelEvent.call( this, e ); },
     "keydown .w5_grid_editbox": "handleKeydown",
     "keydown .gGrid-table>tbody": "handleKeydown"
@@ -66,6 +73,20 @@ var GridProto = {
     35:  "jumpTo",              // END
     33:  "jumpTo",              // PAGE UP
     34:  "jumpTo"               // PAGE DOWN
+  },
+  keySet: {
+    UP : 38,
+    DOWN : 40,
+    LEFT : 37,
+    RIGHT : 39,
+    ENTER : 13,
+    F2 : 113,
+    ESC : 27,
+    TAB : 9,
+    HOME : 36,
+    END : 35,
+    PageUP : 33,
+    PageDOWN : 34
   },
   initialize: function(options) {
     this.options = options;
@@ -88,6 +109,10 @@ var GridProto = {
       this.id = this.$el.attr("id");
     }
 
+    if ( _.isBoolean( options.emulateHTTP ) ) {
+      Backbone.emulateHTTP = options.emulateHTTP;
+    }
+
     if( options.collection instanceof Backbone.Collection ) {
       _.extend( this.collection.constructor.prototype.model.prototype, w5DataModelProto, w5DataModelProtoPro );
       _.extend( this.collection.constructor.prototype, w5DataCollectionProto, w5DataCollectionProtoPro );
@@ -96,7 +121,7 @@ var GridProto = {
         grid: that,
         keys: options.collection.keys ? options.collection.keys : keys,
         url: options.collection.url,
-        urlCUD: options.collection.urlCUD,
+        compoundURL: options.collection.compoundURL,
         defaults: options.collection.defaults ? options.collection.defaults : defaults
       });
     } else {
@@ -119,6 +144,9 @@ var GridProto = {
     if ( options.fetch ) {
       this.viewModel.fetch( this.collection, _.extend( { reset: true }, options.fetch ) );
     }
+
+    this.isBasic = _.isUndefined( this.collection.filterInfo );
+    this.isMobile = this.detectMobile.any();
 
     this.tabbableElements = ['checkbox'];
 
@@ -143,14 +171,15 @@ var GridProto = {
     $el = $(this.template({
       tagName: this.tagName || "div",
       id: this.id,
-      className: " " + ( this.className || "" ),
+      className: this.className ? ( " " + this.className ) : "" ,
+      style: this.$el[0].style.cssText ? ( " " + this.$el[0].style.cssText ) : "",
       width: this.viewModel.getOption("width"),
       caption : this.viewModel.getOption("caption")
     }));
 
     this.$el.replaceWith( $el );
     this.$el = $el;
-    $wrapper_div = $el.find(".gGrid-setTable");
+    $wrapper_div = this.$(".gGrid-setTable");
     this.$wrapper_div = $wrapper_div;
 
     this.tableWidth = $wrapper_div.width();
@@ -158,15 +187,15 @@ var GridProto = {
 
     // scroll value
     this.rowTop = 0;
-    this.rowNum = $el.find("tbody tr").length;
+    this.rowNum = this.$("tbody tr").length;
     this.startCol = 0;
-    this.endCol = $el.find("colgroup col").length;
+    this.endCol = this.$("colgroup col").length;
 
-    this.$scrollYArea   = $el.find(".gScroll-v");
-    this.$scrollYHandle = $el.find(".gScroll-v .scrollHandler");
-    this.$scrollXArea   = $el.find(".gScroll-h");
-    this.$scrollXHandle = $el.find(".gScroll-h .scrollHandler");
-    this.$editBox       = $el.find(".w5_grid_editbox");
+    this.$scrollYArea   = this.$(".gScroll-v");
+    this.$scrollYHandle = this.$(".gScroll-v .scrollHandler");
+    this.$scrollXArea   = this.$(".gScroll-h");
+    this.$scrollXHandle = this.$(".gScroll-h .scrollHandler");
+    this.$editBox       = this.$(".w5_grid_editbox");
 
     this.scrollYHandleMinHeight = parseInt( this.$scrollYHandle.css('min-height'), 10 );
     this.scrollXHandleMinWidth  = parseInt( this.$scrollXHandle.css('min-width'), 10 );
@@ -174,26 +203,50 @@ var GridProto = {
     this.addEvents();
     this.setResize();
 
-    this.headNum = $el.find("thead tr").length;
+    this.headNum = this.$("thead tr").length;
+
+    this.trigger( 'render', { type: "render" } );
 
     return this; // enable chained calls
+  },
+  detectMobile: {
+    userAgent: navigator.userAgent,
+    android: function() {
+      return (/Android/i).test(this.userAgent);
+    },
+    blackBerry: function() {
+      return (/BlackBerry/i).test(this.userAgent);
+    },
+    iOS: function() {
+      return (/iPhone|iPad|iPod/i).test(this.userAgent);
+    },
+    opera: function() {
+      return (/Opera Mini/i).test(this.userAgent);
+    },
+    windows: function() {
+      return (/IEMobile/i).test(this.userAgent);
+    },
+    any: function() {
+      return ( this.iOS() || this.android() || this.blackBerry() || this.opera() || this.windows() );
+    }
   },
   setGridEvents: function() {
     var events = {},
         i;
-    for(i in this.options.gridEvents) {
-      var eventName = i.split(" ")[0];
-      if(!events[eventName]) {
-        events[eventName] = [];
+
+    for ( i in this.options.gridEvents ) {
+      var eventKey = i.split(eventSplitter);
+      if ( !events[eventKey[0]] ) {
+        events[eventKey[0]] = [];
       }
-      events[eventName].push({
-        select: i.slice(eventName.length + 1),
+      events[eventKey[0]].push({
+        select: eventKey.splice(1).join(' '),
         funcName: this.options.gridEvents[i]
       });
     }
     this.gridEventMatch = events;
-    for(i in events) {
-      if(i === "change") {
+    for ( i in events ) {
+      if ( i === "change" ) {
         continue;
       }
       this.events[i + " td"] = "handleCommonEvent";
@@ -202,24 +255,41 @@ var GridProto = {
   },
   handleCommonEvent: function(e) {
     var events = this.gridEventMatch[e.type] || [],
-        $td = $(e.target).closest("td"),
-        col = $td.index(),
-        row = $td.parent().index() + this.rowTop,
-        cid = this.viewModel.getDataCID(row),
-        frozenColumn = this.viewModel.getOption("frozenColumn"),
-        i, j, elems;
-    if(col >= frozenColumn) {
-      col += this.startCol;
+        $td, col, row, cid, frozenColumn,
+        result = {};
+
+    if ( events.length > 0 ) {
+      $td = $(e.target).closest("td");
+      col = $td.index();
+      row = $td.parent().index() + this.rowTop;
+      cid = this.viewModel.getDataCID(row);
+      frozenColumn = this.viewModel.getOption("frozenColumn");
+
+      if ( col >= frozenColumn ) {
+        col += this.startCol - frozenColumn;
+      }
+
+      col = this.viewModel.getColID( col, true );
+
+      result.rowIndex = row;
+      result.colID = col;
+
+      this.fireGridEvent( events, cid, col, e, result, false );
     }
-    col = this.viewModel.getColID(col, true); 
-    for(i = 0; i < events.length; i++) {
-      elems = this.select(events[i].select);
-      for(j = 0; j < elems.length; j++) {
-        if(this.viewModel.getDataCID(elems[j][0]) === cid && elems[j][1] === col) {
-          if(_.isString(events[i].funcName)) {
-            this.options[events[i].funcName].call(this, e, row, col);
-          } else if(_.isFunction(events[i].funcName)) {
-            events[i].funcName.call(this, e, row, col);
+  },
+  fireGridEvent: function( events, cid, colID, eventObj, options, checkedPseudo ) {
+    var i, j, elems;
+
+    for ( i = 0; i < events.length; i++ ) {
+      elems = this.select( events[i].select );
+      for ( j = 0; j < elems.length; j++ ) {
+        if ( this.viewModel.getDataCID( elems[j][0] ) === cid && elems[j][1] === colID ) {
+          if ( checkedPseudo || !( eventObj.target.tagName === 'TD' && elems[j].pseudo && elems[j].pseudo === 'items' ) ) {
+            if ( _.isString( events[i].funcName ) ) {
+              this.options[events[i].funcName].call( this, eventObj, options );
+            } else if ( _.isFunction( events[i].funcName ) ) {
+              events[i].funcName.call( this, eventObj, options );
+            }
           }
         }
       }
@@ -230,7 +300,7 @@ var GridProto = {
       return;
     }
 
-    var $trs = this.$el.find("tr"),
+    var $trs = this.$("tr"),
         $headTr = $($trs[0]),
         colWidth = [],
         headerLabel = [],
@@ -291,16 +361,16 @@ var GridProto = {
     });
   },
   createTbody: function () {
-    var $tbody = this.$el.find("tbody"),
-        $colgroup = this.$el.find("colgroup"),
+    var $tbody = this.$("tbody"),
+        $colgroup = this.$("colgroup"),
         rowNum = this.viewModel.getOption("rowNum"),
         visibleCol = this.viewModel.getVisibleCol(),
         widthSum = 0,
         colgroup = "",
         i, j, $tr, colNum;
 
-    this.$el.find("col").remove();
-    this.$el.find("tr").remove();
+    this.$("col").remove();
+    this.$("tr").remove();
 
     for( colNum = 0; colNum < visibleCol.length; colNum++ ) {
       widthSum += this.viewModel.getMeta( ["*", colNum], "width" );
@@ -350,8 +420,8 @@ var GridProto = {
       $("document").addClass("noselect");
     },
     sortColumn : function( col ) {
-      var column = _.isFunction( this.collection.sortInfo.column ) ? [] : this.collection.sortInfo.column || [],
-          direction = this.collection.sortInfo.direction || [],
+      var column = _.isFunction( this.collection.sortInfo.column ) ? [] : this.collection.sortInfo.column.slice() || [],
+          direction = this.collection.sortInfo.direction.slice() || [],
           colID = this.viewModel.getColID(col),
           index = _.indexOf( column, colID ),
           sortState = index === -1 ? 0 : ( ( direction[index] || 'asc' ) === "asc" ? 1 : 2 );
@@ -377,23 +447,21 @@ var GridProto = {
     _wrapMoveEvent  : null,
     _wrapUpEvent    : null,
     $pickTH         : null,
-    $pickTHWidth    : null,
     dragInfo        : {
-                      startX : null, 
-                      indicatorMovePosX : null,
-                      increasedX : null
-                    },
+                        startX : null,
+                        indicatorMovePosX : null,
+                        increasedX : null
+                      },
 
     _downEvent : function(e) {
       var colOrder = this.viewModel.getOption("colOrder"),
           visibleCol = this.viewModel.getVisibleCol(),
           thIndex, frozenColumn;
 
-      this.columnMove.$indicator =  this.$el.find(".columnMove-indicator");
-      this.columnMove.$indicatorStart = this.$el.find(".columnMove-start");
-      this.columnMove.$indicatorMove = this.$el.find(".columnMove-move");
+      this.columnMove.$indicator =  this.$(".columnMove-indicator");
+      this.columnMove.$indicatorStart = this.$(".columnMove-start");
+      this.columnMove.$indicatorMove = this.$(".columnMove-move");
       this.columnMove.$pickTH = $(e.target).closest("th");
-      this.columnMove.$pickTHWidth = this.columnMove.$pickTH.outerWidth();
       this.columnMove.dragInfo.startX = e.clientX; 
       this.columnMove.dragInfo.indicatorMovePosX = this.columnMove.$pickTH.position().left;
 
@@ -404,15 +472,15 @@ var GridProto = {
       }
 
       if ( colOrder[this.columnMove.draggedColumn] !== visibleCol[this.columnMove.draggedColumn] ) {
-        this.columnMove.draggedColumn = _(colOrder).indexOf(this.columnMove.draggedColumn);
+        this.columnMove.draggedColumn = _(colOrder).indexOf(visibleCol[this.columnMove.draggedColumn]);
       }
 
       $("body").addClass("noselect");
     },
     downEvent : function(e) {
       var that;
-      
-      if ( ( e.target.className.indexOf('gGrid-headerLabelWrap') > -1 || e.target.className.indexOf('gGrid-headerLabelText') > -1 || e.target.className.indexOf('w5-grid-sort') > -1 ) && e.target.tagName !== 'BUTTON' ) {
+
+      if ( e.target.tagName !== 'BUTTON' && ( e.target.className.indexOf('gGrid-headerLabelText') > -1 || e.target.className.indexOf('gGrid-headerLabelWrap') > -1 || e.target.className.indexOf('w5-grid-sort') > -1 ) ) {
         this.columnMove._downEvent.call( this, e);
 
         that = this;
@@ -422,8 +490,8 @@ var GridProto = {
         this.columnMove._wrapMoveEvent = _.bind(this.columnMove._wrapMoveEvent, this);
         this.columnMove._wrapUpEvent = _.bind(this.columnMove._wrapUpEvent, this);
 
-        document.addEventListener('mousemove', this.columnMove._wrapMoveEvent, true);
-        document.addEventListener('mouseup', this.columnMove._wrapUpEvent, true);
+        document.body.addEventListener('mousemove', this.columnMove._wrapMoveEvent, true);
+        document.body.addEventListener('mouseup', this.columnMove._wrapUpEvent, true);
       }
     },
     _moveEvent : function(e) {
@@ -431,24 +499,25 @@ var GridProto = {
           colOrder = this.viewModel.getOption("colOrder"),
           visibleCol = this.viewModel.getVisibleCol(),
           thIndex, frozenColumn, targetIndex;
-      
+
+      this.columnMove.dragInfo.increasedX = e.clientX - this.columnMove.dragInfo.startX;
       this.columnMove.$indicatorStart.css({
           left : this.columnMove.dragInfo.indicatorMovePosX,
           width : this.columnMove.$pickTH.width() - 2
       }).removeClass("hide");
+
       this.columnMove.$indicatorMove.css({
-          width : this.columnMove.$pickTH.width()
+        left  : this.columnMove.dragInfo.indicatorMovePosX + this.columnMove.dragInfo.increasedX,
+        width : this.columnMove.$pickTH.width()
       }).removeClass("hide");
-      this.columnMove.dragInfo.increasedX = e.clientX - this.columnMove.dragInfo.startX;
-      this.columnMove.$indicatorMove.css("left", this.columnMove.dragInfo.indicatorMovePosX + this.columnMove.dragInfo.increasedX);
 
       if ( $th.length > 0 ) {
         thIndex = $th.index();
         frozenColumn = this.viewModel.getOption("frozenColumn");
         targetIndex = thIndex < frozenColumn ? thIndex : thIndex + this.startCol - frozenColumn;
 
-        if ( colOrder[this.columnMove.targetIndex] !== visibleCol[this.columnMove.targetIndex] ) {
-          this.columnMove.targetIndex = _(colOrder).indexOf(this.columnMove.draggedColumn);
+        if ( colOrder[targetIndex] !== visibleCol[targetIndex] ) {
+          targetIndex = _(colOrder).indexOf(visibleCol[targetIndex]);
         }
         if ( targetIndex === this.columnMove.draggedColumn ) {
           this.columnMove.$indicator.addClass("hide");
@@ -467,7 +536,7 @@ var GridProto = {
       }
     },
     moveEvent : function(e) {
-      if(this.columnMove.draggedColumn) {
+      if ( this.columnMove.draggedColumn > -1 ) {
         this.columnMove._moveEvent.call( this, e );
       }
     },
@@ -483,12 +552,14 @@ var GridProto = {
         targetIndex = thIndex < frozenColumn ? thIndex : thIndex + this.startCol - frozenColumn;
 
         if ( colOrder[targetIndex] !== visibleCol[targetIndex] ) {
-          targetIndex = _(colOrder).indexOf(this.columnMove.draggedColumn);
+          targetIndex = _(colOrder).indexOf(visibleCol[targetIndex]);
         }
-        if ( this.columnMove.draggedColumn!==targetIndex ) {
+
+        if ( this.columnMove.draggedColumn !== targetIndex ) {
           this.moveColumn(this.columnMove.draggedColumn, targetIndex);
         }
       }
+
       $("body").removeClass("noselect").removeClass("not-allowed");
       $th.removeClass("allowed").removeClass("not-allowed");
       this.columnMove.$indicator.addClass("hide").removeClass("show");
@@ -498,8 +569,8 @@ var GridProto = {
     },
     upEvent : function(e) {
       this.columnMove._upEvent.call( this, e.target );
-      document.removeEventListener('mousemove', this.columnMove._wrapMoveEvent, true);
-      document.removeEventListener('mouseup', this.columnMove._wrapUpEvent, true);
+      document.body.removeEventListener('mousemove', this.columnMove._wrapMoveEvent, true);
+      document.body.removeEventListener('mouseup', this.columnMove._wrapUpEvent, true);
     }
   },
   frozenColumn : {
@@ -521,9 +592,9 @@ var GridProto = {
       var that = this;
       this.frozenColumn._downEvent.call( this, e.clientX );
 
-      this.frozenColumn.$frozenHandle = this.$el.find(".frozenHandle");
-      this.frozenColumn.$seperateCol = this.$el.find(".frozenHandle-move");
-      this.frozenColumn.$indicator = this.$el.find(".columnMove-indicator");
+      this.frozenColumn.$frozenHandle = this.$(".frozenHandle");
+      this.frozenColumn.$seperateCol = this.$(".frozenHandle-move");
+      this.frozenColumn.$indicator = this.$(".columnMove-indicator");
 
       this.frozenColumn._wrapMoveEvent = function(e){ that.frozenColumn.moveEvent.call( this, e ); };
       this.frozenColumn._wrapUpEvent = function(e){ that.frozenColumn.upEvent.call( this, e ); };
@@ -531,8 +602,8 @@ var GridProto = {
       this.frozenColumn._wrapMoveEvent = _.bind(this.frozenColumn._wrapMoveEvent, this);
       this.frozenColumn._wrapUpEvent = _.bind(this.frozenColumn._wrapUpEvent, this);
 
-      document.addEventListener('mousemove', this.frozenColumn._wrapMoveEvent, true);
-      document.addEventListener('mouseup', this.frozenColumn._wrapUpEvent, true);
+      document.body.addEventListener('mousemove', this.frozenColumn._wrapMoveEvent, true);
+      document.body.addEventListener('mouseup', this.frozenColumn._wrapUpEvent, true);
     },
     _moveEvent : function(clientX) {
       var i,
@@ -578,16 +649,15 @@ var GridProto = {
       this.frozenColumn._moveEvent.call( this, e.clientX );
     },
     _upEvent : function() {
+      this.viewModel.setOption("frozenColumn", this.frozenColumn.newFrozenCol);
       this.frozenColumn.$seperateCol.removeClass("show").addClass("hide");
       this.frozenColumn.$indicator.removeClass("show").addClass("hide");
-      this.viewModel.setOption("frozenColumn", this.frozenColumn.newFrozenCol);
-      this.drawByScroll();
     },
     upEvent : function(e) {
       this.frozenColumn._upEvent.call( this, e.target );
 
-      document.removeEventListener('mousemove', this.frozenColumn._wrapMoveEvent, true);
-      document.removeEventListener('mouseup', this.frozenColumn._wrapUpEvent, true);
+      document.body.removeEventListener('mousemove', this.frozenColumn._wrapMoveEvent, true);
+      document.body.removeEventListener('mouseup', this.frozenColumn._wrapUpEvent, true);
     }
   },
   verticalScroll : {
@@ -619,10 +689,18 @@ var GridProto = {
     handleDownEvent : function(e) {
       var that = this;
 
-      this.verticalScroll._handleDownEvent.call( this, e.clientY );
-
       e.preventDefault();
       e.stopPropagation();
+
+      if ( this.isMobile ) {
+        if ( e.originalEvent.touches ) {
+          e = e.originalEvent.touches[0];
+        } else {
+          return false;
+        }
+      }
+
+      this.verticalScroll._handleDownEvent.call( this, e.clientY );
 
       this.verticalScroll._wrapMoveEvent = function(e){ that.verticalScroll.moveEvent.call( this, e ); };
       this.verticalScroll._wrapUpEvent = function(e){ that.verticalScroll.upEvent.call( this, e ); };
@@ -630,8 +708,13 @@ var GridProto = {
       this.verticalScroll._wrapMoveEvent = _.bind(this.verticalScroll._wrapMoveEvent, this);
       this.verticalScroll._wrapUpEvent = _.bind(this.verticalScroll._wrapUpEvent, this);
 
-      document.addEventListener('mousemove', this.verticalScroll._wrapMoveEvent, true);
-      document.addEventListener('mouseup', this.verticalScroll._wrapUpEvent, true);
+      if ( this.isMobile ) {
+        document.body.addEventListener('touchmove', this.verticalScroll._wrapMoveEvent, true);
+        document.body.addEventListener('touchend', this.verticalScroll._wrapUpEvent, true);
+      } else {
+        document.body.addEventListener('mousemove', this.verticalScroll._wrapMoveEvent, true);
+        document.body.addEventListener('mouseup', this.verticalScroll._wrapUpEvent, true);
+      }
     },
     _moveEvent : function(clientY) {
       if ( !this.verticalScroll.pos ) {
@@ -645,7 +728,11 @@ var GridProto = {
       this.viewModel.setOption("scrollTop", scrollTop);
     },
     moveEvent : function(e) {
-      this.verticalScroll._moveEvent.call( this, e.clientY );
+      if ( this.isMobile ) {
+        e.preventDefault();
+      }
+
+      this.verticalScroll._moveEvent.call( this, this.isMobile ? e.touches[0].clientY : e.clientY );
     },
     _upEvent : function() {
       this.verticalScroll.pos = null;
@@ -653,8 +740,13 @@ var GridProto = {
     upEvent : function() {
       this.verticalScroll._upEvent.call(this);
 
-      document.removeEventListener('mousemove', this.verticalScroll._wrapMoveEvent, true);
-      document.removeEventListener('mouseup', this.verticalScroll._wrapUpEvent, true);
+      if ( this.isMobile ) {
+        document.body.removeEventListener('touchmove', this.verticalScroll._wrapMoveEvent, true);
+        document.body.removeEventListener('touchend', this.verticalScroll._wrapUpEvent, true);
+      } else {
+        document.body.removeEventListener('mousemove', this.verticalScroll._wrapMoveEvent, true);
+        document.body.removeEventListener('mouseup', this.verticalScroll._wrapUpEvent, true);
+      }
     }
   },    
   horizontalScroll : {
@@ -683,10 +775,19 @@ var GridProto = {
     },
     handleDownEvent : function(e) {
       var that = this;
-      this.horizontalScroll._handleDownEvent.call( this, e.clientX );
 
       e.preventDefault();
       e.stopPropagation();
+
+      if ( this.isMobile ) {
+        if ( e.originalEvent.touches ) {
+          e = e.originalEvent.touches[0];
+        } else {
+          return false;
+        }
+      }
+
+      this.horizontalScroll._handleDownEvent.call( this, e.clientX );
 
       this.horizontalScroll._wrapMoveEvent = function(e){ that.horizontalScroll.moveEvent.call( this, e ); };
       this.horizontalScroll._wrapUpEvent = function(e){ that.horizontalScroll.upEvent.call( this, e ); };
@@ -694,8 +795,13 @@ var GridProto = {
       this.horizontalScroll._wrapMoveEvent = _.bind(this.horizontalScroll._wrapMoveEvent, this);
       this.horizontalScroll._wrapUpEvent = _.bind(this.horizontalScroll._wrapUpEvent, this);
 
-      document.addEventListener('mousemove', this.horizontalScroll._wrapMoveEvent, true);
-      document.addEventListener('mouseup', this.horizontalScroll._wrapUpEvent, true);
+      if ( this.isMobile ) {
+        document.body.addEventListener('touchmove', this.horizontalScroll._wrapMoveEvent, true);
+        document.body.addEventListener('touchend', this.horizontalScroll._wrapUpEvent, true);
+      } else {
+        document.body.addEventListener('mousemove', this.horizontalScroll._wrapMoveEvent, true);
+        document.body.addEventListener('mouseup', this.horizontalScroll._wrapUpEvent, true);
+      }
     },
     _moveEvent : function(clientX) {
       if ( !this.horizontalScroll.pos ) {
@@ -709,7 +815,11 @@ var GridProto = {
       this.viewModel.setOption("scrollLeft", scrollLeft);
     },
     moveEvent : function(e) {
-      this.horizontalScroll._moveEvent.call( this, e.clientX );
+      if ( this.isMobile ) {
+        e.preventDefault();
+      }
+
+      this.horizontalScroll._moveEvent.call( this, this.isMobile ? e.touches[0].clientX : e.clientX );
     },
     _upEvent : function() {
       this.horizontalScroll.pos = null;
@@ -717,16 +827,24 @@ var GridProto = {
     upEvent : function() {
       this.horizontalScroll._upEvent.call(this);
 
-      document.removeEventListener('mousemove', this.horizontalScroll._wrapMoveEvent, true);
-      document.removeEventListener('mouseup', this.horizontalScroll._wrapUpEvent, true);
+      if ( this.isMobile ) {
+        document.body.removeEventListener('touchmove', this.horizontalScroll._wrapMoveEvent, true);
+        document.body.removeEventListener('touchend', this.horizontalScroll._wrapUpEvent, true);
+      } else {
+        document.body.removeEventListener('mousemove', this.horizontalScroll._wrapMoveEvent, true);
+        document.body.removeEventListener('mouseup', this.horizontalScroll._wrapUpEvent, true);
+      }
     }
   },
   scrollByWheel : {
     wheelEvent : function(e) {
-      // todo: jquery event에서는 wheel 관련 데이터들이 originalEvent 안에 들어있어서 아래와 같이 함
       var ev = e.originalEvent || e,
           deltaX = 0,
           deltaY = 0;
+
+      if ( e.target.tagName !== "TD" ){
+        return;
+      }
 
       if ( 'detail'      in ev ) { deltaY = ev.detail;        }
       if ( 'wheelDelta'  in ev ) { deltaY = ev.wheelDelta * -1;  }
@@ -746,7 +864,7 @@ var GridProto = {
       e.stopPropagation();
     }
   },
-  clickCell : {
+  clickCell: {
     clickEvent : function(e) {
       var row = $(e.target).closest("tr").index() + this.rowTop,
           tdCol = $(e.target).closest("td").index(),
@@ -761,25 +879,31 @@ var GridProto = {
       }
     }
   },
-  onModelChange: function ( model ) {
-    var rowIndex = model.collection.indexOf(model);
-    _.each(model.changed, function(data, colID) {
-      var events = this.gridEventMatch["change"] || [],
-          eventObj = {type:"change"},
-          i, j;
-      for(i = 0; i < events.length; i++) {
-        var elems = this.select(events[i].select);
-        for(j = 0; j < elems.length; j++) {
-          if(this.viewModel.getDataCID(elems[j][0]) === model.cid && elems[j][1] === colID) {
-            if(_.isString(events[i].funcName)) {
-              this.options[events[i].funcName].call(this, eventObj, rowIndex, colID);
-            } else if(_.isFunction(events[i].funcName)) {
-              events[i].funcName.call(this, eventObj, rowIndex, colID);
-            }
-          }
-        }
+  onModelChange: function ( model, options ) {
+    var rowIndex = model.collection.indexOf(model),
+        events = this.gridEventMatch["change"] || [],
+        eventObj = options.eventObj || { type: "change" },
+        displayType = '',
+        result = {};
+
+    result.rowIndex = rowIndex;
+    if ( options.status ) {
+      _.extend( result, options.status );
+    }
+
+    _.each( model.changed, function( data, colID ) {
+      result.colID = colID;
+
+      displayType = this.viewModel.getMeta( [rowIndex, colID], "displayType" );
+      if ( !options.status && cellObjects[displayType].completedOptions ) {
+        result = cellObjects[displayType].completedOptions( this, result, rowIndex, colID, data, model );
       }
-      this.drawCell(rowIndex, colID);
+
+      this.fireGridEvent( events, model.cid, colID, eventObj, result, true );
+
+      if ( !options.noDraw ) {
+        this.drawCell(rowIndex, colID);
+      }
     }, this);
   },
   onModelAddRemove: function ( model, collection, options ) {
@@ -787,8 +911,7 @@ var GridProto = {
     if ( index === -1 ) {
       index = options.index || 0;
     }
-    this.wholeTblHeight = this.getWholeTblHeight();
-    this.drawTbody( index );
+    this.drawPartial(index);
   },
   onReset: function () {
     if ( this.$wrapper_div ) {
@@ -796,6 +919,17 @@ var GridProto = {
       this.viewModel.setOption("scrollTop", 0, {silent:true});
       this.createTbody();
       this.setResize();
+    }
+  },
+  drawPartial: function(idx) {
+    this.wholeTblHeight = this.getWholeTblHeight();
+
+    if ( this.viewModel.getDataLength() < this.viewModel.getOption("rowNum") ) {
+      this.setResize();
+    } else if ( this.rowTop !== 0 && this.rowTop > idx || this.getRowLength() - this.viewModel.getOption('rowNum') < idx ) {
+      this.viewModel.setOption( 'scrollTop', idx * 20 );
+    } else {
+      this.drawTbody( idx );
     }
   },
   drawWhole: function ( model ) {
@@ -809,15 +943,24 @@ var GridProto = {
     if( model.hasChanged('width') || model.hasChanged('flex') || model.hasChanged('hidden') ) {
       if( model.type === "column" ) {
         if ( model.hasChanged('width') ) {
-          model.set('flex', null, {slient: true});
+          model.set('flex', null, { silent: true } );
         }
+
         this.viewModel.updateVisibleCol();
         this.setResize();
+
+        if ( model.hasChanged('width') ) {
+          this.trigger( 'adjustColumn', { type: 'adjustColumn' }, {
+            colID: model.colID,
+            beforeWidth: model.previous('width') ? model.previousAttributes().width.value : this.viewModel.metaDefaultObject['width'],
+            width: model.get('width').value
+          });
+        }
       }
       return;
     }
 
-    if( model.hasChanged('closed') && model.type === "row" ) {
+    if( model.hasChanged('collapsed') && model.type === "row" ) {
       idx = model.get('id').split(',');
       idx[0] = this.viewModel.getMetaIndex(idx[0]);
       this.viewModel.toggleGroup( idx[0] );
@@ -848,8 +991,8 @@ var GridProto = {
         frozenColumn = this.viewModel.getOption("frozenColumn"),
         scrollXRange = this.wholeTblWidth - this.tableWidth,
         scrollYRange = this.wholeTblHeight - 20 * this.viewModel.getOption("rowNum"),
-        $frozenDiv = this.$el.find(".frozenHandle"),
-        $cols = this.$el.find("colgroup col"),
+        $frozenDiv = this.$(".frozenHandle"),
+        $cols = this.$("colgroup col"),
         frozenArea = this.viewModel.getFrozenArea(),
         visibleCol = this.viewModel.getVisibleCol(),
         topRange, leftRange,
@@ -859,7 +1002,9 @@ var GridProto = {
         drawFlag = false,
         yAreaHeight, yHandleHeight,
         xAreaWidth, xHandleWidth,
-        left, i, colWidth, top, rowTop;
+        left, i, colWidth, top, rowTop,
+        $th,
+        innerCellView;
 
     // handle scrollLeft
     if ( scrollLeft > scrollXRange ) {
@@ -896,23 +1041,30 @@ var GridProto = {
       this.startCol = startCol;
       this.endCol = endCol;
       for ( i = $cols.length; i <= endCol - startCol + frozenColumn; i++ ) {
-        this.$el.find("colgroup").append("<col>");
-        this.$el.find("thead tr").append("<th>"+
+        this.$("colgroup").append("<col>");
+        this.$("thead tr").append("<th class='gGrid-headerLabel' scope='col'>"+
                                            "<div class='gGrid-headerLabelWrap'>"+
                                            "<div class='gGrid-headerLabelText'>"+
                                          "</th>");
-        this.$el.find("tbody tr").append("<td>");
+        this.$("tbody tr").append("<td>");
       }
-      $cols = this.$el.find("colgroup col");
+      $cols = this.$("colgroup col");
 
-      this.$el.find('table').width( widthSum + frozenArea );
+      this.$('table').width( widthSum + frozenArea );
       _($cols).each(function (col, i) {
         var colIndex = i < frozenColumn ? i : i + startCol - frozenColumn;
         var width = colIndex <= endCol ? this.viewModel.getMeta( ["*", colIndex], "width") : 0;
         
         $(col).width( width );
         if ( width === 0 ) {
-          $(this.getHeaderCell(0, i)).children(0).html("");
+          innerCellView = this.viewModel.getMeta( ["*", colIndex], "innerCellView", { noncomputed: true } );
+          if ( innerCellView ) {
+            innerCellView.remove();
+            this.viewModel.removeMeta( ["*", colIndex], "innerCellView", { silent: true } );
+          }
+          $th = $(this.getHeaderCell(0, i));
+          $th.off('mouseenter').off('mouseleave');
+          $th.children(0).html("");
         }
       }, this);
       drawFlag = true;
@@ -941,7 +1093,7 @@ var GridProto = {
     }
 
     yAreaHeight = this.$scrollYArea.height();
-    yHandleHeight = this.$el.find("tbody tr").length * yAreaHeight / this.viewModel.getDataLength();
+    yHandleHeight = this.$("tbody tr").length * yAreaHeight / this.viewModel.getDataLength();
     yHandleHeight = ( this.scrollYHandleMinHeight > yHandleHeight ) ? this.scrollYHandleMinHeight : yHandleHeight;
 
     // calculate scrollXHandle's width and left
@@ -954,7 +1106,11 @@ var GridProto = {
     this.$scrollYHandle.css( "top", top + "px" );
     this.$scrollYHandle.height( yHandleHeight );
 
-    this.$scrollYArea.css( "opacity", yAreaHeight <= yHandleHeight ? 0 : 1 );
+    if ( yAreaHeight <= yHandleHeight ) {
+      this.$scrollYArea.css( { "opacity": 0, "-ms-filter": "progid:DXImageTransform.Microsoft.Alpha(Opacity=0)" } );
+    } else {
+      this.$scrollYArea.css( { "opacity": 1, "-ms-filter": "progid:DXImageTransform.Microsoft.Alpha(Opacity=100)" } );
+    }
 
     leftRange = xAreaWidth - xHandleWidth;
     // left : leftRange = scrollLeft : scrollXRange
@@ -962,7 +1118,11 @@ var GridProto = {
     this.$scrollXHandle.css("left", left + "px");
     this.$scrollXHandle.width( xHandleWidth );
 
-    this.$scrollXArea.css( "opacity", xAreaWidth <= xHandleWidth ? 0 : 1 );
+    if ( xAreaWidth <= xHandleWidth ) {
+      this.$scrollXArea.css( { "opacity": 0, "-ms-filter": "progid:DXImageTransform.Microsoft.Alpha(Opacity=0)" } );
+    } else {
+      this.$scrollXArea.css( { "opacity": 1, "-ms-filter": "progid:DXImageTransform.Microsoft.Alpha(Opacity=100)" });
+    }
   },
   onOptionChange: function ( model ) {
     if ( model.hasChanged("colOrder") ) {
@@ -973,8 +1133,13 @@ var GridProto = {
       this.wholeTblWidth = this.getWholeTblWidth();
       this.viewModel.setOption("scrollLeft", 0, {silent:true});
       this.drawByScroll();
+
+      this.trigger( 'frozenColumn', { type: 'frozenColumn' }, {
+        oldFrozenColumn: model.previous('frozenColumn') ? model.previous('frozenColumn') : this.viewModel.optionDefaultObject['frozenColumn'],
+        frozenColumn: model.changedAttributes().frozenColumn
+      });
     }
-    if ( model.hasChanged("scrollLeft") || model.hasChanged("scrollTop") ) {
+    if ( model.hasChanged("scrollTop") || ( model.hasChanged("scrollLeft") && !model.hasChanged("frozenColumn") ) ) {
       this.drawByScroll();
     }
     if ( model.hasChanged("width") ) {
@@ -983,12 +1148,10 @@ var GridProto = {
     }
   },
   getHeaderCell: function ( rowNum, colNum ) {
-    return this.$el.find("table thead tr:nth-child(" + (rowNum + 1) + ")").find(
-      "th:nth-child(" + (colNum + 1) + ")")[0];
+    return this.$( "table thead tr:nth-child(" + ( rowNum + 1 ) + ") th:nth-child(" + ( colNum + 1 ) + ")")[0];
   },
   getTbodyCell: function ( rowNum, colNum ) {
-    return this.$el.find("table tbody tr:nth-child(" + (rowNum + 1) + ")").find(
-      "td:nth-child(" + (colNum + 1) + ")")[0];
+    return this.$( "table tbody tr:nth-child(" + ( rowNum + 1 ) + ") td:nth-child(" + ( colNum + 1 ) + ")")[0];
   },
   // getFooterCell: function ( rowNum, colNum ) {
   // return this.$el.find("table tfoot tr:nth-child(" + (rowNum + 1) + ")").find(
@@ -1026,7 +1189,7 @@ var GridProto = {
     for(var j = 0; j < frozenColumn; j++) {
       this.drawHeaderCell( 0, j );
     }
-    // frozenColumn 이후  
+    // frozenColumn 이후
     for(j = this.startCol; j <= this.endCol; j++) {
       this.drawHeaderCell( 0, j );
     }
@@ -1056,44 +1219,80 @@ var GridProto = {
         colOrder = this.viewModel.getOption("colOrder"),
         frozenColumn = this.viewModel.getOption("frozenColumn"),
         visibleCol = this.viewModel.getVisibleCol(),
+        colID = this.viewModel.getColID(col),
         tdCol = colIndex < frozenColumn ? colIndex : colIndex-this.startCol+frozenColumn,
+        filtered = false,
         cell = this.getHeaderCell(0, tdCol),
+        $cell = $(cell),
         label = this.viewModel.getMeta( ["*", col], "headerLabel"),
         $labelNode = $("<div class='gGrid-headerLabelText'></div>"),
-        $sortStateNode = $("<i class='w5-grid-sort'></i>");
+        $sortStateNode = $("<i class='w5-grid-sort'></i>" ),
+        headerDisplayType = this.viewModel.getMeta( ['*', col], 'headerDisplayType', { noncomputed: true } ),
+        innerCellView,
+        that;
 
     if (cell) {
-      $labelNode.append(label);
-      if( this.viewModel.getMeta( ["*", col], "sortable" ) !== false ) {
+      if ( headerDisplayType ) {
+        that = this;
+        innerCellView = this.viewModel.getMeta( ["*", col], "innerCellView", { noncomputed: true } );
+        if ( innerCellView ) {
+          innerCellView.remove();
+        }
+        innerCellView = new cellViews[headerDisplayType]( $labelNode, that, label, [row, col] );
+        this.viewModel.setMeta( ["*", col], "innerCellView", innerCellView, { silent: true } );
+
+        $labelNode.append( innerCellView );
+      } else {
+        $labelNode.append(label);
+      }
+
+      if ( this.viewModel.getMeta( ["*", col], "sortable" ) !== false ) {
         $labelNode.append($sortStateNode);
       }
 
-      $(cell).attr("abbr", label).children(0).html("")
+      $cell.off('mouseenter').off('mouseleave');
+
+      // display filtered column header
+      if ( !this.isBasic ){
+        if ( this.filter_menu_html ){
+          if ( _.indexOf( this.viewModel.collection.filterInfo.column_list, colID ) > -1 ){
+            filtered = true;
+            $cell.addClass("filter-column");
+            
+          } else{
+            filtered = false;
+            $cell.removeClass("filter-column");
+          }
+        } else {
+          this.filter_menu_html = {};
+        }
+      }
+
+      $cell.attr("abbr", label).children(0).html("")
           .append($labelNode)
-          .append(this.getColMenu(colIndex))
+          .append(this.getColMenu(colIndex, tdCol, filtered))
           .append(this.getAdjustColHandle(colIndex));
     }
 
-    // Left show button show/hide 처리
+    // Left show button show/hide
     var idx = _(colOrder).indexOf(visibleCol[col]),
         leftColumnID = colOrder[idx - 1];
 
     if( idx === 0 || _(visibleCol).indexOf(leftColumnID) >= 0 ) {
-      $(cell).find(".display-left .w5-grid-column-show").addClass("hide");
+      $cell.find(".display-left .w5-grid-column-show").addClass("hide");
     } else {
-      $(cell).find(".display-left .w5-grid-column-show").removeClass("hide");
+      $cell.find(".display-left .w5-grid-column-show").removeClass("hide");
     }
 
-    // sort 상태 아이콘 표시 
+    // display sort status icon
     var column = this.collection.sortInfo.column || [],
         direction = this.collection.sortInfo.direction || [],
         btnClass = ["state-none", "state-asc", "state-desc"],
         textNode = ["Sort None", "Sort Ascending", "Sort Descending"],
-        colID = this.viewModel.getColID(col),
         index = _.indexOf( column, colID ),
         sortState = index === -1 ? 0 : ( ( direction[index] || 'asc' ) === "asc" ? 1 : 2 );
 
-    $(cell).find(".w5-grid-sort").addClass(btnClass[sortState])
+    $cell.find(".w5-grid-sort").addClass(btnClass[sortState])
         .removeClass(btnClass[(sortState + 1) % 3])
         .removeClass(btnClass[(sortState + 2) % 3])
         .text(textNode[sortState]);
@@ -1104,7 +1303,7 @@ var GridProto = {
         inColRange = colIndex < frozenColumn || (this.startCol <= colIndex && colIndex <= this.endCol),
         inRowRange = this.rowTop <= row && row < this.rowTop + this.viewModel.getOption("rowNum"),
         tdCol = colIndex < frozenColumn ? colIndex : colIndex-this.startCol+frozenColumn,
-        $cell, data, cellObject, node, nodeFormatter, isNodeFormatter, style, className;
+        $cell, data, cellObject, $content, node, nodeFormatter, isNodeFormatter, style, className;
 
     if( !inColRange || !inRowRange ) {
       return;
@@ -1125,7 +1324,11 @@ var GridProto = {
           nodeFormatter.destroy.call( this.view, $cell, data, this.viewModel.collection.at(row), row, this.viewModel.getColID(colIndex) );
         }
 
-        $cell.html("").append( cellObject.getContent(this, data, row, colIndex) );
+        $content = cellObject.getContent(this, data, row, colIndex);
+        $cell.html("").append( $content );
+        if ( _.isObject($content) && $content.data('afterProcess') ) {
+          $content.data('afterProcess').run();
+        }
 
         if ( isNodeFormatter ) {
           node = $cell.get(0);
@@ -1136,39 +1339,43 @@ var GridProto = {
         }
 
         style = this.viewModel.getMeta( [row, col], "style" );
-        className = this.viewModel.getMeta( [row, col], "class" ) || "";
+        className = this.viewModel.getMeta( [row, col], "className" ) || "";
       } else {
         $cell.html("");
         style = null;
         className = "";
       }
       $cell[0].style.cssText = "";
-      if(style) {
+      if ( style ) {
         $cell.css( style );
       }
-      $cell.attr("class", className);
+
+      $cell.attr( "class", className );
     }
   },
   getAdjustColHandle: function () {
     var grid = this;
 
     var adjustCol = {
-      $adjustHandle  : $("<i class='adjustCol-handle'>Adjust this Column</i>"),
-      $adjustCol_start : grid.$el.find(".adjustCol-start"),
-      $adjustCol_move  : grid.$el.find(".adjustCol-move"),
-      targetCol      : 0,
-      targetColW     : 0,
-      draggingX      : 0,
-      colDragInfo    : {},    //변하는 중인 col의 width
+      $adjustHandle     : $("<i class='adjustCol-handle'>Adjust this Column</i>"),
+      $adjustCol_start  : grid.$(".adjustCol-start"),
+      $adjustCol_move   : grid.$(".adjustCol-move"),
+      targetCol         : 0,
+      targetColW        : 0,
+      targetColLeft     : 0,
+      draggingX         : 0,
+      colDragInfo       : {},    //변하는 중인 col의 width
 
       downEvent : function(e) {
-        var $metaCol = grid.$wrapper_div.find("thead th").eq($(e.target).parent().closest("th").index() + 1);
-        this.targetCol = $(e.target).parent().closest("th").index();
-        this.targetColW = $(e.target).parent().closest("th").width();
+        var $targetTH = $(e.target).parent().closest("th");
+
+        this.targetCol      = $targetTH.index();
+        this.targetColW     = $targetTH.width();
+        this.targetColLeft  = $targetTH.position().left;
 
         this.colDragInfo = {
           posX : e.clientX,
-          startX : $metaCol.position().left
+          startX : this.targetColLeft + this.targetColW
         };
 
         this.$adjustCol_start.css("left", this.colDragInfo.startX);
@@ -1176,8 +1383,8 @@ var GridProto = {
         this.$adjustCol_move.css("left", this.colDragInfo.startX);
         this.$adjustCol_move.removeClass("hide").addClass("show");
 
-        document.addEventListener('mousemove', this.moveEvent, true);
-        document.addEventListener('mouseup', this.upEvent, true);
+        document.body.addEventListener('mousemove', this.moveEvent, true);
+        document.body.addEventListener('mouseup', this.upEvent, true);
 
         e.stopPropagation();
       },
@@ -1187,29 +1394,31 @@ var GridProto = {
         $("body").addClass("sizingH");
       },
       upEvent : function() {
-        var frozenColumn = grid.viewModel.getOption("frozenColumn");
-        if (this.targetCol >= frozenColumn) {
-          this.targetCol += grid.startCol - frozenColumn;
-        }
-        var colWidth = grid.viewModel.getMeta( ["*", this.targetCol], "width" );
+        var colWidth, frozenColumn;
 
-        // todo: removeMeta, setMeta에서 각각 다시 그리므로 silent 처리 필요
-        grid.viewModel.removeMeta( ["*", this.targetCol], "flex", {silent:true} );
-        grid.viewModel.setMeta( ["*", this.targetCol], "width", colWidth + this.draggingX );
-        
+        if ( this.targetColW + this.draggingX > 0 ) {
+          frozenColumn = grid.viewModel.getOption("frozenColumn");
+          if ( this.targetCol >= frozenColumn ) {
+            this.targetCol += grid.startCol - frozenColumn;
+          }
+
+          colWidth = grid.viewModel.getMeta( ["*", this.targetCol], "width" );
+          grid.viewModel.setMeta( ["*", this.targetCol], "width", colWidth + this.draggingX );
+        }
+
         this.$adjustCol_start.removeClass("show").addClass("hide");
         this.$adjustCol_move.removeClass("show").addClass("hide");
         $("body").removeClass("sizingH");
 
-        document.removeEventListener('mousemove', this.moveEvent, true);
-        document.removeEventListener('mouseup', this.upEvent, true);
+        document.body.removeEventListener('mousemove', this.moveEvent, true);
+        document.body.removeEventListener('mouseup', this.upEvent, true);
       }
     };
     
     _(adjustCol).bindAll("downEvent", "moveEvent", "upEvent");
     adjustCol.$adjustHandle.on("mousedown", adjustCol.downEvent);
 
-    return adjustCol.$adjustHandle; 
+    return adjustCol.$adjustHandle;
   },
   colLeftMenu: _.template(
       "<div class='gGrid-colMenu display-left'>"+
@@ -1225,8 +1434,9 @@ var GridProto = {
       "</ul>"+
     "</div>"
   ),
-  getColMenu: function ( col ) {
+  getColMenu: function ( col, tdCol, filtered ) {
     var grid = this,
+        colID = grid.viewModel.getColID( col ),
         $colMenu = $(document.createDocumentFragment()),
         $leftMenu = $(this.colLeftMenu()),
         $rightMenu = $(this.colRightMenu()),
@@ -1262,17 +1472,19 @@ var GridProto = {
     $colMenu.append($leftMenu);
 
     var rightMenu = {
-      _openColMenu : function( menuBtn ){
+      _openColMenu : function( menuBtn ) {
         var checkMenuPos = 0,
             $cell = $(menuBtn).closest("th"),
             colIdx = $cell.index(),
             i;
 
-        grid.$el.find("thead th .display-right").removeClass("open");
-        grid.$el.find("thead th .display-right .w5-grid-colMenu-icon").removeClass("on");
-        
+        grid.$("thead th .display-right").removeClass("open");
+        grid.$("thead th .display-right .w5-grid-colMenu-icon").removeClass("on");
+        $rightMenu.addClass("open");
+        $(menuBtn).addClass("on");
+
         for ( i=0; i<=colIdx; i++ ){
-          checkMenuPos += grid.$el.find("thead th").eq(i).width();
+          checkMenuPos += grid.$("thead th").eq(i).width();
         }
         if ( checkMenuPos > grid.$wrapper_div.width()-$cell.find(".display-right .w5-dropdown-menu").width() ){
           $cell.find(".display-right .w5-dropdown-menu").css({
@@ -1280,9 +1492,6 @@ var GridProto = {
             right : "0px"
           });
         }
-
-        $rightMenu.addClass("open");
-        $(menuBtn).addClass("on");
       },
       openColMenu : function(e){
         this._openColMenu(e);
@@ -1292,7 +1501,7 @@ var GridProto = {
         $menuIcon.removeClass("on");
       },
       closeColMenu : function(){
-        this._closeColMenu();  
+        this._closeColMenu();
       },
       _hideCol : function () {
         var remainCol = grid.viewModel.getVisibleCol().length;
@@ -1318,10 +1527,162 @@ var GridProto = {
       frozenCol : function ( e ) {
         this._frozenCol(e);
         e.preventDefault();
+      },
+      clearNextFormEls : function( $el ) {
+        $el.nextAll().remove();
+      },
+      changeDataCondition : function( event ) {
+        var $selectedEl = $( event.target ),
+            $parent = $selectedEl.parent(),
+            $newEl,
+            selectedValue = event.target.value;
+
+        if ( ( selectedValue === "textContains" ) ||
+             ( selectedValue === "textDoesNotContain" ) ||
+             ( selectedValue === "textIsExactly" ) ||
+             ( selectedValue === "cellIsEmpty" ) ){
+
+          this.clearNextFormEls( $selectedEl );
+          $selectedEl.removeClass("select-sm").addClass("select-lg");
+          $newEl = $( grid.filterTemplate_input() );
+          $newEl.removeClass("input-xs").addClass("input-sm");
+          $parent.append( $newEl );
+        }
+
+        if ( ( selectedValue === "dateIs" ) ||
+             ( selectedValue === "dateIsBefore" ) ||
+             ( selectedValue === "dateIsAfter" ) ){
+
+            this.clearNextFormEls( $selectedEl );
+            $selectedEl.removeClass("select-sm").addClass("select-lg");
+            $newEl = $( grid.filterTemplate_date() );
+            $newEl.on("change", this.changeDateCondition );
+            $parent.append( $newEl );
+        }
+
+        if ( ( selectedValue === "greaterThan" ) ||
+             ( selectedValue === "lessThan" ) ||
+             ( selectedValue === "isEqualTo" ) ||
+             ( selectedValue === "isNotEqualTo" ) ||
+             ( selectedValue === "isBetween" ) ||
+             ( selectedValue === "isNotBetween" ) ){
+
+            this.clearNextFormEls( $selectedEl );
+            $selectedEl.removeClass("select-sm").addClass("select-lg");
+            if ( ( selectedValue === "isBetween" ) ||
+                 ( selectedValue === "isNotBetween" ) ){
+              $parent.append( $(grid.filterTemplate_input()) );
+              $parent.append( $(grid.filterTemplate_input()) );
+            } else{
+              $parent.append( $(grid.filterTemplate_input()).removeClass("select-xs").addClass("select-sm") );
+            }
+        }
+      },
+      changeDateCondition : function( event ) {
+        var $selectedEl = $( event.target ),
+            $newEl = $( grid.filterTemplate_input() ),
+            $parent = $selectedEl.parent(),
+            selectedValue = event.target.value;
+        
+        if ( selectedValue === "theDate" ){
+          $selectedEl.prev().removeClass("select-lg").addClass("select-sm");
+          $selectedEl.removeClass("select-lg").addClass("select-xs");
+          $newEl.attr("placeholder","MM-DD-YYYY");
+          $parent.append( $newEl );
+        } else {
+          this.clearNextFormEls( $selectedEl );
+          $selectedEl.removeClass("select-xs").addClass("select-lg");
+        }
+      },
+      addFilterMenu : function( event ) {
+        var $targetLI = $( event.target ).closest("li"),
+            $newLI = $( grid.filterTemplate() );
+
+        $newLI.find(".condition-remove-btn").on( "click", this.removeFilterMenu );
+        $targetLI.before( $newLI );
+
+        if ( $targetLI.siblings().length > 4 ){
+          $newLI.addClass("line-dashed");
+        }
+        if( ( this.$addConditionBtn.index() > 2 ) &&
+              !this.$addConditionBtn.hasClass("line-dashed") ){
+            this.$addConditionBtn.addClass("line-dashed");
+        }
+
+        $newLI.find(".w5-grid-form-select").eq(0).on( "change", this.changeDataCondition );
+      },
+      removeFilterMenu : function( event ) {
+        var $LI = $(event.target).closest("li"),
+            $siblings = $LI.siblings();
+        
+        $LI.remove();
+        if ( $siblings.eq(2).hasClass("line-dashed") ){
+          $siblings.eq(2).removeClass("line-dashed");
+        }
+        if ( this.$addConditionBtn.index() > 3 ){
+          this.$addConditionBtn.addClass("line-dashed");
+        }
+      },
+      applyFilter : function() {
+        var condition = $rightMenu.find(".w5-grid-form .form-group"),
+            conditionNum = condition.length,
+            $conditionLI = condition.closest("li"),
+            filteredColumns = grid.viewModel.collection.filterInfo.column_list,
+            filterObj = {},
+            formEl, tmpArr = [], i;
+        filterObj[colID] = {};
+
+        if ( conditionNum === 0 ){
+          filterObj[colID] = null;
+          grid.filter_menu_html[colID] = null;
+
+          if ( filteredColumns.length === 1 && (_.indexOf( filteredColumns, colID ) >-1 )){
+            grid.viewModel.filter();
+          } else {
+            grid.viewModel.filter( filterObj );
+          }
+        } else{
+
+          for ( i=0; i<conditionNum; i++ ){
+            formEl = condition.eq(i).children();
+
+            if ( formEl.eq(0).val() === "isBetween" ||
+                 formEl.eq(0).val() === "isNotBetween" ){
+              tmpArr.push( formEl.eq(1).val(), formEl.eq(2).val() );
+              filterObj[colID][formEl.eq(0).val()] = tmpArr;
+           
+            } else {
+              if ( formEl.eq(1).val() === "theDate" ){
+                filterObj[colID][formEl.eq(0).val()] = formEl.eq(2).val();
+              } else {
+                filterObj[colID][formEl.eq(0).val()] = formEl.eq(1).val();
+              }
+            }
+          }
+          
+          grid.filter_menu_html[colID] = $conditionLI.clone();
+          grid.viewModel.filter( filterObj );
+        }
+      },
+      displayFilterCondition : function () {
+        var selectNum;
+
+        if ( grid.filter_menu_html[colID] ){
+          grid.filter_menu_html[colID].find(".condition-remove-btn").on( "click", this.removeFilterMenu );
+          
+          selectNum = grid.filter_menu_html[colID].find(".w5-grid-form-select").length;
+          grid.filter_menu_html[colID].eq(0).on( "change", this.changeDataCondition );
+          if ( selectNum === 2 ){
+            grid.filter_menu_html[colID].eq(1).on( "change", this.changeDateCondition );
+          }
+          
+          this.$filterMenu.append( grid.filter_menu_html[colID] );
+        }
       }
     };
 
-    _(rightMenu).bindAll("openColMenu", "closeColMenu", "hideCol", "frozenCol");
+    _(rightMenu).bindAll("openColMenu", "closeColMenu", "hideCol", "frozenCol",
+     "clearNextFormEls", "changeDataCondition", "changeDateCondition", "addFilterMenu", "removeFilterMenu", "applyFilter", "displayFilterCondition");
     $rightMenu.find(".w5-grid-colMenu-icon").on("click", function(){
       if ( $(this).hasClass("on") ){
         rightMenu.closeColMenu( $(this) );
@@ -1330,11 +1691,12 @@ var GridProto = {
       }
     });  
     $rightMenu.find(".w5-dropdown-menu li").find(".column-hide").on("click", rightMenu.hideCol);  
-    $rightMenu.find(".w5-dropdown-menu li").find(".frozen-column").on("click", rightMenu.frozenCol);  
-    grid.$el.find("thead th").on("mouseenter", function(){
+    $rightMenu.find(".w5-dropdown-menu li").find(".frozen-column").on("click", rightMenu.frozenCol);
+
+    grid.$("thead tr:first-child th").eq(tdCol).on("mouseenter", function(){
       $(this).find(".display-right").removeClass("hide");
     });
-    grid.$el.find("thead th").on("mouseleave", function(){
+    grid.$("thead tr:first-child th").eq(tdCol).on("mouseleave", function(){
       $rightMenu.removeClass("open").addClass("hide");
       rightMenu.closeColMenu();
     });
@@ -1345,9 +1707,30 @@ var GridProto = {
         $rightMenu.find(".frozen-column").off("click", rightMenu.frozenCol);  
       }
 
+      if ( !this.isBasic ){
+        rightMenu.$filterMenu      = $( document.createDocumentFragment() );
+        rightMenu.$filterTemp      = $( this.filterTemplate() );
+        rightMenu.$addConditionBtn = $( this.filterTemplate_addCondition() );
+        rightMenu.$filterBtnSet    = $( this.filterTemplate_btnSet() );
+
+        rightMenu.$addConditionBtn.find(".condition-add-btn").on( "click", rightMenu.addFilterMenu );
+        rightMenu.$filterBtnSet.find(".btn-normal.color-blue").on( "click", rightMenu.applyFilter );
+        rightMenu.$filterBtnSet.find(".btn-normal.color-gray").on( "click", rightMenu.closeColMenu );
+
+        if ( filtered ){
+          rightMenu.displayFilterCondition();
+          rightMenu.$filterMenu.append( rightMenu.$addConditionBtn.addClass("line-dashed") )
+                               .append( rightMenu.$filterBtnSet );
+        } else {
+          rightMenu.$filterMenu.append( rightMenu.$addConditionBtn )
+                               .append( rightMenu.$filterBtnSet );
+        }
+
+        $rightMenu.find(".w5-dropdown-menu").removeClass("form-none").append( rightMenu.$filterMenu );
+      }
       $colMenu.append($rightMenu);
     }
-    return $colMenu;   
+    return $colMenu;
   },
   setFlex: function () {
     var restWidth = this.tableWidth,
@@ -1412,8 +1795,9 @@ var GridProto = {
       this.setResize();
     }
   },
-  redraw: function() {
+  refresh: function() {
     this.setResize();
+    this.trigger( 'refresh', { type: "refresh" } );
     return this;
   },
   scrollTo: function(xpos, ypos) {
@@ -1431,10 +1815,51 @@ var GridProto = {
     return this;
   },
   moveColumn: function(fromCol, toCol) {
-    var colOrder = this.viewModel.getOption("colOrder").slice(),
-        col = colOrder.splice(fromCol, 1)[0];
+    var colOrder = this.viewModel.getOption("colOrder"),
+        fromColumnID = colOrder[fromCol],
+        toColumnID = colOrder[toCol],
+        visibleCol = _( this.viewModel.getVisibleCol() ),
+        visibleColInfo = [ visibleCol.indexOf( colOrder[fromCol] ), visibleCol.indexOf( colOrder[toCol] ) ],
+        frozenColumn = this.viewModel.getOption( "frozenColumn" ) - 1,
+        focusedCol = null,
+        col, options;
+
+    colOrder = colOrder.slice();
+    col = colOrder.splice(fromCol, 1)[0];
     colOrder.splice(toCol, 0, col);
+
+    if ( this.focusedCell ) {
+      if ( visibleColInfo[0] === this.focusedCell.colIndex ) {
+        focusedCol = visibleColInfo[1];
+      } else if ( visibleColInfo[1] === this.focusedCell.colIndex ) {
+        if ( visibleColInfo[0] > visibleColInfo[1] ) {
+          focusedCol = visibleColInfo[1] + 1;
+        } else {
+          focusedCol = visibleColInfo[1] - 1;
+        }
+      }
+
+      options = { oldColID: this.viewModel.getColID( this.focusedCell.colIndex ) };
+    }
+
+    if ( visibleColInfo[0] <= frozenColumn && visibleColInfo[1] > frozenColumn ) {
+      this.viewModel.setOption( "frozenColumn", frozenColumn, { silent: true } );
+    } else if ( visibleColInfo[0] > frozenColumn && visibleColInfo[1] <= frozenColumn ) {
+      this.viewModel.setOption( "frozenColumn", frozenColumn + 2, { silent: true } );
+    }
+
     this.viewModel.setOption("colOrder", colOrder);
+
+    if ( focusedCol ) {
+      this.setFocusedCell( this.focusedCell.rowIndex, focusedCol, null, options );
+    }
+
+    this.trigger( 'moveColumn', { type: 'moveColumn' }, {
+      fromColumnIndex: fromCol,
+      toColumnIndex: toCol,
+      fromColumnID: fromColumnID,
+      toColumnID: toColumnID
+    });
     return this;
   },
   addRow: function () {
@@ -1445,16 +1870,16 @@ var GridProto = {
     this.viewModel.removeRow( index, options );
     return this;
   },
-  removedRow: function () {
-    return this.collection.__removeModels;
+  removedRow: function ( options ) {
+    return this.viewModel.removedRow( options );
   },
   reset: function(data) {
     data = data || [];
 
-    this.viewModel.model.meta.table.clear({silent:true});
-    this.viewModel.model.meta.row.reset([], {silent:true});
-    this.viewModel.model.meta.column.reset([], {silent:true});
-    this.viewModel.model.meta.cell.reset([], {silent:true});
+    this.viewModel.table.clear({silent:true});
+    this.viewModel.row.reset([], {silent:true});
+    this.viewModel.column.reset([], {silent:true});
+    this.viewModel.cell.reset([], {silent:true});
 
     _(this.viewModel.colModel).each(function(model, index) {
       _.chain(model).each( function( value, key ) {
@@ -1467,8 +1892,8 @@ var GridProto = {
     this.viewModel.collection.reset(data);
     return this;
   },
-  sort: function ( columns, directions ) {
-    this.viewModel.sort( columns, directions );
+  sort: function ( columns, directions, options ) {
+    this.viewModel.sort( columns, directions, options );
     return this;
   },
   getRowLength: function () {
@@ -1536,9 +1961,12 @@ var GridProto = {
   option: function() {
     return this.viewModel.option;
   },
-  fetch: function ( model, options ) {
-    this.viewModel.fetch( model, options );
+  fetch: function () {
+    this.viewModel.fetch.apply( this.viewModel, arguments );
     return this;
+  },
+  getCUData: function ( options ) {
+    return this.viewModel.getCUData( options );
   },
   syncData: function ( options ) {
     this.viewModel.syncData( options );
@@ -1554,87 +1982,160 @@ var GridProto = {
   getDefaults: function () {
     return this.viewModel.getDefaults();
   },
-  getChildren: function(parentEls, tagName, attribute) {
-    var unique_check = {},
-        elems = [],
-        i, j, k,
-        row, col, colName;
-    for(k = 0; k < parentEls.length; k++) {
-      row = parentEls[k][0];
-      col = parentEls[k][1];
-      // add cols in table or cells in row
-      if(col === "*") {
-        if(!tagName || // tagName이 주어지지 않았거나
-            (row === "*" && tagName === "col") ||  // parent가 table일 경우에는 tagName === "col"
-            (row !== "*" && tagName === "cell")) { // parent가 row일 경우에는 tagName === "cell"
-          for(i = 0; i < this.viewModel.colModel.length; i++) {
-            colName = this.viewModel.getColID(i);
-            if(!unique_check[row + "_" + colName]) {
-              unique_check[row + "_" + colName] = 1;
-              elems.push([row, colName]);  
-            }
+  setPseudo: function ( item, pseudo ) {
+    if ( pseudo ) {
+      item.pseudo = pseudo;
+    }
+    return item;
+  },
+  pushElems: function ( tagName, key1, length, compareTag, unique_check, elems, pseudo ) {
+    var i, key2;
+
+    if ( !tagName ||
+       ( key1 === "*" && tagName === compareTag ) ||
+       ( key1 !== "*" && tagName === "cell" ) ) {
+      for ( i = 0; i < length; i++ ) {
+        if ( compareTag === 'col' ) {
+          key2 = this.viewModel.getColID(i);
+        } else {
+          if ( i === 0 ) {
+            key2 = key1;
           }
+          key1 = i;
         }
-      }
-      // add rows in table or cells in col
-      if(row === "*") {
-        if(!tagName || // tagName이 주어지지 않았거나
-            (col === "*" && tagName === "row") ||  // parent가 table일 경우에는 tagName === "row"
-            (col !== "*" && tagName === "cell")) { // parent가 row일 경우에는 tagName === "cell"
-          for(i = 0; i < this.collection.length; i++) {
-            if(!unique_check[i + "_" + col]) {
-              unique_check[i + "_" + col] = 1;
-              elems.push([i, col]);  
-            }
-          }
-        }
-      }
-      // add cells in table
-      if(row === "*" && col === "*" && (!tagName || tagName === "cell")) {
-        for(i = 0; i < this.collection.length; i++) {
-          for(j = 0; j < this.viewModel.colModel.length; j++) {
-            colName = this.viewModel.getColID(j);
-            if(!unique_check[i + "_" + colName]) {
-              unique_check[i + "_" + colName] = 1;
-              elems.push([i, colName]);
-            }
-          }
+        if ( !unique_check[key1 + "_" + key2] ) {
+          unique_check[key1 + "_" + key2] = 1;
+          elems.push( this.setPseudo( [key1, key2], pseudo ) );
         }
       }
     }
-    if(attribute) {
-      var attr = /\[([^=]+)=([^\]]+)\]/g.exec(attribute),
-          attrName = attr[1],
-          attrValue = attr[2],
-          newEls = [],
-          val;
-      for(i = 0; i < elems.length; i++) {
-        if(attrName === "data") {
+  },
+  getChildren: function( parentEls, tagName, attribute, pseudo ) {
+    var unique_check = {},
+        elems = [],
+        i, k,
+        row, col,
+        attr,
+        attrName, attrOperator, attrValue,
+        newEls,
+        val, valArr;
+
+    for ( k = 0; k < parentEls.length; k++ ) {
+      row = parentEls[k][0];
+      col = parentEls[k][1];
+
+      // add cols in table or cells in row
+      if ( col === "*" ) {
+        this.pushElems( tagName, row, this.viewModel.colModel.length, 'col', unique_check, elems, pseudo );
+      }
+      // add rows in table or cells in col
+      if ( row === "*" ) {
+        this.pushElems( tagName, col, this.collection.length, 'row', unique_check, elems, pseudo );
+      }
+      // add cells in table
+      if ( row === "*" && col === "*" && ( !tagName || tagName === "cell" ) ) {
+        for ( i = 0; i < this.collection.length; i++ ) {
+          this.pushElems( false, i, this.viewModel.colModel.length, 'col', unique_check, elems, pseudo );
+        }
+      }
+    }
+    if ( attribute ) {
+      attr = /\[([\w]+)(?:([\~\^\$\|\=]+)?\'(.+)\')?\]/g.exec(attribute);
+      newEls = [];
+
+      if ( attr ){
+        attrName = attr[1];
+        attrOperator = attr[2];
+        attrValue = attr[3];
+      } else {
+        throw new Error( "Attribute value of selector must be wrapped single quotation marks." );
+      }
+
+      for ( i = 0; i < elems.length; i++ ) {
+        if ( attrName === "data" ) {
           val = this.viewModel.getData(elems[i]);
         } else {
           val = this.viewModel.getMeta(elems[i], attrName);
         }
-        if(String(val) === attrValue) {
-          newEls.push(elems[i]);
+
+        switch ( attrOperator ){
+        case "=" :
+          if ( String(val) === attrValue ){
+            newEls.push(elems[i]);
+          }
+          break;
+        case "~=" :
+          if ( attrName !== "data" ) {
+            valArr = val.match(/\w+/g);
+            if ( _.indexOf( valArr, attrValue ) !== -1 ){ newEls.push(elems[i]); }
+          } else {
+            if ( val.indexOf( attrValue ) !== -1 ){ newEls.push(elems[i]); }
+          }
+          break;
+        default:
+          if ( !_.isEmpty(val) ||
+           !((attrName === "data") && _.isUndefined(attrValue)) ){
+            newEls.push(elems[i]);
+          }
+          break;
         }
       }
       elems = newEls;
     }
+
+    if ( pseudo && ( pseudo === 'row' || pseudo === 'col' ) ) {
+      unique_check = {};
+      newEls = [];
+      for ( i = 0; i < elems.length; i++ ) {
+        if ( elems[i][0] !== '*' && elems[i][1] !== '*' ) {
+          if ( elems[i].pseudo === 'row' ) {
+            if ( !unique_check[ elems[i][0] + "_*" ] ) {
+              unique_check[ elems[i][0] + "_*" ] = true;
+              elems[i][1] = '*';
+              newEls.push(elems[i]);
+            }
+          } else {
+            if ( !unique_check[ "*_" + elems[i][1] ] ) {
+              unique_check[ "*_" + elems[i][1] ] = true;
+              elems[i][0] = '*';
+              newEls.push(elems[i]);
+            }
+          }
+        }
+      }
+      elems = newEls;
+    }
+
     return elems;
   },
-  select: function( str, context, results ) {
-    var sel = str.match(/[^ ]+/g),
-        els, i;
+  select: function( str, context, results, options ) {
+    var sel, els, i, selector,
+        checkedRegExr = /row:checked/,
+        checkedValue,
+        seen;
+
+    options = options || {};
+
+    if ( str.search( checkedRegExr ) > -1 ) {
+      checkedValue = this.viewModel.getCheckValue();
+
+      if ( checkedValue !== null ) {
+        str = str.replace( checkedRegExr, "col[id='" + this.viewModel.getColID(0) + "'] cell[data='" + checkedValue + "']:row" );
+      }
+    }
+
+    sel = str.match(/\w+(\[([\S]+)([\~\^\$\|\=]+\'(.+)\')?\])?(\:\w+)?/g);
 
     context = context || [["*", "*"]]; // default started with a table
     results = results || [];
 
-    for(i = 0; i < sel.length; i++) {
-      if(sel[i].match(/^[^\[\s]+\[[^\]]+\]|^[^\[\s]+/g)) {
-        var tagName = (sel[i].match(/^[^\[]*/g) || [])[0],
-            attribute = (sel[i].match(/\[[^\]]+\]$/g) || [])[0];
+    for ( i = 0; i < sel.length; i++ ) {
+      selectorPattern[0].lastIndex = 0;
+      selectorPattern[1].lastIndex = 0;
 
-        els = this.getChildren( context, tagName, attribute);
+      if ( selectorPattern[0].test(sel[i]) ) {
+        selector = selectorPattern[1].exec(sel[i]);
+        els = this.getChildren( context, selector[1], selector[2], selector[3] );
         context = els;
       } else {
         els = [];
@@ -1642,6 +2143,17 @@ var GridProto = {
       }
     }
     Array.prototype.push.apply( results, els );
+
+    if ( options.union ) {
+      seen = {};
+      results = _.reduce( results, function( list, value ) {
+        if ( !seen[ value[0] + '_' + value[1] ] ) {
+          seen[ value[0] + '_' + value[1] ] = true;
+          list.push(value);
+        }
+        return list;
+      }, []);
+    }
 
     return new GridSelector( this, results );
   },
@@ -1655,17 +2167,62 @@ var GridProto = {
     delete this.options.gridEvents[selector];
     this.setGridEvents();
   },
-  setFocusedCell: function( rowIndex, colIndex, isFocused ) {
-    if ( _.isUndefined(isFocused) ) {
+  triggerGridEvent: function( pos, event, options ) {
+    var events = this.gridEventMatch[event];
+
+    options = options || {};
+    options.rowIndex = pos[0];
+    options.colID = this.viewModel.getColID( pos[1], true );
+
+    if ( events ) {
+      this.fireGridEvent( events, this.viewModel.getDataCID( pos[0] ), pos[1], { type: event }, options, true );
+    }
+  },
+  fireIndexChanged: function( indexInfo, options ) {
+    options = options || {};
+    indexInfo.oldColID = options.oldColID || this.viewModel.getColID( indexInfo.oldColIndex );
+    indexInfo.colID = this.viewModel.getColID( indexInfo.colIndex );
+
+    if ( indexInfo.oldRowIndex !== indexInfo.rowIndex ) {
+      this.trigger( 'rowChanged', { type: "rowChanged" }, indexInfo );
+    }
+    if ( indexInfo.oldColIndex !== indexInfo.colIndex ) {
+      this.trigger( 'colChanged', { type: "colChanged" }, indexInfo );
+    }
+  },
+  clearFocusedCell: function() {
+    var that = this;
+    if ( this.focusedCell ) {
+      cellObjects["text"].endEdit.call( cellObjects["text"], { type: 'blur' }, that );
+      this.focusedCell = null;
+      this.setFocusedCell();
+    }
+  },
+  setFocusedCell: function( rowIndex, colIndex, isFocused, options ) {
+    var indexInfo = {
+      oldRowIndex: -1,
+      oldColIndex: -1,
+      oldColID: '',
+      rowIndex: -1,
+      colIndex: -1,
+      colID: ''
+    };
+
+    if ( _.isUndefined(isFocused) || _.isNull(isFocused) ) {
       isFocused = true;
     }
 
-    if(arguments.length === 0) {
-      if(this.focusedCell) {
+    if ( this.focusedCell ) {
+      indexInfo.oldRowIndex = this.focusedCell.oldRowIndex > -1 ? this.focusedCell.oldRowIndex : this.focusedCell.rowIndex;
+      indexInfo.oldColIndex = this.focusedCell.oldColIndex > -1 ? this.focusedCell.oldColIndex : this.focusedCell.colIndex;
+    }
+
+    if ( arguments.length === 0 ) {
+      if ( this.focusedCell ) {
         rowIndex = this.focusedCell.rowIndex;
         colIndex = this.focusedCell.colIndex;
       } else {
-        this.$el.find(".w5-grid-focused-cell").addClass("hide");
+        this.$(".w5-grid-focused-cell").addClass("hide");
         return;
       }
     } else {
@@ -1674,44 +2231,68 @@ var GridProto = {
         colIndex : colIndex
       };
     }
+    indexInfo.rowIndex = rowIndex;
+    indexInfo.colIndex = colIndex;
 
-    this.$el.find(".w5-grid-focused-cell").removeClass("hide");
+    this.$(".w5-grid-focused-cell").removeClass("hide");
     var trIndex = rowIndex - this.rowTop,
         frozenColumn = this.viewModel.getOption("frozenColumn"),
         tdIndex = colIndex < frozenColumn ? colIndex : colIndex - this.startCol + frozenColumn,
-        $td = this.$el.find("tbody tr").eq(trIndex).find("td").eq(tdIndex);
-    if($td.length === 0 || trIndex < 0 || tdIndex < 0) {
-      this.$el.find(".w5-grid-focused-cell").addClass("hide");
+        $td = this.$("tbody tr").eq(trIndex).find("td").eq(tdIndex);
+
+    if ( colIndex >= frozenColumn && colIndex < this.startCol ) {
+      tdIndex = -1;  
+    }
+
+    if ( $td.length === 0 || trIndex < 0 || tdIndex < 0 ) {
+      this.$(".w5-grid-focused-cell").addClass("hide");
       return;
     }
+
     var top = $td.offset().top - this.$wrapper_div.offset().top,
         left = $td.offset().left - this.$wrapper_div.offset().left,
-        width = $td.outerWidth(true),
-        height = $td.outerHeight(true),
-        size = this.$el.find(".border-top").height();
-    this.$el.find(".border-top").css({
+        right = this.$scrollYArea.width(),
+        thickness = this.$(".border-top").height(),
+        width = $td.outerWidth(),
+        height = $td.outerHeight();
+
+    if ( this.endCol === colIndex ){
+      width -= ( right + thickness );
+    }
+
+    this.$(".border-top").css({
       top   : top,
       left  : left,
+      right : right,
       width : width
     });
-    this.$el.find(".border-bottom").css({
-      top   : top + height - size,
+    this.$(".border-right").css({
+      top   : top,
+      left  : left + width,
+      right : right,
+      height: height + thickness
+    });
+    this.$(".border-bottom").css({
+      top   : top + height,
       left  : left,
+      right : right,
       width : width
     });
-    this.$el.find(".border-left").css({
+    this.$(".border-left").css({
       top   : top,
       left  : left,
+      right : right,
       height: height
     });
-    this.$el.find(".border-right").css({
-      top   : top,
-      left  : left + width - size,
-      height: height
-    });
-    if ( isFocused ) {
+
+    if ( !this.isMobile && isFocused ) {
       this.$editBox.focus();
     }
+
+    this.fireIndexChanged( indexInfo, options );
+
+    this.focusedCell.oldRowIndex = rowIndex;
+    this.focusedCell.oldColIndex = colIndex;
   },
   handleKeydown: function(e) {
     if ( this.keydownEvents[e.keyCode] ) {
@@ -1720,42 +2301,58 @@ var GridProto = {
   },
   moveUp: function ( e, options ) {
     var rowIndex, colIndex,
+        targetRow = options && options.targetRow,
         isForced = options && options.isForced;
 
     if ( this.focusedCell && ( isForced || this.checkEditBox( e.target.className, true ) ) ) {
-      rowIndex = this.focusedCell.rowIndex - 1;
+      rowIndex = this.focusedCell.rowIndex;
       colIndex = this.focusedCell.colIndex;
 
-      if ( rowIndex > -1 ) {
-        if ( rowIndex < this.rowTop ) {
-          this.focusedCell = {
-            rowIndex: rowIndex,
-            colIndex: colIndex
-          };
-          this.viewModel.setOption( "scrollTop", (rowIndex) * 20 );
+      if ( !_.isNumber( targetRow ) ) {
+        targetRow = rowIndex - 1;
+      }
+
+      if ( targetRow > -1 ) {
+        this.focusedCell = {
+          rowIndex: targetRow,
+          colIndex: colIndex,
+          oldRowIndex: rowIndex,
+          oldColIndex: colIndex
+        };
+
+        if ( targetRow < this.rowTop ) {
+          this.viewModel.setOption( "scrollTop", (targetRow) * 20 );
         } else {
-          this.setFocusedCell( rowIndex, colIndex );
+          this.setFocusedCell( targetRow, colIndex );
         }
       }
     }
   },
   moveDown: function ( e, options ) {
     var rowIndex, colIndex,
+        targetRow = options && options.targetRow,
         isForced = options && options.isForced;
 
     if ( this.focusedCell && ( isForced || this.checkEditBox( e.target.className, true ) ) ) {
-      rowIndex = this.focusedCell.rowIndex + 1;
+      rowIndex = this.focusedCell.rowIndex;
       colIndex = this.focusedCell.colIndex;
 
-      if ( rowIndex < this.getRowLength() ) {
-        if ( rowIndex >= this.rowTop + this.viewModel.getOption('rowNum') ) {
-          this.focusedCell = {
-            rowIndex: rowIndex,
-            colIndex: colIndex
-          };
-          this.viewModel.setOption( "scrollTop", (rowIndex) * 20 );
+      if ( !_.isNumber( targetRow ) ) {
+        targetRow = rowIndex + 1;
+      }
+
+      if ( targetRow < this.getRowLength() ) {
+        this.focusedCell = {
+          rowIndex: targetRow,
+          colIndex: colIndex,
+          oldRowIndex: rowIndex,
+          oldColIndex: colIndex
+        };
+
+        if ( targetRow >= this.rowTop + this.viewModel.getOption('rowNum') ) {
+          this.viewModel.setOption( "scrollTop", (targetRow) * 20 );
         } else {
-          this.setFocusedCell(rowIndex, colIndex);
+          this.setFocusedCell( targetRow, colIndex );
         }
       }
     }
@@ -1776,19 +2373,20 @@ var GridProto = {
       }
 
       if ( targetCol >= 0 ) {
+        this.focusedCell = {
+          rowIndex: rowIndex,
+          colIndex: targetCol,
+          oldRowIndex: rowIndex,
+          oldColIndex: colIndex
+        };
+
         if ( targetCol < this.startCol ) {
           if ( targetCol < frozenColumn ) {
             this.setFocusedCell( rowIndex, targetCol );
           } else {
-            this.focusedCell = {
-              rowIndex: rowIndex,
-              colIndex: targetCol
-            };
-
             for ( i = colIndex; i > targetCol - 1; i-- ) {
               scrollLeft += this.viewModel.getMeta( ["*", i], 'width' );
             }
-
             this.viewModel.setOption( "scrollLeft", this.viewModel.getOption( "scrollLeft" ) - scrollLeft );
           }
         } else {
@@ -1808,29 +2406,32 @@ var GridProto = {
 
     if ( this.focusedCell && ( isForced || this.checkEditBox( e.target.className, true ) ) ) {
       rowIndex = this.focusedCell.rowIndex;
-      colIndex = this.focusedCell.colIndex;
+      colIndex = this.focusedCell.colIndex; 
 
       if ( !_.isNumber( targetCol ) ) {
         targetCol = colIndex + 1;
       }
 
       if ( targetCol <= this.getColLength() - 1 ) {
-        if ( targetCol > this.endCol - 1 ) {
-          this.focusedCell = {
-            rowIndex: rowIndex,
-            colIndex: targetCol
-          };
+        this.focusedCell = {
+          rowIndex: rowIndex,
+          colIndex: targetCol,
+          oldRowIndex: rowIndex,
+          oldColIndex: colIndex
+        };
 
+        if ( targetCol > this.endCol - 1 ) {
           curScrollLeft = this.viewModel.getOption( "scrollLeft" );
 
           if ( this.endCol === this.getColLength() - 1 ) {
+            curScrollLeft += this.viewModel.getMeta( ["*", this.endCol], 'width' );
             if ( this.wholeTblWidth - this.tableWidth > curScrollLeft ) {
-              this.viewModel.setOption( "scrollLeft", curScrollLeft + this.viewModel.getMeta( ["*", this.endCol], 'width' ) );
+              this.viewModel.setOption( "scrollLeft", curScrollLeft );
             } else {
               this.setFocusedCell( rowIndex, targetCol );
             }
           } else {
-            for ( i = this.endCol; i < targetCol + 2; i++ ) {
+            for ( i = this.startCol; i < targetCol; i++ ) {
               scrollLeft += this.viewModel.getMeta( ["*", i], 'width' );
             }
             this.viewModel.setOption( "scrollLeft", curScrollLeft + scrollLeft );
@@ -1858,13 +2459,11 @@ var GridProto = {
     }
     return result;
   },
-  focusWidget: function( e, options ) {
+  focusWidget: function( e ) {
     var displayType,
         $cell,
         focusSelector,
         readOnly;
-
-    options = options || {};
 
     if ( this.focusedCell ) {
       var rowIndex = this.focusedCell.rowIndex,
@@ -1873,7 +2472,7 @@ var GridProto = {
 
       displayType = this.viewModel.getMeta( [rowIndex, colIndex], 'displayType' );
       readOnly = this.viewModel.getMeta( [rowIndex, colIndex], "readOnly");
-      if ( options && !options.isSkip && displayType === 'text' ) {
+      if ( displayType === 'text' ) {
         if ( this.$editBox.data("edit") ) {
           cellObjects["text"].endEdit.call( cellObjects["text"], e, that, { isForced: true } );
         } else {
@@ -1905,8 +2504,8 @@ var GridProto = {
     if ( this.focusedCell ) {
       rowIndex = this.focusedCell.rowIndex;
       colIndex = this.focusedCell.colIndex;
-
       displayType = this.viewModel.getMeta( [rowIndex, colIndex], 'displayType' );
+
       if ( displayType === 'text' ) {
         cellObjects["text"].endEdit.call( cellObjects["text"], e, that, { isForced: true } );
       }
@@ -1967,10 +2566,9 @@ var GridProto = {
   moveActionableItem: function(e) {
     var isSift = e.shiftKey,
         position = this.getActivatePosition( isSift ),
-        frozenColumn = this.viewModel.getOption("frozenColumn"),
+//        frozenColumn = this.viewModel.getOption("frozenColumn"),
         displayType,
-        that = this,
-        notMoved = true;
+        that = this;
 
     if ( !position.runNative ) {
       if ( position.row !== null ) {
@@ -1984,11 +2582,9 @@ var GridProto = {
         if ( isSift ) {
           if ( position.col === 0 ) {
             if ( position.row > 0 ) {
-              position.row -= 1;
               position.col = this.viewModel.getVisibleCol().length - 1;
 
               if ( position.col >= this.endCol ) {
-                notMoved = false;
                 this.moveRight( e, { targetCol: position.col, isForced: true } );
                 this.moveUp( e, { isForced: true } );
               }
@@ -1997,20 +2593,14 @@ var GridProto = {
               return false;
             }
           } else {
-            position.col -= 1;
-            if ( position.col < this.startCol ) {
-              notMoved = false;
-              this.moveLeft( e, { isForced: true } );
-            }
+            this.moveLeft( e, { isForced: true } );
           }
         } else {
           if ( position.col === this.viewModel.getVisibleCol().length - 1 ) {
             if ( position.row < this.getRowLength() - 1 ) {
-              position.row += 1;
               position.col = 0;
 
               if ( position.col <= this.startCol ) {
-                notMoved = false;
                 this.moveLeft( e, { targetCol: position.col, isForced: true } );
                 this.moveDown( e, { isForced: true } );
               }
@@ -2019,16 +2609,8 @@ var GridProto = {
               return false;
             }
           } else {
-            position.col += 1;
-            if ( position.col > this.endCol - 1 || position.col === frozenColumn ) {
-              notMoved = false;
-              this.moveRight( e, { isForced: true } );
-            }
+            this.moveRight( e, { isForced: true } );
           }
-        }
-
-        if ( notMoved ) {
-          this.setFocusedCell( position.row, position.col, false );
         }
 
         this.focusWidget( e );
@@ -2036,18 +2618,51 @@ var GridProto = {
     }
   },
   jumpTo: function( e ) {
-    this.blurWidget(e);
-
-    if ( e.keyCode === 36 ) {
+    if ( e.keyCode === this.keySet["HOME"] ) {
       this.moveLeft( e, { targetCol: 0, isForced: true } );
-    } else if ( e.keyCode === 35 ) {
+    } else if ( e.keyCode === this.keySet["END"] ) {
       this.moveRight( e, { targetCol: this.viewModel.getVisibleCol().length - 1, isForced: true } );
-    } else if ( e.keyCode === 33 ) {
-      this.focusedCell.rowIndex = 1;
-      this.moveUp( e, { isForced: true } );
-    } else if ( e.keyCode === 34 ) {
-      this.focusedCell.rowIndex = this.getRowLength() - 2;
-      this.moveDown( e, { isForced: true } );
+    } else if ( e.keyCode === this.keySet["PageUP"] ) {
+      this.moveUp( e, { targetRow: 0, isForced: true } );
+    } else if ( e.keyCode === this.keySet["PageDOWN"] ) {
+      this.moveDown( e, { targetRow: this.getRowLength() - 1, isForced: true } );
     }
+  },
+  delegateGridEvents: function( action ) {
+    var key,
+        args = [].slice.call( arguments, 1 );
+
+    if ( typeof args[0] === 'object' ) {
+      for ( key in args[0] ) {
+        if ( _.isString( args[0][key] ) ) {
+          args[0][key] = this.options[args[0][key]];
+        }
+      }
+    } else if (  _.isString( args[1] ) ) {
+      args[1] = this.options[args[1]];
+    }
+
+    if ( action.search( /[l|L]isten/ ) !== -1 ) {
+      args.unshift( args.pop() );
+    }
+    BView[action].apply( this, args );
+  },
+  on: function( event, callback, context ) {
+    this.delegateGridEvents( 'on', event, callback, context );
+  },
+  off: function( event, callback, context ) {
+    this.delegateGridEvents( 'off', event, callback, context );
+  },
+  once: function( event, callback, context ) {
+    this.delegateGridEvents( 'once', event, callback, context );
+  },
+  listenTo: function( other, event, callback ) {
+    this.delegateGridEvents( 'listenTo', event, callback, other );
+  },
+  stopListening: function( other, event, callback ) {
+    this.delegateGridEvents( 'stopListening', event, callback, other );
+  },
+  listenToOnce: function( other, event, callback ) {
+    this.delegateGridEvents( 'listenToOnce', event, callback, other );
   }
 };

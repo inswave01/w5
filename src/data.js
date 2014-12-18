@@ -10,8 +10,9 @@ function ViewModel(option, colModel, view, data, style) {
   this.row    = new Backbone.Collection(null, {model : this.MetaModel});
   this.cell   = new Backbone.Collection(null, {model : this.MetaModel});
   this.groupInfo = {
-    grouped: true,
-    groupRowCIDs: []
+    grouped: false,
+    groupRowCIDs: [],
+    subTotalPosition: 'header'
   };
 
   _(colModel).each( function ( model, index ) {
@@ -46,6 +47,7 @@ _.extend( ViewModel.prototype, {
     scrollLeft : 0,
     scrollTop : 0,
     frozenColumn : 0,
+    selectionMode : "cell",
     rowNum : 10
   },
   metaDefaultObject: {
@@ -58,13 +60,12 @@ _.extend( ViewModel.prototype, {
     hidden : false,
     dataType : null,
     format : "",
-    //editType : null,
-    class : ""
+    className : ""
   },
   metaDataTypes: {
     style : "object",
     option : "object",
-    class : "className",
+    className : "className",
     disabled : true,
     readOnly : true,
     displayType : true,
@@ -138,7 +139,7 @@ _.extend( ViewModel.prototype, {
         }
         var val = _(value).isArray() ? value[index] : value;
         dataType = this.getMeta([index, pos[1]], "dataType");
-        if(dataType) {
+        if ( dataType ) {
           val = w5.dataType[dataType]( val );
         }
         rst = row.set( pos[1], val, options );
@@ -157,6 +158,28 @@ _.extend( ViewModel.prototype, {
       this.save( models, options );
     }
   },
+  checkNegativeValue: function ( value ) {
+    return _.isUndefined(value) || _.isNull(value) || value === '';
+  },
+  getCheckValue: function ( options ) {
+    var col,
+        checkedValue;
+
+    options = options || {};
+    col = options.col || 0;
+    checkedValue = this.getMeta( ['*', col], 'options', options );
+
+    if ( checkedValue && _.isArray(checkedValue) ) {
+      checkedValue = checkedValue[0].value;
+      if ( this.checkNegativeValue( checkedValue ) ) {
+        checkedValue = null;
+      }
+    } else {
+      checkedValue = null;
+    }
+
+    return checkedValue;
+  },
   runExpression: function( expression, rowIndex, colId ) {
     return expression.call( this.view, {
       rowIndex: rowIndex,
@@ -164,35 +187,53 @@ _.extend( ViewModel.prototype, {
       attributes: this.collection.at(rowIndex).toJSON()
     });
   },
-  getCellData: function(rowIndex, colId) {
-    var expression = this.getMeta( [rowIndex, colId], "expression" );
+  getCellData: function( rowIndex, colId, options ) {
+    var data,
+        expression = this.getMeta( [rowIndex, colId], "expression" );
 
     if ( _.isFunction( expression ) ) {
       expression = this.runExpression( expression, rowIndex, colId );
 
       if( _.isFunction( expression ) ) {
         this.setMeta( [rowIndex, colId], "expression", expression, { silent: true } );
-        return this.runExpression( expression, rowIndex, colId );
+        data = this.runExpression( expression, rowIndex, colId );
       } else {
-        return expression;
+        data = expression;
       }
-    } else if(_.isString(expression) && this.evalExpression) {
-      return this.evalExpression(rowIndex, colId, expression);
+    } else if ( _.isString(expression) && this.evalExpression ) {
+      data = this.evalExpression( rowIndex, colId, expression );
     } else {
-      return this.collection.at(rowIndex).get(colId);
+      data = this.collection.at(rowIndex).get(colId);
     }
+    return options.formatted === true ? cellProto.getFormattedData( data, rowIndex, colId, this.view ) : data;
   },
   getData: function ( pos, options ) {
     options = options || {};
     var isArray = options.type && options.type.toLowerCase() === 'array',
-        singular, models, ret;
+        singular, models, ret,
+        checkedValue, modelValue,
+        keys, values;
 
     pos[1] = this.getColID(pos[1], options.inorder);
     if ( pos[1] === "*" ) {
       singular = pos[0] !== "*";
       models = singular ? [this.collection.at(pos[0])] : this.collection.models;
-      ret = _.map(models, function (model) {
-        var keys, values;
+
+      if ( options.checked ) {
+        checkedValue = this.getCheckValue( options );
+        if ( checkedValue === null ) {
+          return [];
+        }
+      }
+
+      ret = _.reduce( models, function ( list, model ) {
+        if ( options.checked ) {
+          modelValue = model.get( this.getColID( 0, options.inorder ) );
+          if ( _.isUndefined(modelValue) || _.isNull(modelValue) || modelValue.indexOf(checkedValue) === -1 ) {
+            return list;
+          }
+        }
+
         if ( options.pick === true || isArray ) {
           keys = this.colInvertLinker;
         } else if ( options.pick ) {
@@ -202,24 +243,30 @@ _.extend( ViewModel.prototype, {
         } else {
           keys = model.keys();
         }
+
         values = _.map(keys, function(col) {
-          return this.getCellData(model.collection.indexOf(model), col);
-        }, this);
-        if ( !isArray ) {
-          return _.object(keys, values);
+          return this.getCellData( model.collection.indexOf(model), col, options );
+        }, this );
+
+        if ( isArray ) {
+          list.push( values );
+        } else {
+          list.push( _.object(keys, values) );
         }
-        return values;
-      }, this );
-      if(singular) {
+
+        return list;
+      }, [], this );
+
+      if ( singular ) {
         return ret[0];
       }
       return ret;
     } else if ( pos[0] === "*" ) {
       return this.collection.map(function (row, rowIndex) {
-        return this.getCellData(rowIndex, pos[1]);
+        return this.getCellData( rowIndex, pos[1], options );
       }, this);
     }
-    return this.getCellData(pos[0], pos[1]);
+    return this.getCellData( pos[0], pos[1], options );
   },
   getDataLength: function () {
     return this.collection.length;
@@ -248,25 +295,27 @@ _.extend( ViewModel.prototype, {
     model.set( prop, prop === 'id' ? value : obj, options); 
   },
   getMeta: function ( pos, prop, options ) {
-    options = options || {};
-    pos[0] = this.getDataCID(pos[0]);
-    pos[1] = this.getColID(pos[1], options.inorder);
-    var model = this.getModel(pos[0], pos[1]),
+    var cid = this.getDataCID(pos[0]),
+        model,
         ret,
         metaArr;
 
+    options = options || {};
+    pos[1] = this.getColID( pos[1], options.inorder );
+    model = this.getModel( cid, pos[1] );
+
     if ( (pos[0] === "*" || pos[1] === "*") || options.noncomputed ) {
       if(model && model.has(prop)) {
-        ret = model.get(prop).value;
+        ret = _.isObject(model.get(prop)) ? model.get(prop).value : model.get(prop);
       } else {
         ret = this.metaDefaultObject[prop];
       }
     } else {
       metaArr = _([
         model,
-        this.getModel("*", pos[1]),
-        this.getModel(pos[0], "*"),
-        this.getModel("*", "*")
+        this.getModel( "*", pos[1] ),
+        this.getModel( cid, "*" ),
+        this.getModel( "*", "*" )
       ]).compact();
       metaArr = _(_.map( metaArr, function (model) {
         return model.get(prop);
@@ -306,11 +355,11 @@ _.extend( ViewModel.prototype, {
   },
   removeMeta: function ( pos, prop, options ) {
     options = options || {};
-    pos[1] = this.getColID(pos[1], options.inorder);
-    var model = this.getModel(this.getDataCID(pos[0]), pos[1]);
+    pos[1] = this.getColID( pos[1], options.inorder );
+    var model = this.getModel( this.getDataCID(pos[0]), pos[1] );
 
     if ( model ) {
-      model.unset(prop, options);
+      model.unset( prop, options );
     }
   },
   removeMetaByDataCID: function (cid) {
@@ -389,12 +438,14 @@ _.extend( ViewModel.prototype, {
     return data;
   },
   addRow: function ( index, data, options ) {
-    var models;
+    var models,
+        rowCount = 0;
 
     options = options || {};
 
     if ( arguments.length === 0 ) {
       data = {};
+      index = null;
     } else if( arguments.length === 1 ) {
       if ( _.isNumber(arguments[0]) ) {
         data = {};
@@ -412,7 +463,7 @@ _.extend( ViewModel.prototype, {
     }
 
     if ( index === 0 ) {
-      models = this.collection.unshift( data );
+      models = this.collection.unshift( data, options );
     } else {
       if ( index ) {
         options.at = index;
@@ -420,60 +471,147 @@ _.extend( ViewModel.prototype, {
       models = this.collection.add( data, options );
     }
 
-    if ( _.isArray( models ) ) {
-      _.each( models, function( element ) {
-        element.__isNew = true;
-      });
-    } else {
-      models.__isNew = true;
-    }
+    if ( !options.group ) {
+      if ( _.isArray( models ) ) {
+        _.each( models, function( element ) {
+          element.__isNew = true;
+          rowCount += 1;
+        });
+      } else {
+        models.__isNew = true;
+        rowCount += 1;
+      }
 
-    if ( options.save === true ) {
-      this.save( models, options );
+      if ( options.save === true ) {
+        if ( _.isArray( models ) && models.length === 1 ) {
+          this.save( models[0], options );
+        } else {
+          this.save( models, options );
+        }
+      }
+
+      if ( !options.silent ) {
+        index = _.isNull(index) ? this.getDataLength() - 1 : index;
+
+        if ( options.focus === true ) {
+          if ( index >= this.view.rowTop + this.getOption('rowNum') || index < this.view.rowTop ) {
+            this.setOption( "scrollTop", index * 20 );
+          }
+          this.view.setFocusedCell( index, 0 );
+        } else if ( this.view.focusedCell ) {
+          if ( this.view.focusedCell.rowIndex >= index ) {
+            this.view.setFocusedCell( this.view.focusedCell.rowIndex + rowCount, this.view.focusedCell.colIndex );
+          }
+        }
+
+        this.view.trigger( 'addRow', { type: "addRow" }, { index: index, addedCount: rowCount } );
+      }
     }
   },
   removeRow: function ( index, options ) {
-    var targetRow;
+    var targetRow,
+        removedRow,
+        targetIndex = [],
+        focusedRow = -1,
+        rowCount = 0;
 
+    index = _.isArray(index) ? index : [index];
+    if ( index.length === 0 ) {
+      return;
+    }
     options = options || {};
 
-    if(_.isNumber(index)) {
-      targetRow = this.collection.at(index);
-      this.removeMetaByDataCID( targetRow.cid );
-    } else if(_.isString(index)) {
-      targetRow = this.collection.get(index);
-      this.removeMetaByDataCID( index );
-    }
-    if ( targetRow ) {
-      if ( options.destroy ) {
-        options.url = _.result( targetRow, 'url' );
+    targetRow = _.reduce( index, function( memo, item ) {
+      if ( _.isString(item) ) {
+        item = this.collection.get(item);
       }
 
-      targetRow = this.collection.remove( targetRow );
-      if ( _.isArray( targetRow ) ) {
-        targetRow = _.reduce( targetRow, function( memo, element ) {
+      if ( item instanceof Backbone.Model ) {
+        item = this.collection.indexOf( item );
+      }
+
+      if ( _.isNumber(item) ) {
+        targetRow = this.collection.at( item );
+        if ( targetRow && ( options.group || !this.getMeta( [item, "*"], "group" ) ) ) {
+          this.removeMetaByDataCID( targetRow.cid );
+          memo.push( targetRow );
+          targetIndex.push(item);
+        }
+      }
+
+      return memo;
+    }, [], this );
+
+    if ( targetRow.length > 0 ) {
+      if ( this.view.focusedCell ) {
+        focusedRow = this.view.focusedCell.rowIndex;
+      }
+      if ( options.destroy && targetRow.length === 1 ) {
+        options.url = _.result( targetRow[0], 'url' );
+      }
+
+      targetRow = this.collection.remove( targetRow, options );
+
+      if ( !options.group ) {
+        removedRow = _.reduce( targetRow, function( memo, element ) {
           if ( !element.__isNew ) {
             memo.push(element);
           }
           return memo;
         }, [] );
-        Array.prototype.push.apply( this.collection.__removeModels, targetRow );
-      } else {
-        if ( !targetRow.__isNew ) {
-          this.collection.__removeModels.push(targetRow);
-        }
-      }
+        Array.prototype.push.apply( this.collection.__removeModels, removedRow );
 
-      if ( options.destroy ) {
-        this.destroy( targetRow, options );
+        if ( options.destroy && targetRow.length === 1 ) {
+          this.destroy( targetRow[0], options );
+        }
+
+        if ( !options.silent ) {
+          if ( focusedRow > -1 ) {
+            _.each( targetIndex, function( value ) {
+              if ( focusedRow > value ) {
+                rowCount += 1;
+              } else if ( focusedRow === value && focusedRow >= this.view.getRowLength() ) {
+                rowCount += 1;
+              }
+            }, this );
+
+            if ( rowCount > 0 ) {
+              this.view.setFocusedCell( this.view.focusedCell.rowIndex - rowCount, this.view.focusedCell.colIndex );
+            }
+          }
+
+          this.view.trigger( 'removeRow', { type: "removeRow" }, { index: targetIndex.slice(), removedRow: _( targetRow ).map( function( model ) { return model.toJSON(); } ) } );
+        }
       }
     }
   },
-  sort: function ( columns, directions ) {
+  removedRow: function ( options ) {
+    if ( options && options.ref ) {
+      return this.collection.__removeModels;
+    } else {
+      return _( this.collection.__removeModels ).map( function( model ) { return model.toJSON(); } );
+    }
+  },
+  sort: function ( columns, directions, options ) {
+    var i = 0,
+        colSortInfo = this.collection.sortInfo,
+        sortInfo = {
+          before: {
+            columns: _.isFunction( colSortInfo.column ) ? null : colSortInfo.column.slice(),
+            directions: colSortInfo.direction.slice()
+          },
+          after: {
+            columns: null,
+            directions: null
+          }
+        };
+
+    options = options || {};
+
     if ( _.isUndefined(columns) ) {
-      this.collection.sortInfo.column = [];
+      colSortInfo.column = [];
     } else if ( _.isFunction(columns) ) {
-      this.collection.sortInfo.column = columns;
+      colSortInfo.column = columns;
     } else {
       if ( _.isNumber( columns ) || _.isString( columns ) ) {
         columns = [columns];
@@ -481,37 +619,133 @@ _.extend( ViewModel.prototype, {
       columns = _.map( columns, function (item) {
         return this.getColID(item);
       }, this );
-      this.collection.sortInfo.column = columns;
+      colSortInfo.column = columns;
     }
 
-    if ( _.isUndefined(directions) ) {
-      this.collection.sortInfo.direction = ['asc'];
+    if ( _.isUndefined(directions) || _.isNull(directions) ) {
+      if ( _.isUndefined(columns) ) {
+        colSortInfo.direction = [];
+      } else {
+        colSortInfo.direction = ['asc'];
+      }
     } else {
       if ( _.isString( directions ) ) {
         directions = [directions];
       }
-      this.collection.sortInfo.direction = directions;
+      colSortInfo.direction = directions;
     }
 
-    this.collection.sortData();
+    while ( i < colSortInfo.column.length ) {
+      if ( colSortInfo.direction[i] ) {
+        colSortInfo.direction[i] = colSortInfo.direction[i].toLowerCase();
+      } else {
+        colSortInfo.direction[i] = 'asc';
+      }
+      i += 1;
+    }
+
+    sortInfo.after.columns = _.isFunction( colSortInfo.column) ? null : colSortInfo.column.slice();
+    sortInfo.after.directions = colSortInfo.direction.slice();
+
+    if ( !options.group && this.groupInfo.grouped ) {
+      options.sort = true;
+      this.group.call( this, colSortInfo.column.slice(), colSortInfo.direction.slice(), null, options );
+    } else {
+      this.collection.sortData( options );
+    }
+
+    if ( !options.silent ) {
+      this.view.trigger( 'sort', { type: "sort" }, sortInfo );
+    }
+  },
+  wrapRoot: function( data, options ) {
+    var wrapper;
+    if ( options.rootName ) {
+      wrapper = {};
+      wrapper[options.rootName] = data;
+      data = wrapper;
+    }
+    return data;
+  },
+  convertJSONtoXML: function( model, options ) {
+    var data;
+
+    model = model || {};
+    if ( options.data ) {
+      data = options.data;
+    } else {
+      if ( _.isString(model) ) {
+        data = JSON.parse(model);
+      } else {
+        data = model.toJSON();
+      }
+    }
+
+    if ( options.converter ) {
+      data = options.converter.json2xml_str.call( options.converter.json2xml_str, data, options );
+    } else if ( this.view.options.xmlConverter ) {
+      data = this.wrapRoot( data, options );
+      data = this.view.options.xmlConverter.json2xml_str(data);
+    }
+
+    return data;
+  },
+  sendXML: function( model, options ) {
+    var that = this;
+
+    options = options || {};
+    options.type = options.type || 'POST';
+    options.contentType = options.contentType || 'application/xml';
+    options.dataType = options.dataType || 'xml';
+    options.processData = false;
+
+    if ( this.view.options.xmlConverter ) {
+      options.defaultXMLConverter = this.view.options.xmlConverter;
+    }
+
+    options.data = this.convertJSONtoXML( model, options );
+    options.converters = {
+      "text xml": function(value) {
+        value = $.parseXML(value);
+
+        if ( options.converter ) {
+          value = options.converter.xml2json.call( options.converter.xml2json, value, options );
+        } else if ( that.view.options.xmlConverter ) {
+          value = that.view.options.xmlConverter.xml2json(value);
+        }
+
+        return value;
+      }
+    };
+    return options;
   },
   fetch: function( model, options ) {
-    if ( _.isUndefined(model) ) {
+    if ( arguments.length > 0 ) {
+      if ( type.isNumber( model ) ) {
+        model = this.collection.at( model );
+      } else if ( !( model instanceof Backbone.Collection || model instanceof Backbone.Model ) ) {
+        options = model;
+        model = this.collection;
+      }
+
+      if ( options && options.contentType && options.contentType.indexOf('xml') > -1 ) {
+        options = this.sendXML( model, options );
+      }
+    } else {
       model = this.collection;
-    } else if ( type.isNumber( model ) ) {
-      model = this.collection.at(model);
     }
+
     model.fetch( options );
   },
-  save: function ( models, options ) {
+  save: function ( model, options ) {
     var idx,
         data,
         success = options.success;
 
     options = options || {};
-    if ( !_.isArray (models) ) {
-      idx = this.collection.indexOf(models);
-      if ( options.pick || options.omit ) {
+    if ( !_.isArray (model) ) {
+      idx = this.collection.indexOf(model);
+      if ( options.formatted || options.pick || options.omit ) {
         data = this.getData( [idx, '*'], options );
         options.patch = true;
       } else {
@@ -519,21 +753,31 @@ _.extend( ViewModel.prototype, {
       }
 
       options.success = function ( modelCompleted, resp ) {
-        models.__isNew = false;
-
+        model.__isNew = false;
         if ( success ) {
           success( modelCompleted, resp, options );
         }
       };
 
+      if ( options.contentType && options.contentType.indexOf('xml') > -1 ) {
+        if ( options.patch ) {
+          options.data = data;
+        }
+        options = this.sendXML( model, options );
+      }
+
       this.collection.at( idx ).save( data, options );
     }
   },
-  destroy: function ( models, options ) {
+  destroy: function ( model, options ) {
     var vModel = this,
         success = options.success;
 
-    if ( !_.isArray ( models ) ) {
+    if ( !_.isArray ( model ) ) {
+      if ( options.contentType && options.contentType.indexOf('xml') > -1 ) {
+        options = this.sendXML( model, options );
+      }
+
       options.success = function ( modelCompleted, resp ) {
         _.each( vModel.collection.__removeModels, function ( element, index, list ) {
           if ( modelCompleted.id === element.id ) {
@@ -546,61 +790,90 @@ _.extend( ViewModel.prototype, {
         }
       };
 
-      models.destroy( options );
+      model.destroy( options );
     }
   },
   getCUData: function ( options ) {
-    var models = { create: [], update: [], delete: [] },
+    options = options || {};
+
+    var models = { createList: [], updateList: [], deleteList: [] },
         excludeCreate = options.excludeCreate || false,
         excludeUpdate = options.excludeUpdate || false,
         excludeDelete = options.excludeDelete || false;
 
     if ( !excludeCreate || !excludeUpdate ) {
-      models = _.reduce( this.collection.models, function ( store, model, idx ) {
+      models = _.reduce( this.collection.models, function ( store, model ) {
         if ( !excludeCreate && model.__isNew ) {
-          model.__idx = idx;
-          store.create.push(model);
+          store.createList.push( options.ref ? model : model.toJSON() );
         } else if ( !excludeUpdate && model.hasChanged() ) {
-          model.__idx = idx;
-          store.update.push(model);
+          store.updateList.push( options.ref ? model : model.toJSON() );
         }
         return store;
       }, models, this );
     }
     if ( !excludeDelete ) {
-      Array.prototype.push.apply( models.delete, this.collection.__removeModels );
+      Array.prototype.push.apply( models.deleteList, this.removedRow( options ) );
     }
 
     return models;
   },
   syncData: function ( options ) {
-    var vModel = this,
-        data = this.getCUData( options || ( options = {} ) ),
-        dataCreated = data.create.slice(),
+    var data,
+        vModel = this,
+        dataCreated,
+        success,
         dummy = _.extend( {}, Backbone.Events, {
-          url: this.collection.urlCUD,
-          getJSON: function (target) {
-            _.each( target, function( ele, idx, list ) {
-              list[idx] = this.getData( [ele.__idx, '*'], options );
-              delete ele.__idx;
-            }, vModel );
-          },
-          toJSON: function () {
-            this.getJSON( data.create );
-            this.getJSON( data.update );
-            return data;
+                  url: this.collection.compoundURL
+                } );
+
+    options = options || {};
+    success = options.success;
+
+    if ( options.modified === true ) {
+      options.ref = true;
+
+      data = this.getCUData( options );
+      dataCreated = data.createList.slice();
+      dummy = _.extend( dummy, {
+        getJSON: function (target) {
+          _.each( target, function( model, idx, list ) {
+            list[idx] = vModel.getData( [ model.collection.indexOf(model), '*' ], options );
+          }, vModel );
+        },
+        toJSON: function () {
+          if ( options.formatted || options.pick || options.omit ) {
+            this.getJSON( data.createList );
+            this.getJSON( data.updateList );
           }
-        } ),
-        success = options.success,
-        grid = this;
+          return data;
+        }
+      } );
+    } else {
+      dummy = _.extend( dummy, {
+        toJSON: function () {
+          if ( options.checked || options.formatted || options.pick || options.omit ) {
+            data = vModel.getData( ['*', '*'], options );
+          } else {
+            data = vModel.collection.toJSON();
+          }
+          return data;
+        }
+      } );
+    }
+
+    if ( options && options.contentType && options.contentType.indexOf('xml') > -1 ) {
+      options = this.sendXML( JSON.stringify( dummy.toJSON() ), options );
+    }
 
     options.success = function ( model, resp ) {
-      grid.collection.__removeModels = [];
+      if ( !(options.excludeDelete || false) ) {
+        vModel.collection.__removeModels = [];
+      }
 
       _.each( dataCreated, function ( item, idx ) {
         item.__isNew = false;
-        if ( options.afterProcess && model.create && model.create[idx] ) {
-          item.set( model.create[idx] );
+        if ( options.afterProcess && model.createList && model.createList[idx] ) {
+          item.set( model.createList[idx] );
         }
       });
 
@@ -679,7 +952,7 @@ var w5DataCollectionProto = {
       this.grid = options.grid;
       this.keys = options.keys;
       this.url = options.url;
-      this.urlCUD = options.urlCUD;
+      this.compoundURL = options.compoundURL;
       this.defaults = options.defaults;
       this.__removeModels = [];
     }
@@ -759,14 +1032,14 @@ var w5DataCollectionProto = {
         return idx1 > idx2 ? 1 : -1;
       }
 
-      if ( ( dirs[_.indexOf( cols, col )] || 'asc' ).toLowerCase() === 'asc' ) {
+      if ( dirs[_.indexOf( cols, col )]  === 'asc' ) {
         return _.isUndefined(item2.attributes[col]) ? 1 : item1.attributes[col] > item2.attributes[col] ? 1 : -1;
       } else {
         return _.isUndefined(item1.attributes[col]) ? 1 : item1.attributes[col] < item2.attributes[col] ? 1 : -1;
       }
     }
   },
-  sortData: function() {
+  sortData: function( options ) {
     if ( this.sortInfo.column.length > 0 ) {
       this.cloneCollection();
       this.__sorting = true;
@@ -777,7 +1050,7 @@ var w5DataCollectionProto = {
         this.comparator = this.sortInfo.comparator;
       }
 
-      this.sort();
+      this.sort( options );
     } else {
       if ( this.__sorting ) {
         this.__sorting = false;
