@@ -24,19 +24,23 @@ GridSelector.fn.clone.prototype = GridSelector.fn;
 
 var GridSelectorApis = {
   get: function (prop) {
-    var args = [].slice.call(arguments, 1);
-    if(prop === "data") {
-      return this.viewModel.getData.apply(this.viewModel, [this[0]].concat(args));
-    } else if(prop === "option") {
-      return this.viewModel.getOption.apply(this.viewModel, args);
-    } else {
-      var deep = _.isString(args[0]), ret;
-      ret = this.viewModel.getMeta.apply(this.viewModel, [this[0], prop, deep ? args[1] : args[0]]);
-      if( deep ) {
-        ret = ret[arguments[1]];
-      }
-      return ret;
-    }
+    var args = [].slice.call( arguments, 1 ),
+        result = _(this).map( function(pos) {
+          if ( prop === "data" ) {
+            return this.viewModel.getData.apply( this.viewModel, [pos].concat( args ) );
+          } else if ( prop === "option" ) {
+            return this.viewModel.getOption.apply( this.viewModel, args );
+          } else {
+            var deep = _.isString( args[0] ),
+                ret = this.viewModel.getMeta.apply( this.viewModel, [pos, prop, deep ? args[1] : args[0]] );
+
+            if ( deep ) {
+              ret = ret[args[0]];
+            }
+            return ret;
+          }
+        }, this);
+    return this.length > 1 ? result : result[0];
   },
   set: function (prop) {
     var args = [].slice.call(arguments, 1);
@@ -89,21 +93,27 @@ var GridSelectorApis = {
         delete tmpMeta[prop2];
         this.viewModel.setMeta(pos, prop, tmpMeta);
       }
-    } , this);
+    }, this);
     return this;
   },
-  addClass : function(className){ 
-    var tmpStr = this.viewModel.getMeta(this[0], "class", {noncomputed:true});
+  addClass : function ( className ) {
+    var tmpMeta, classNameArr;
+    classNameArr = className === '' ? [] : className.split(/\s/);
 
-    if ( tmpStr.length===0 ){
-      this.viewModel.setMeta(this[0], "class", className);
-    } else {
-      this.viewModel.setMeta(this[0], "class", tmpStr+" "+className);
-    }
+    _(this).each( function ( pos ) {
+      tmpMeta = this.viewModel.getMeta( pos, "className", {noncomputed:true} );
+      tmpMeta = tmpMeta === '' ? [] : tmpMeta.split(/\s/);
+
+      _(classNameArr).each(function(index) {
+        tmpMeta.push(index);
+      });
+      this.viewModel.setMeta( pos, "className", tmpMeta.join(" ") );
+    }, this );
+
     return this;
   },
   hasClass : function(className){
-    var tmpStr = this.viewModel.getMeta(this[0], "class", {noncomputed:true}),
+    var tmpStr = this.viewModel.getMeta(this[0], "className", {noncomputed:true}),
         hasFlag = false;
 
     _(tmpStr.split(/\s+/)).each(function(item){
@@ -115,17 +125,19 @@ var GridSelectorApis = {
     return hasFlag;
   },
   removeClass : function(className){
-    var tmpStr = this.viewModel.getMeta(this[0], "class", {noncomputed:true});
+    var tmpStr = this.viewModel.getMeta(this[0], "className", {noncomputed:true});
 
     if ( tmpStr.length!==0 ){
-        this.viewModel.setMeta(this[0], "class",
-          _(tmpStr.split(/\s+/)).difference(className.split(/\s+/)).join(" "));   
+      _(this).each(function(pos) {
+        this.viewModel.setMeta( pos, "className",
+          _(tmpStr.split(/\s+/)).difference(className.split(/\s+/)).join(" ") );
+      }, this);
     }
 
     return this;
   },
   toggleClass: function(className, addOrRemove){
-    var tmpStr = this.viewModel.getMeta(this[0], "class", {noncomputed:true}),
+    var tmpStr = this.viewModel.getMeta(this[0], "className", {noncomputed:true}),
         targetIdx;
 
     if(arguments.length === 1) {
@@ -144,6 +156,12 @@ var GridSelectorApis = {
       this.removeClass(className);
     }
     
+    return this;
+  },
+  triggerGridEvent: function ( event, options ) {
+    _(this).each( function ( pos ) {
+      this.grid.triggerGridEvent( pos, event, options );
+    }, this );
     return this;
   }
 };
