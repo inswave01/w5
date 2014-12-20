@@ -5,7 +5,7 @@
  * Copyright 2013 Inswave Foundation and other contributors
  * Released under the LGPLv3.0 license
  *
- * Date: 2014-12-18
+ * Date: 2014-12-20
  */
 
 (function(root, factory) {
@@ -789,12 +789,23 @@ _.extend( ViewModel.prototype, {
     options.data = this.convertJSONtoXML( model, options );
     options.converters = {
       "text xml": function(value) {
+        var targetPath;
         value = $.parseXML(value);
 
         if ( options.converter ) {
           value = options.converter.xml2json.call( options.converter.xml2json, value, options );
         } else if ( that.view.options.xmlConverter ) {
           value = that.view.options.xmlConverter.xml2json(value);
+          if ( options.targetPath ) {
+            if ( _.isString(options.targetPath) ) {
+              targetPath = options.targetPath.split('.');
+              value = _.reduce( targetPath, function( memo, key ) {
+                return memo[key];
+              }, value );
+            } else if ( _.isFunction(options.targetPath) ) {
+              value = options.targetPath(value);
+            }
+          }
         }
 
         return value;
