@@ -1,9 +1,9 @@
 {
   "name": "w5",
-  "version": "1.0.1",
-  "main": "dist/js/1.0.1/w5.min.js",
+  "version": "1.2.0",
+  "main": "dist/js/1.2.0/w5.min.js",
   "license": "LGPLv3.0",
-  "homepage": "http://w5.io",
+  "homepage": "https://w5.io",
   "ignore": [
     "**/.*",
     "*.md",
