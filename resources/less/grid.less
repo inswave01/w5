@@ -81,7 +81,7 @@
 @hScroll-handle-mWidth              : 28px;
 
 @colMenu-min-width                  : 155px;
-@colMenu-max-width                  : 340px;
+@colMenu-max-width                  : 330px;
 @colMenu-select-xs                  : 105px;
 @colMenu-select-sm                  : 120px;
 @colMenu-select-lg                  : 140px;
@@ -311,54 +311,53 @@
                 }
             }       
         }
-        &.open {
-            .w5-dropdown-menu {
-                width: @colMenu-max-width;
-                display: block;
-                position: absolute;
-                top: @header-label-height;
-                left: 0px;
-                overflow-y: scroll;
-                &.form-none {
-                    width: @colMenu-min-width;
-                    overflow: hidden;
-                }
-                .w5-grid-form-select {
-                    &.select-xs {
-                        width : @colMenu-select-xs;
-                    }
-                    &.select-sm {
-                        width : @colMenu-select-sm;
-                    }
-                    &.select-lg {
-                        width : @colMenu-select-lg;
-                    }
-                }
-                .w5-grid-form-input {
-                    &.input-xs {
-                        width : @colMenu-input-xs;
-                    }
-                    &.input-sm {
-                        width : @colMenu-input-sm;
-                    }
-                    &.input-lg {
-                        width : @colMenu-input-lg;
-                    }
-                }
-            }
-        }
     }
 }
 .w5-dropdown-menu {
-    margin: 0px;
-    padding: 0px;
+    margin: 0;
+    padding: 0;
     background: #fff;
     border: 1px solid #636363;
     list-style: none;
     display: none;
+    &.open {
+      width: @colMenu-max-width;
+      display: block;
+      position: absolute;
+      top: @header-label-height;
+      left: 0;
+      overflow-y: auto;
+      z-index: 16;
+      &.form-none {
+        width: @colMenu-min-width;
+        overflow: hidden;
+      }
+      .w5-grid-form-select {
+        &.select-xs {
+          width : @colMenu-select-xs;
+        }
+        &.select-sm {
+          width : @colMenu-select-sm;
+        }
+        &.select-lg {
+          width : @colMenu-select-lg;
+        }
+      }
+      .w5-grid-form-input {
+        &.input-xs {
+          width : @colMenu-input-xs;
+        }
+        &.input-sm {
+          width : @colMenu-input-sm;
+        }
+        &.input-lg {
+          width : @colMenu-input-lg;
+        }
+      }
+    }
     li {
         padding: 7px;
-        padding-right: 0px; /* for IE Scroll */
+        padding-right: 0; /* for IE Scroll */
         border-top: 1px solid #636363;
         position: relative;
         &:first-child{
@@ -379,26 +378,26 @@
             clear: left;
         }
         .column-hide {
-            background: url("@{image-dir}/menu-icon-hide.gif") 0px center no-repeat;    
+            background: url("@{image-dir}/menu-icon-hide.gif") 0 center no-repeat;
         }
         .frozen-column {
-            background: url("@{image-dir}/menu-icon-frozen.png") 0px center no-repeat; 
+            background: url("@{image-dir}/menu-icon-frozen.png") 0 center no-repeat;
         }
         .frozen-column.disabled {
             color: #bdbdbd;
             text-shadow: 1px 1px 1px #fff;
-            background: url("@{image-dir}/menu-icon-frozen-disabled.png") 0px center no-repeat;    
+            background: url("@{image-dir}/menu-icon-frozen-disabled.png") 0 center no-repeat;
             cursor: default;
         }
         .filter {
-            background: url("@{image-dir}/menu-icon-filter.gif") 0px center no-repeat;  
+            background: url("@{image-dir}/menu-icon-filter.gif") 0 center no-repeat;
         }
         .validator {
-            background: url("@{image-dir}/menu-icon-validator.gif") 0px center no-repeat;   
+            background: url("@{image-dir}/menu-icon-validator.gif") 0 center no-repeat;
         }
         .condition-add-btn {
             margin: 5px 2px 0 0;
-            padding: 0px;
+            padding: 0;
             width: 98%;
             height: 18px;
             color: #2965CD;
@@ -415,11 +414,14 @@
             color: #c2c2c2;
             position: absolute;
             top: 8px;
-            right: 22px;
+            right: 12px;
             &:hover {
                 cursor: pointer;
                 color: @grid-red;
             }
+        }
+        .align-right {
+          text-align: right;
         }
     }
     .line-none {
@@ -427,6 +429,9 @@
     }
     .line-dashed {
         border-top: 1px dashed #ccc;
+    }
+    .line-dashed_bottom {
+      border-bottom: 1px dashed #ccc;
     }
 }
 

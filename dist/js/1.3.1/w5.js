@@ -1,3 +1,1163 @@
+/*!
+ * w5 1.3.1
+ * [https://w5.io]
+ *
+ * Copyright 2013 Inswave Foundation and other contributors
+ * Released under the LGPLv3.0 license
+ *
+ * Date: 2015-02-11
+ */
+
+(function(root, factory) {
+  /* global define */
+  if ( typeof define === 'function' && define.amd ) {
+    define( ['jquery', 'underscore', 'Backbone', 'exports'], function( $, _, Backbone, exports ) {
+      root.w5 = factory( $, _, Backbone, root, exports );
+    });
+  } else {
+    root.w5 = factory( (root.jQuery || root.$), root._, root.Backbone, root, {} );
+  }
+
+}( this, function( $, _, Backbone, window, w5 ) {
+
+    "use strict";
+
+var
+  resizeChecker = (function() {
+    var gridArr = [];
+
+    setInterval(function() {
+      _(gridArr).each( function(grid) {
+        grid.checkResize();
+      });
+    }, 200);
+
+    return {
+      add: function(grid) {
+        grid.wrapper_width = grid.$el.width();
+        gridArr.push(grid);
+      }
+    };
+  })(),
+  type = function (o) {
+
+    if ( o === null ) {
+      return 'null';
+    }
+
+    if ( o && ( o.nodeType === 1 || o.nodeType === 9 ) ) {
+      return 'element';
+    }
+
+    var s = Object.prototype.toString.call(o);
+    var type = s.match(/\[object (.*?)\]/)[1].toLowerCase();
+
+    if ( type === 'number' ) {
+      if ( isNaN(o) ) {
+        return 'nan';
+      }
+      if ( !isFinite(o) ) {
+        return 'infinity';
+      }
+    }
+    return type;
+  };
+  _.each( ['Null',
+          'Undefined',
+          'Object',
+          'Array',
+          'String',
+          'Number',
+          'Boolean',
+          'Function',
+          'RegExp',
+          'Element',
+          'NaN',
+          'Infinite'],
+    function (t) {
+      type['is' + t] = function (o) {
+        return type(o) === t.toLowerCase();
+      };
+    }
+  );
+
+function ViewModel(option, colModel, view, data, style) {
+  this.option = new Backbone.Model(this.optionDefaultObject);
+  this.colModel = colModel;
+  this.view = view;
+  this.collection = data;
+  this.colLinker = {};
+  this.colInvertLinker = [];
+  this.table  = new this.MetaModel({id : 'table'}, {rowCID : "*", colID : "*"});
+  this.column = new Backbone.Collection(null, {model : this.MetaModel});
+  this.row    = new Backbone.Collection(null, {model : this.MetaModel});
+  this.cell   = new Backbone.Collection(null, {model : this.MetaModel});
+  this.groupInfo = {
+    grouped: false,
+    groupRowCIDs: [],
+    subTotalPosition: 'header'
+  };
+
+  _(colModel).each( function ( model, index ) {
+    var id = model.id || model.headerLabel;
+    if(!id) {
+      throw new Error( "The column should be assigned one of id or headerLable." );
+    }
+    this.colLinker[id] = index;
+    this.colInvertLinker[index] = id;
+  }, this);
+  if(!option.colOrder) {
+    option.colOrder = this.colInvertLinker.slice();
+  }
+
+  this.option.set(option);
+
+  _(colModel).each(function(model, index) {
+    _.chain(model).each( function( value, key ) {
+      if( key !== 'id' ) {
+        this.setMeta( ["*", index], key, value, {inorder:true} );
+      }
+    }, this);
+  }, this);
+
+  _.each(style || [], function(meta) {
+    this.setMeta( [meta[0], meta[1]], "style", meta[2]);
+  }, this);
+}
+
+_.extend( ViewModel.prototype, {
+  optionDefaultObject: {
+    scrollLeft : 0,
+    scrollTop : 0,
+    frozenColumn : 0,
+    selectionMode : "cell",
+    rowNum : 10
+  },
+  metaDefaultObject: {
+    width : 100,
+    headerLabel : "",
+    readonly : false,
+    disabled : false,
+    displayType : "text",
+    options : null,
+    hidden : false,
+    dataType : null,
+    format : "",
+    className : ""
+  },
+  metaDataTypes: {
+    style : "object",
+    option : "object",
+    className : "className",
+    disabled : true,
+    readOnly : true,
+    displayType : true,
+    options : true
+  },
+  MetaModel: Backbone.Model.extend({
+    initialize : function(attributes, options) {
+      this.rowCID = options.rowCID;
+      this.colID = options.colID;
+      if(this.rowCID === "*" && this.colID === "*") {
+        this.type = "table";
+      } else if(this.rowCID === "*") {
+        this.type = "column";
+      } else if(this.colID === "*") {
+        this.type = "row";
+      } else {
+        this.type = "cell";
+      }
+    }
+  }),
+  getModel: function(rowCID, colID, makeModel) {
+    var collection, key, model;
+    if( rowCID === "*" && colID === "*" ) {
+      return this.table;
+    }
+
+    if( rowCID === "*" ) {
+      key = colID;
+      collection = this.column;
+    } else if( colID === "*" ) {
+      key = rowCID;
+      collection = this.row;
+    } else {
+      key = rowCID + "," + colID;
+      collection = this.cell;
+    }
+    model = collection.get(key) || null;
+    if(!model && makeModel) {
+      model = new this.MetaModel({id : key}, {rowCID : rowCID, colID : colID});
+      collection.push(model);
+    }
+    return model;
+  },
+  setData: function ( pos, value, options ) {
+    var models,
+        rst, i, dataType;
+
+    options = options || {};
+    if ( this.collection.__validator && _.isUndefined(options.validate) ) {
+      options.validate = true;
+    }
+    pos[1] = this.getColID(pos[1], options.inorder );
+
+    if ( pos[0] === "*" && pos[1] === "*" ) {
+      models = this.collection.reset(value, options);
+    } else if ( pos[1] === "*" ) {
+      value = this.checkDataType( value );
+      for(i in value) {
+        dataType = this.getMeta([pos[0], i], "dataType");
+        if(dataType) {
+          value[i] = w5.dataType[dataType](value[i]);
+        }
+      }
+      models = this.collection.at(pos[0]).set( value, options );
+    } else if ( pos[0] === "*" ) {
+      options.save = false;
+      options.targetColumn = pos[1];
+      (this.collection).find( function( row, index ) {
+        if ( _(value).isArray() && index >= value.length ) {
+          return;
+        }
+        var val = _(value).isArray() ? value[index] : value;
+        dataType = this.getMeta([index, pos[1]], "dataType");
+        if ( dataType ) {
+          val = w5.dataType[dataType]( val );
+        }
+        rst = row.set( pos[1], val, options );
+
+        return rst === false;
+      }, this);
+    } else {
+      dataType = this.getMeta([pos[0], pos[1]], "dataType");
+      if(dataType) {
+        value = w5.dataType[dataType](value);
+      }
+      models = this.collection.at(pos[0]).set( pos[1], value, options );
+    }
+
+    if ( options.save === true ) {
+      this.save( models, options );
+    }
+  },
+  checkNegativeValue: function ( value ) {
+    return _.isUndefined(value) || _.isNull(value) || value === '';
+  },
+  getCheckValue: function ( options ) {
+    var col,
+        checkedValue;
+
+    options = options || {};
+    col = options.col || 0;
+    checkedValue = this.getMeta( ['*', col], 'options', options );
+
+    if ( checkedValue && _.isArray(checkedValue) ) {
+      checkedValue = checkedValue[0].value;
+      if ( this.checkNegativeValue( checkedValue ) ) {
+        checkedValue = null;
+      }
+    } else {
+      checkedValue = null;
+    }
+
+    return checkedValue;
+  },
+  runExpression: function( expression, rowIndex, colId ) {
+    return expression.call( this.view, {
+      rowIndex: rowIndex,
+      colId: colId,
+      attributes: this.collection.at(rowIndex).toJSON()
+    });
+  },
+  getCellData: function( rowIndex, colId, options ) {
+    var data,
+        expression = this.getMeta( [rowIndex, colId], "expression" );
+
+    if ( _.isFunction( expression ) ) {
+      expression = this.runExpression( expression, rowIndex, colId );
+
+      if( _.isFunction( expression ) ) {
+        this.setMeta( [rowIndex, colId], "expression", expression, { silent: true } );
+        data = this.runExpression( expression, rowIndex, colId );
+      } else {
+        data = expression;
+      }
+    } else if ( _.isString(expression) && this.evalExpression ) {
+      data = this.evalExpression( rowIndex, colId, expression );
+    } else {
+      data = this.collection.at(rowIndex).get(colId);
+    }
+    return options.formatted === true ? cellProto.getFormattedData( data, rowIndex, colId, this.view ) : data;
+  },
+  getData: function ( pos, options ) {
+    options = options || {};
+    var isArray = options.type && options.type.toLowerCase() === 'array',
+        singular, models, ret,
+        checkedValue, modelValue,
+        keys, values;
+
+    pos[1] = this.getColID(pos[1], options.inorder);
+    if ( pos[1] === "*" ) {
+      singular = pos[0] !== "*";
+      models = singular ? [this.collection.at(pos[0])] : this.collection.models;
+
+      if ( options.checked ) {
+        checkedValue = this.getCheckValue( options );
+        if ( checkedValue === null ) {
+          return [];
+        }
+      }
+
+      ret = _.reduce( models, function ( list, model ) {
+        if ( options.checked ) {
+          modelValue = model.get( this.getColID( 0, options.inorder ) );
+          if ( _.isUndefined(modelValue) || _.isNull(modelValue) || modelValue.indexOf(checkedValue) === -1 ) {
+            return list;
+          }
+        }
+
+        if ( options.pick === true || isArray ) {
+          keys = this.colInvertLinker;
+        } else if ( options.pick ) {
+          keys = _.intersection( this.colInvertLinker, options.pick );
+        } else if ( options.omit ) {
+          keys = _.difference( this.colInvertLinker, options.omit );
+        } else {
+          keys = model.keys();
+        }
+
+        values = _.map(keys, function(col) {
+          return this.getCellData( model.collection.indexOf(model), col, options );
+        }, this );
+
+        if ( isArray ) {
+          list.push( values );
+        } else {
+          list.push( _.object(keys, values) );
+        }
+
+        return list;
+      }, [], this );
+
+      if ( singular ) {
+        return ret[0];
+      }
+      return ret;
+    } else if ( pos[0] === "*" ) {
+      return this.collection.map(function (row, rowIndex) {
+        return this.getCellData( rowIndex, pos[1], options );
+      }, this);
+    }
+    return this.getCellData( pos[0], pos[1], options );
+  },
+  getDataLength: function () {
+    return this.collection.length;
+  },
+  getDataCID: function (pos) {
+    if(pos === "*" || _(pos).isString()) {
+      return pos;
+    }
+    return this.collection.at(pos).cid;
+  },
+  getMetaIndex: function (id) {
+    return this.collection.indexOf( this.collection.get(id) );
+  },
+  setMeta: function ( pos, prop, value, options ) {
+    options = options || {};
+    pos[1] = this.getColID(pos[1], options.inorder);
+    var model = this.getModel(this.getDataCID(pos[0]), pos[1], true);
+    var obj = {
+      uid : _.uniqueId()
+    };
+    if( options.alter && model.has(prop) ) {
+      obj = model.get( prop );
+    }
+    obj.value = ( prop === 'width' || prop === 'height' ) ? parseInt( value, 10 ) : value;
+
+    model.set( prop, prop === 'id' ? value : obj, options); 
+  },
+  getMeta: function ( pos, prop, options ) {
+    var cid = this.getDataCID(pos[0]),
+        model,
+        ret,
+        metaArr;
+
+    options = options || {};
+    pos[1] = this.getColID( pos[1], options.inorder );
+    model = this.getModel( cid, pos[1] );
+
+    if ( (pos[0] === "*" || pos[1] === "*") || options.noncomputed ) {
+      if(model && model.has(prop)) {
+        ret = _.isObject(model.get(prop)) ? model.get(prop).value : model.get(prop);
+      } else {
+        ret = this.metaDefaultObject[prop];
+      }
+    } else {
+      metaArr = _([
+        model,
+        this.getModel( "*", pos[1] ),
+        this.getModel( cid, "*" ),
+        this.getModel( "*", "*" )
+      ]).compact();
+      metaArr = _(_.map( metaArr, function (model) {
+        return model.get(prop);
+      })).compact();
+      if(metaArr.length === 0) {
+        metaArr = [{
+          uid : -1,
+          value : this.metaDefaultObject[prop] 
+        }];
+      }
+      switch(this.metaDataTypes[prop]) {
+      case "object": 
+        metaArr = _(metaArr).sortBy(function(obj) {
+          return parseInt(obj.uid, 10);
+        });
+        ret = _(metaArr).reduce(function(memo, obj) {
+          return _.extend(memo, obj.value);
+        }, {});
+        break;
+      case "className":
+        ret = _.union(_.pluck(metaArr, "value").join(" ").split(/\s+/)).join(" ");
+        break;
+      default:
+        ret = _.max(metaArr, function(obj) {
+          return parseInt(obj.uid, 10);
+        }).value;    
+      }
+    }
+    return ret;
+  },
+  hasMeta: function ( pos, prop, value, options ) {
+    options =  options || {};
+    pos[1] = this.getColID(pos[1], options.inorder);
+    var model = this.getModel(this.getDataCID(pos[0]), pos[1]);
+
+    return !!model && model.has(prop);
+  },
+  removeMeta: function ( pos, prop, options ) {
+    options = options || {};
+    pos[1] = this.getColID( pos[1], options.inorder );
+    var model = this.getModel( this.getDataCID(pos[0]), pos[1] );
+
+    if ( model ) {
+      model.unset( prop, options );
+    }
+  },
+  removeMetaByDataCID: function (cid) {
+    var keepLength = this.cell.length,
+        filteredMeta = _.filter( this.cell.models, function (model) {
+          return model.id.indexOf(cid) === -1;
+        });
+
+    if ( keepLength > filteredMeta.length ) {
+      this.cell.reset( filteredMeta, { silent: true } );
+    }
+    this.row.remove( this.row.get(cid), { silent: true } );
+  },
+  setOption: function () {
+    return this.option.set.apply(this.option, arguments);
+  },
+  getOption: function () {
+    return this.option.get.apply(this.option, arguments);
+  },
+  getColID: function ( item, inorder ) {
+    if( item === "*" || _(item).isString() ) {
+      return item;
+    } else if( _(item).isNumber() ) {
+      return inorder ? this.colInvertLinker[item] : this.visibleCol[item];
+    }
+    return null;
+  },
+  getColIndex: function ( item, inorder ) {
+    if( item === "*" || _(item).isNumber() ) {
+      return item;
+    } else if( _(item).isString() ) {
+      return inorder ? this.colLinker[item] : _(this.visibleCol).indexOf(item);
+    }
+    return null;
+  },
+  updateVisibleCol: function() {
+    var colOrder = this.getOption("colOrder");
+    this.visibleCol = _.reduce(colOrder, function(memo, col) {
+      if(!this.getMeta(["*", col], "hidden")) {
+        memo.push(col);
+      }
+      return memo;
+    }, [], this);
+  },
+  getVisibleCol: function() {
+    return this.visibleCol;
+  },
+  getFrozenArea: function() {
+    return _.reduce(_.range(this.getOption("frozenColumn")), function ( memo, col ) {
+      return memo + this.getMeta( ["*", col], "width");
+    }, 0, this);
+  },
+  makeJSONfromArray: function ( arr ) {
+    var keys = _.keys(this.colLinker ),
+        nested = _.isArray(arr[0]) ? true : false;
+
+    if ( nested ) {
+      arr = _.map( arr, function(values) {
+        return _.object( keys, values );
+      }, this );
+    } else {
+      arr = _.object( keys, arr );
+    }
+
+    return arr;
+  },
+  checkDataType: function (data) {
+    if ( _.isArray(data) ) {
+      if ( !type.isObject(data[0]) ) {
+        data = this.makeJSONfromArray( data );
+      }
+    } else if ( type.isObject(data) ) {
+    } else {
+      throw new TypeError("Array, JSON data types allow only.");
+    }
+    return data;
+  },
+  addRow: function ( index, data, options ) {
+    var models,
+        rowCount = 0;
+
+    options = options || {};
+
+    if ( arguments.length === 0 ) {
+      data = {};
+      index = null;
+    } else if( arguments.length === 1 ) {
+      if ( _.isNumber(arguments[0]) ) {
+        data = {};
+      } else {
+        data = this.checkDataType(index);
+        index = null;
+      }
+    } else if( arguments.length >= 2 ) {
+      if ( _.isObject(arguments[0]) ) {
+        options = data;
+        data = index;
+        index = null;
+      }
+      data = this.checkDataType(data);
+    }
+
+    if ( index === 0 ) {
+      models = this.collection.unshift( data, options );
+    } else {
+      if ( index ) {
+        options.at = index;
+      }
+      models = this.collection.add( data, options );
+    }
+
+    if ( !options.group ) {
+      if ( _.isArray( models ) ) {
+        _.each( models, function( element ) {
+          element.__isNew = true;
+          rowCount += 1;
+        });
+      } else {
+        models.__isNew = true;
+        rowCount += 1;
+      }
+
+      if ( options.save === true ) {
+        if ( _.isArray( models ) && models.length === 1 ) {
+          this.save( models[0], options );
+        } else {
+          this.save( models, options );
+        }
+      }
+
+      if ( !options.silent ) {
+        index = _.isNull(index) ? this.getDataLength() - 1 : index;
+
+        if ( options.focus === true ) {
+          if ( index >= this.view.rowTop + this.getOption('rowNum') || index < this.view.rowTop ) {
+            this.setOption( "scrollTop", index * 20 );
+          }
+          this.view.setFocusedCell( index, 0 );
+        } else if ( this.view.focusedCell ) {
+          if ( this.view.focusedCell.rowIndex >= index ) {
+            this.view.setFocusedCell( this.view.focusedCell.rowIndex + rowCount, this.view.focusedCell.colIndex );
+          }
+        }
+
+        this.view.trigger( 'addRow', { type: "addRow" }, { index: index, addedCount: rowCount } );
+      }
+    }
+  },
+  removeRow: function ( index, options ) {
+    var targetRow,
+        removedRow,
+        targetIndex = [],
+        focusedRow = -1,
+        rowCount = 0;
+
+    index = _.isArray(index) ? index : [index];
+    if ( index.length === 0 ) {
+      return;
+    }
+    options = options || {};
+
+    targetRow = _.reduce( index, function( memo, item ) {
+      if ( _.isString(item) ) {
+        item = this.collection.get(item);
+      }
+
+      if ( item instanceof Backbone.Model ) {
+        item = this.collection.indexOf( item );
+      }
+
+      if ( _.isNumber(item) ) {
+        targetRow = this.collection.at( item );
+        if ( targetRow && ( options.group || !this.getMeta( [item, "*"], "group" ) ) ) {
+          this.removeMetaByDataCID( targetRow.cid );
+          memo.push( targetRow );
+          targetIndex.push(item);
+        }
+      }
+
+      return memo;
+    }, [], this );
+
+    if ( targetRow.length > 0 ) {
+      if ( this.view.focusedCell ) {
+        focusedRow = this.view.focusedCell.rowIndex;
+      }
+      if ( options.destroy && targetRow.length === 1 ) {
+        options.url = _.result( targetRow[0], 'url' );
+      }
+
+      targetRow = this.collection.remove( targetRow, options );
+
+      if ( !options.group ) {
+        removedRow = _.reduce( targetRow, function( memo, element ) {
+          if ( !element.__isNew ) {
+            memo.push(element);
+          }
+          return memo;
+        }, [] );
+        Array.prototype.push.apply( this.collection.__removeModels, removedRow );
+
+        if ( options.destroy && targetRow.length === 1 ) {
+          this.destroy( targetRow[0], options );
+        }
+
+        if ( !options.silent ) {
+          if ( focusedRow > -1 ) {
+            _.each( targetIndex, function( value ) {
+              if ( focusedRow > value ) {
+                rowCount += 1;
+              } else if ( focusedRow === value && focusedRow >= this.view.getRowLength() ) {
+                rowCount += 1;
+              }
+            }, this );
+
+            if ( rowCount > 0 ) {
+              this.view.setFocusedCell( this.view.focusedCell.rowIndex - rowCount, this.view.focusedCell.colIndex );
+            }
+          }
+
+          this.view.trigger( 'removeRow', { type: "removeRow" }, { index: targetIndex.slice(), removedRow: _( targetRow ).map( function( model ) { return model.toJSON(); } ) } );
+        }
+      }
+    }
+  },
+  removedRow: function ( options ) {
+    if ( options && options.ref ) {
+      return this.collection.__removeModels;
+    } else {
+      return _( this.collection.__removeModels ).map( function( model ) { return model.toJSON(); } );
+    }
+  },
+  sort: function ( columns, directions, options ) {
+    var i = 0,
+        colSortInfo = this.collection.sortInfo,
+        sortInfo = {
+          before: {
+            columns: _.isFunction( colSortInfo.column ) ? null : colSortInfo.column.slice(),
+            directions: colSortInfo.direction.slice()
+          },
+          after: {
+            columns: null,
+            directions: null
+          }
+        };
+
+    options = options || {};
+
+    if ( _.isUndefined(columns) ) {
+      colSortInfo.column = [];
+    } else if ( _.isFunction(columns) ) {
+      colSortInfo.column = columns;
+    } else {
+      if ( _.isNumber( columns ) || _.isString( columns ) ) {
+        columns = [columns];
+      }
+      columns = _.map( columns, function (item) {
+        return this.getColID(item);
+      }, this );
+      colSortInfo.column = columns;
+    }
+
+    if ( _.isUndefined(directions) || _.isNull(directions) ) {
+      if ( _.isUndefined(columns) ) {
+        colSortInfo.direction = [];
+      } else {
+        colSortInfo.direction = ['asc'];
+      }
+    } else {
+      if ( _.isString( directions ) ) {
+        directions = [directions];
+      }
+      colSortInfo.direction = directions;
+    }
+
+    while ( i < colSortInfo.column.length ) {
+      if ( colSortInfo.direction[i] ) {
+        colSortInfo.direction[i] = colSortInfo.direction[i].toLowerCase();
+      } else {
+        colSortInfo.direction[i] = 'asc';
+      }
+      i += 1;
+    }
+
+    sortInfo.after.columns = _.isFunction( colSortInfo.column) ? null : colSortInfo.column.slice();
+    sortInfo.after.directions = colSortInfo.direction.slice();
+
+    if ( !options.group && this.groupInfo.grouped ) {
+      options.sort = true;
+      this.group.call( this, colSortInfo.column.slice(), colSortInfo.direction.slice(), null, options );
+    } else {
+      this.collection.sortData( options );
+    }
+
+    if ( !options.silent ) {
+      this.view.trigger( 'sort', { type: "sort" }, sortInfo );
+    }
+  },
+  wrapRoot: function( data, options ) {
+    var wrapper;
+    if ( options.rootName ) {
+      wrapper = {};
+      wrapper[options.rootName] = data;
+      data = wrapper;
+    }
+    return data;
+  },
+  convertJSONtoXML: function( model, options ) {
+    var data;
+
+    model = model || {};
+    if ( options.data ) {
+      data = options.data;
+    } else {
+      if ( _.isString(model) ) {
+        data = JSON.parse(model);
+      } else {
+        data = model.toJSON();
+      }
+    }
+
+    if ( options.converter ) {
+      data = options.converter.json2xml_str.call( options.converter.json2xml_str, data, options );
+    } else if ( this.view.options.xmlConverter ) {
+      data = this.wrapRoot( data, options );
+      data = this.view.options.xmlConverter.json2xml_str(data);
+    }
+
+    return data;
+  },
+  sendXML: function( model, options ) {
+    var that = this;
+
+    options = options || {};
+    options.type = options.type || 'POST';
+    options.contentType = options.contentType || 'application/xml';
+    options.dataType = options.dataType || 'xml';
+    options.processData = false;
+
+    if ( this.view.options.xmlConverter ) {
+      options.defaultXMLConverter = this.view.options.xmlConverter;
+    }
+
+    options.data = this.convertJSONtoXML( model, options );
+    options.converters = {
+      "text xml": function(value) {
+        var targetPath;
+        value = $.parseXML(value);
+
+        if ( options.converter ) {
+          value = options.converter.xml2json.call( options.converter.xml2json, value, options );
+        } else if ( that.view.options.xmlConverter ) {
+          value = that.view.options.xmlConverter.xml2json(value);
+          if ( options.targetPath ) {
+            if ( _.isString(options.targetPath) ) {
+              targetPath = options.targetPath.split('.');
+              value = _.reduce( targetPath, function( memo, key ) {
+                return memo[key];
+              }, value );
+            } else if ( _.isFunction(options.targetPath) ) {
+              value = options.targetPath(value);
+            }
+          }
+        }
+
+        return value;
+      }
+    };
+    return options;
+  },
+  fetch: function( model, options ) {
+    if ( arguments.length > 0 ) {
+      if ( type.isNumber( model ) ) {
+        model = this.collection.at( model );
+      } else if ( !( model instanceof Backbone.Collection || model instanceof Backbone.Model ) ) {
+        options = model;
+        model = this.collection;
+      }
+
+      if ( options && options.contentType && options.contentType.indexOf('xml') > -1 ) {
+        options = this.sendXML( model, options );
+      }
+    } else {
+      model = this.collection;
+    }
+
+    model.fetch( options );
+  },
+  save: function ( model, options ) {
+    var idx,
+        data,
+        success = options.success;
+
+    options = options || {};
+    if ( !_.isArray (model) ) {
+      idx = this.collection.indexOf(model);
+      if ( options.formatted || options.pick || options.omit ) {
+        data = this.getData( [idx, '*'], options );
+        options.patch = true;
+      } else {
+        data = null;
+      }
+
+      options.success = function ( modelCompleted, resp ) {
+        model.__isNew = false;
+        if ( success ) {
+          success( modelCompleted, resp, options );
+        }
+      };
+
+      if ( options.contentType && options.contentType.indexOf('xml') > -1 ) {
+        if ( options.patch ) {
+          options.data = data;
+        }
+        options = this.sendXML( model, options );
+      }
+
+      this.collection.at( idx ).save( data, options );
+    }
+  },
+  destroy: function ( model, options ) {
+    var vModel = this,
+        success = options.success;
+
+    if ( !_.isArray ( model ) ) {
+      if ( options.contentType && options.contentType.indexOf('xml') > -1 ) {
+        options = this.sendXML( model, options );
+      }
+
+      options.success = function ( modelCompleted, resp ) {
+        _.each( vModel.collection.__removeModels, function ( element, index, list ) {
+          if ( modelCompleted.id === element.id ) {
+            list.splice( index, 1 );
+          }
+        });
+
+        if ( success ) {
+          success( modelCompleted, resp, options );
+        }
+      };
+
+      model.destroy( options );
+    }
+  },
+  getCUData: function ( options ) {
+    options = options || {};
+
+    var models = { createList: [], updateList: [], deleteList: [] },
+        excludeCreate = options.excludeCreate || false,
+        excludeUpdate = options.excludeUpdate || false,
+        excludeDelete = options.excludeDelete || false;
+
+    if ( !excludeCreate || !excludeUpdate ) {
+      models = _.reduce( this.collection.models, function ( store, model ) {
+        if ( !excludeCreate && model.__isNew ) {
+          store.createList.push( options.ref ? model : model.toJSON() );
+        } else if ( !excludeUpdate && model.hasChanged() ) {
+          store.updateList.push( options.ref ? model : model.toJSON() );
+        }
+        return store;
+      }, models, this );
+    }
+    if ( !excludeDelete ) {
+      Array.prototype.push.apply( models.deleteList, this.removedRow( options ) );
+    }
+
+    return models;
+  },
+  syncData: function ( options ) {
+    var data,
+        vModel = this,
+        dataCreated,
+        success,
+        dummy = _.extend( {}, Backbone.Events, {
+                  url: this.collection.compoundURL
+                } );
+
+    options = options || {};
+    success = options.success;
+
+    if ( options.modified === true ) {
+      options.ref = true;
+
+      data = this.getCUData( options );
+      dataCreated = data.createList.slice();
+      dummy = _.extend( dummy, {
+        getJSON: function (target) {
+          _.each( target, function( model, idx, list ) {
+            list[idx] = vModel.getData( [ model.collection.indexOf(model), '*' ], options );
+          }, vModel );
+        },
+        toJSON: function () {
+          if ( options.formatted || options.pick || options.omit ) {
+            this.getJSON( data.createList );
+            this.getJSON( data.updateList );
+          }
+          return data;
+        }
+      } );
+    } else {
+      dummy = _.extend( dummy, {
+        toJSON: function () {
+          if ( options.checked || options.formatted || options.pick || options.omit ) {
+            data = vModel.getData( ['*', '*'], options );
+          } else {
+            data = vModel.collection.toJSON();
+          }
+          return data;
+        }
+      } );
+    }
+
+    if ( options && options.contentType && options.contentType.indexOf('xml') > -1 ) {
+      options = this.sendXML( JSON.stringify( dummy.toJSON() ), options );
+    }
+
+    options.success = function ( model, resp ) {
+      if ( !(options.excludeDelete || false) ) {
+        vModel.collection.__removeModels = [];
+      }
+
+      _.each( dataCreated, function ( item, idx ) {
+        item.__isNew = false;
+        if ( options.afterProcess && model.createList && model.createList[idx] ) {
+          item.set( model.createList[idx] );
+        }
+      });
+
+      if ( success ) {
+        success( model, resp, options );
+      }
+    };
+
+    return Backbone.sync( "create", dummy, options );
+  },
+  getGridData: function () {
+    return this.collection;
+  },
+  setDefaults: function ( defaults ) {
+    this.collection.defaults = defaults;
+  },
+  getDefaults: function () {
+    var defaults = null;
+    if ( type.isFunction( this.collection.defaults ) ) {
+      defaults = this.collection.defaults();
+    } else if ( type.isObject( this.collection.defaults ) ) {
+      defaults = _.clone( this.collection.defaults );
+    }
+    return defaults;
+  }
+});
+
+var w5DataModelProto = {
+  parse: function(data, options) {
+    if ( options.saved ) {
+      data = this.attributes;
+    } else {
+      if( _.isString(data) ) {
+        data = JSON.parse(data);
+      }
+      if( this.collection && _.isArray(data) ) {
+        return this.parseWithDataType( this.collection.keys, data, ( this.collection.grid ? this.collection.grid.options.colModel : null )  );
+      }
+    }
+    return data;
+  },
+  defaults: function () {
+    if ( this.collection && this.collection.defaults ) {
+      if ( type.isFunction( this.collection.defaults ) ) {
+        return this.collection.defaults.call(this);
+      }
+      return this.collection.defaults;
+    }
+  },
+  parseWithDataType: function( keys, data, colModel ) {
+    var dataType,
+        result = {};
+
+    for ( var i = 0, length = keys.length; i < length; i++ ) {
+      if ( colModel ) {
+        dataType = colModel[i].dataType;
+        if ( dataType ) {
+          data[i] = w5.dataType[dataType]( data[i] );
+        }
+      }
+      result[keys[i]] = data[i];
+    }
+    return result;
+  }
+};
+
+var w5DataCollectionProto = {
+  __validator: null,
+  __invalidCallback: null,
+  __sorting: false,
+  __filtering: false,
+  __originalCollection: null,
+  defaults: null,
+  initialize: function(models, options) {
+    if(options) {
+      this.grid = options.grid;
+      this.keys = options.keys;
+      this.url = options.url;
+      this.compoundURL = options.compoundURL;
+      this.defaults = options.defaults;
+      this.__removeModels = [];
+    }
+  },
+  clone: function() {
+    return new this.constructor(this.models, {grid: this.grid, keys: this.keys});
+  },
+  parse: function ( data ) {
+    if( _.isString(data) ) {
+      return JSON.parse(data);
+    }
+    return data;
+  },
+  cloneCollection: function () {
+    if ( !this.__originalCollection ) {
+      this.__originalCollection = this.clone();
+      this.__originalCollection.listenTo( this, 'add remove', this.syncData );
+    }
+  },
+  resetCollection: function (action) {
+    if ( action === 'filter' ) {
+      if ( this.__sorting ) {
+        this.reset( this.__originalCollection.models, { silent: true } );
+        this.sortData();
+      } else {
+        this.reset( this.__originalCollection.models );
+        this.__originalCollection.stopListening( this, 'add remove', this.syncData );
+        this.__originalCollection = null;
+      }
+    } else if ( action === 'sort' ) {
+      if ( this.__filtering ) {
+        this.reset( this.__originalCollection.models, { silent: true } );
+        this.filterData( true, {} );
+      } else {
+        this.reset( this.__originalCollection.models );
+        this.__originalCollection.stopListening( this, 'add remove', this.syncData );
+        this.__originalCollection = null;
+      }
+    }
+  },
+  syncData: function ( model, collection, options ) {
+    var idx;
+
+    if( options.add ) {
+      if( options.at === 0 ) {
+        idx = this.indexOf( collection.at(1) );
+      } else {
+        idx = collection.indexOf(model) - 1;
+        idx = this.indexOf( collection.at(idx) ) + 1;
+      }
+      this.add( model, _.extend( options, {at: idx, silent: true } ) );
+    } else {
+      idx = this.indexOf(model);
+      this.remove( model, _.extend( options, { index: idx, silent: true } ) );
+    }
+  },
+  sortInfo: {
+    column: [],
+    direction: [],
+    comparator: function ( item1, item2 ) {
+      if ( !this.sortInfo.column ) {
+        return 0;
+      }
+
+      var cols = this.sortInfo.column,
+          dirs = this.sortInfo.direction,
+          col;
+
+      col = _.find( cols, function ( attr ) {
+        return item1.attributes[attr] !== item2.attributes[attr];
+      });
+
+      if ( !col ) {
+        var compCollection = item1.collection.__originalCollection || item1.collection,
+            idx1 = compCollection.indexOf(item1),
+            idx2 = compCollection.indexOf(item2);
+        return idx1 > idx2 ? 1 : -1;
+      }
+
+      if ( dirs[_.indexOf( cols, col )]  === 'asc' ) {
+        return _.isUndefined(item2.attributes[col]) ? 1 : item1.attributes[col] > item2.attributes[col] ? 1 : -1;
+      } else {
+        return _.isUndefined(item1.attributes[col]) ? 1 : item1.attributes[col] < item2.attributes[col] ? 1 : -1;
+      }
+    }
+  },
+  sortData: function( options ) {
+    if ( this.sortInfo.column.length > 0 ) {
+      this.cloneCollection();
+      this.__sorting = true;
+
+      if ( _.isFunction(this.sortInfo.column) ) {
+        this.comparator = this.sortInfo.column;
+      } else {
+        this.comparator = this.sortInfo.comparator;
+      }
+
+      this.sort( options );
+    } else {
+      if ( this.__sorting ) {
+        this.__sorting = false;
+        this.comparator = null;
+        this.resetCollection('sort');
+      }
+    }
+  }
+};
+
+var w5DataModelProtoPro = null,
+    w5DataCollectionProtoPro = null;
+
 var eventSplitter = /\s+/,
     selectorPattern = [/^[^\[\s]+\[[^\]]+\]|^[^\[\s]+/g, /(^[^\[\]:]*)(\[[^\]]+\])?(?::(\w+$))?/g],
     BView = Backbone.View.prototype;
@@ -2481,3 +3641,761 @@ var GridProto = {
     }
   }
 };
+
+function GridSelector(grid, items) {
+  return new GridSelector.fn.init(grid, items);
+}
+
+GridSelector.fn = GridSelector.prototype = {
+  constructor : GridSelector,
+  init : function (grid, items) {
+    this.grid = grid;
+    this.viewModel = grid.viewModel;
+    this.push.apply(this, items);
+  },
+  clone : function (grid) {
+    this.grid = grid; 
+  },
+  length : 0,
+  push : [].push,
+  slice : [].slice,
+  splice : [].splice,
+  sort : [].sort
+};
+
+GridSelector.fn.init.prototype = GridSelector.fn;
+GridSelector.fn.clone.prototype = GridSelector.fn;
+
+var GridSelectorApis = {
+  get: function (prop) {
+    var args = [].slice.call( arguments, 1 ),
+        result = _(this).map( function(pos) {
+          if ( prop === "data" ) {
+            return this.viewModel.getData.apply( this.viewModel, [pos].concat( args ) );
+          } else if ( prop === "option" ) {
+            return this.viewModel.getOption.apply( this.viewModel, args );
+          } else {
+            var deep = _.isString( args[0] ),
+                ret = this.viewModel.getMeta.apply( this.viewModel, [pos, prop, deep ? args[1] : args[0]] );
+
+            if ( deep ) {
+              ret = ret[args[0]];
+            }
+            return ret;
+          }
+        }, this);
+    return this.length > 1 ? result : result[0];
+  },
+  set: function (prop) {
+    var args = [].slice.call(arguments, 1);
+    _(this).each(function(pos) {
+      if(prop === "data") {
+        this.viewModel.setData.apply(this.viewModel, [pos].concat(args));
+      } else if(prop === "option") {
+        this.viewModel.setOption.apply(this.viewModel, args);
+      } else {
+        var deep = _.isString(args[1]), value;
+        if(deep) {
+          value = _.clone(this.viewModel.getMeta(pos, prop, {noncomputed:true})) || {};
+          value[args[0]] = args[1];
+          this.viewModel.setMeta.apply(this.viewModel, [pos, prop, value, args[2]]);
+        } else {
+          this.viewModel.setMeta.apply(this.viewModel, [pos, prop, args[0], args[1]]);
+        }
+      }
+    }, this);
+    return this;
+  },
+  alter: function (prop, value1, value2) {
+    var args = arguments;
+    _(this).each(function(pos) {
+      if( args.length === 2 ) {
+        this.viewModel.setMeta(pos, prop, value1, {alter:true});
+      } else {
+        var tmpMeta = _.clone(this.viewModel.getMeta(pos, prop)) || {};
+        tmpMeta[value1] = value2;
+        this.viewModel.setMeta(pos, prop, tmpMeta, {alter:true});
+      }
+    }, this);
+    return this;
+  },
+  has: function (prop, prop2) {
+    if(arguments.length === 1) {
+      return this.viewModel.hasMeta(this[0], prop);
+    } else {
+      var tmpMeta = this.viewModel.getMeta(this[0], prop) || {};
+      return tmpMeta.hasOwnProperty(prop2);
+    }
+  },
+  unset: function(prop, prop2) {
+    var args = arguments;
+    _(this).each(function(pos) {
+      if( args.length === 2 ) {
+        this.viewModel.removeMeta(pos, prop);
+      } else {
+        var tmpMeta = _.clone(this.viewModel.getMeta(pos, prop)) || {};
+        delete tmpMeta[prop2];
+        this.viewModel.setMeta(pos, prop, tmpMeta);
+      }
+    }, this);
+    return this;
+  },
+  addClass : function ( className ) {
+    var tmpMeta, classNameArr;
+    classNameArr = className === '' ? [] : className.split(/\s/);
+
+    _(this).each( function ( pos ) {
+      tmpMeta = this.viewModel.getMeta( pos, "className", {noncomputed:true} );
+      tmpMeta = tmpMeta === '' ? [] : tmpMeta.split(/\s/);
+
+      _(classNameArr).each(function(index) {
+        tmpMeta.push(index);
+      });
+      this.viewModel.setMeta( pos, "className", tmpMeta.join(" ") );
+    }, this );
+
+    return this;
+  },
+  hasClass : function(className){
+    var tmpStr = this.viewModel.getMeta(this[0], "className", {noncomputed:true}),
+        hasFlag = false;
+
+    _(tmpStr.split(/\s+/)).each(function(item){
+      if ( item===className ){
+        hasFlag = true; 
+      }
+    });
+
+    return hasFlag;
+  },
+  removeClass : function(className){
+    var tmpStr = this.viewModel.getMeta(this[0], "className", {noncomputed:true});
+
+    if ( tmpStr.length!==0 ){
+      _(this).each(function(pos) {
+        this.viewModel.setMeta( pos, "className",
+          _(tmpStr.split(/\s+/)).difference(className.split(/\s+/)).join(" ") );
+      }, this);
+    }
+
+    return this;
+  },
+  toggleClass: function(className, addOrRemove){
+    var tmpStr = this.viewModel.getMeta(this[0], "className", {noncomputed:true}),
+        targetIdx;
+
+    if(arguments.length === 1) {
+      _(tmpStr.split(/\s+/)).each(function(item, i){
+        if ( item===className ){ 
+          targetIdx = i;
+        }
+      });
+    
+      addOrRemove = _.isUndefined(targetIdx) ? true : false;
+    }
+
+    if ( addOrRemove ) {
+      this.addClass(className);
+    } else {
+      this.removeClass(className);
+    }
+    
+    return this;
+  },
+  triggerGridEvent: function ( event, options ) {
+    _(this).each( function ( pos ) {
+      this.grid.triggerGridEvent( pos, event, options );
+    }, this );
+    return this;
+  }
+};
+
+var cellProto = {
+  alterValue : function(grid, dom, value) {
+    dom.firstChild.value = value;
+  },
+  dblclick: function ( e, grid ) {
+    grid.focusWidget( e );
+  },
+  setOptions: function( options, index, value, label, isNew ) {
+    if ( isNew ) {
+      options.index = index;
+      options.value = value;
+      options.label = label;
+    } else {
+      options.oldIndex = index;
+      options.oldValue = value;
+      options.oldLabel = label;
+    }
+    return options;
+  },
+  getFormattedData: function( data, row, col, grid, options ) {
+    var format = grid.viewModel.getMeta( [row, col], "format" ) || "";
+
+    format = options && options.format ? options.format : format;
+
+    return _.isFunction(format) ? format.call( grid, data ) : w5.formatter( data, format,
+      grid.viewModel.getMeta( [row, col], "dataType" ), {
+        originalFormat: grid.viewModel.getMeta( [row, col], "originalFormat" ) || "",
+        dayInWeek: grid.viewModel.getOption('dayInWeek') || w5.formatter.defaultDayInWeek,
+        APM: grid.viewModel.getOption('APM') || w5.formatter.defaultAPM
+      } );
+  }
+}, cellObjects = {};
+
+cellObjects["text"] = _.defaults({
+  getContent : function(grid, data, row, col) {
+    var template = grid.viewModel.getMeta( [row, col], "template") || "<%=data%>";
+
+    if ( _.isString(template) ) {
+      template = _.template(template);
+    }
+
+    return template( { data: this.getFormattedData( data, row, col, grid ) } );
+  },
+  dblclick: function(e, grid, row, col) {
+    var readOnly = grid.viewModel.getMeta( [row, col], "readOnly");
+
+    if( !readOnly ) {
+      this.popupEditBox(grid, row, col);
+    }
+    $("body").addClass("noselect");
+  },
+  popupEditBox: function(grid, row, col) {
+    var frozenColumn = grid.viewModel.getOption("frozenColumn"),
+        tdCol = col < frozenColumn ? col : col-grid.startCol+frozenColumn,
+        $cell = $(grid.getTbodyCell(row - grid.rowTop, tdCol)),
+        data = grid.viewModel.getData([row, col]);
+
+    grid.$editBox.text(data).css({
+      width: "auto",
+      "min-width": $cell.outerWidth(),
+      height: $cell.outerHeight(),
+      top: $cell.offset().top - grid.$wrapper_div.offset().top,
+      left: $cell.offset().left - grid.$wrapper_div.offset().left
+    }).data({
+      edit : true,
+      row : row,
+      col : col,
+      grid : grid,
+      dataType: _.isDate(data) ? 'date' : _.isNumber(data) ? 'number' : _.isBoolean(data) ? 'boolean' : null
+    });
+    grid.$editBox.focus();
+
+    if (typeof window.getSelection !== "undefined" &&
+        typeof document.createRange !== "undefined") {
+      var range = document.createRange();
+      range.selectNodeContents( grid.$editBox[0] );
+      range.collapse(false);
+      var sel = window.getSelection();
+      sel.removeAllRanges();
+      sel.addRange(range);
+    } else if (typeof document.body.createTextRange !== "undefined") {
+      var textRange = document.body.createTextRange();
+      textRange.moveToElementText( grid.$editBox[0] );
+      textRange.collapse(false);
+      textRange.select();
+    }
+  },
+  endEdit: function( e, grid, options ) {
+    if ( e.type === "blur" || ( e.type === "keydown" && e.keyCode === 13 ) || options.isForced ) {
+      if ( grid.$editBox.data("edit") ) {
+        var value = grid.$editBox.text(),
+            row = grid.$editBox.data("row"),
+            col = grid.$editBox.data("col"),
+            dataType = grid.$editBox.data("dataType");
+
+        grid.viewModel.setData( [row, col], ( dataType === 'date' ) ? new Date(value) : dataType ? w5.dataType[dataType](value) : value );
+        grid.$editBox.text("").css("cssText", "");
+        grid.$editBox.removeData("edit");
+      }
+    }
+    $("body").removeClass("noselect");
+  },
+  completedOptions: function ( grid, result, rowIndex, colID, data, model ) {
+    result.oldValue = model._previousAttributes[colID];
+    result.value = data;
+    return result;
+  }
+}, cellProto);
+_(cellObjects["text"]).bindAll("dblclick", "popupEditBox", "endEdit");
+
+cellObjects["select"] = _.defaults({
+  getContent : function ( grid, value, row, col ) {
+    var options = grid.viewModel.getMeta( [row, col], "options" ),
+        $select,
+        index = -1;
+
+    $select = $( "<select>" + _(options).reduce( function( memo, obj, idx ) {
+      if ( index === -1 && obj.value === value ) {
+        index = idx;
+      }
+      var selected = ( (index > -1) && (obj.value === value) ) ? " selected": "";
+      return memo + "<option " + selected + ">" + obj.label + "</option>";
+    }, "" ) + "</select>");
+
+    $select.prop( "selectedIndex", index );
+
+    if ( index === -1 ) {
+      $select.data( 'status', this.setOptions( {}, index, undefined, undefined, true ) );
+      $select.data( "afterProcess", { run: function () {
+        $select.prop( "selectedIndex", -1 );
+        grid.viewModel.setData( [row, col], '', { silent: true } );
+      } } );
+    } else {
+      $select.data( 'status', this.setOptions( {}, index, options[index].value, options[index].label, true ) );
+    }
+
+    $select.data( "pos", {
+      row : row,
+      col : col
+    });
+
+    $select.on( "change", function(e) {
+      var idx = this.selectedIndex,
+          $this = $(this),
+          pos = $this.data("pos"),
+          status = $this.data('status'),
+          options = grid.viewModel.getMeta( [pos.row, pos.col], "options" ),
+          value = options[idx] ? options[idx].value : undefined;
+
+      status = cellObjects['select'].setOptions( status, status.index, status.value, status.label, false );
+      status = cellObjects['select'].setOptions( status, idx, value, options[idx] ? options[idx].label : undefined, true );
+      grid.viewModel.setData( [pos.row, pos.col], value, { noDraw: true, eventObj: e, status: status } );
+    });
+    return $select;
+  },
+  completedOptions: function ( grid, result, rowIndex, colID, data, model ) {
+    var options = grid.viewModel.getMeta( [rowIndex, colID], 'options' ),
+        cell,
+        idx = -1,
+        matchedItem;
+
+    cell = grid.getTbodyCell( rowIndex, grid.viewModel.getColIndex(colID) );
+
+    if ( cell ) {
+      idx = cell.querySelector('select').selectedIndex;
+      result = this.setOptions( result,
+        idx,
+        options[idx] ? options[idx].value : undefined,
+        options[idx] ? options[idx].label : undefined,
+        false );
+    } else {
+      result.oldValue = model._previousAttributes[colID];
+      matchedItem = _(options).find( function( obj ) {
+        idx += 1;
+        if ( obj.value === result.oldValue ) {
+          return obj;
+        }
+      });
+
+      if ( matchedItem ) {
+        result = this.setOptions( result, idx, result.oldValue, matchedItem.label, false );
+      } else {
+        result = this.setOptions( result, -1, undefined, undefined, false );
+      }
+    }
+
+    idx = -1;
+    matchedItem = _(options).find( function( obj ) {
+      idx += 1;
+      if ( obj.value === data ) {
+        return obj;
+      }
+    });
+
+    if ( matchedItem ) {
+      result = this.setOptions( result, idx, data, matchedItem.label, true );
+    } else {
+      result = this.setOptions( result, -1, undefined, undefined, true );
+    }
+
+    return result;
+  }
+}, cellProto);
+
+cellObjects["checkbox"] = _.defaults({
+  getContent : function ( grid, value, row, col ) {
+    var options = grid.viewModel.getMeta( [row, col], "options" ),
+        values = grid.viewModel.checkNegativeValue( value ) ? [] : value.split(" "),
+        indexes = [],
+        labels = [],
+        $checkbox = $( _(options).reduce( function ( memo, obj, idx ) {
+          var checked = _(values).indexOf(obj.value) >= 0 ? " checked='true'" : "";
+
+          if ( checked ) {
+            indexes.push(idx);
+            labels.push(obj.label);
+          }
+
+          return memo + "<input type='checkbox' id='checkbox_" + row + "_" + col + "_" + idx + "'" + checked + ">" +
+              "<label for='checkbox_" + row + "_" + col + "_" + idx + "'>" + obj.label + "</label>";
+        }, ""));
+
+    $checkbox.data( 'status', this.setOptions( {}, indexes, values, labels, true ) );
+    $checkbox.data( "pos", {
+      row : row,
+      col : col
+    });
+
+    $checkbox.on( "change", function(e) {
+      var $this = $(this),
+          $checkboxArr = $this.parent().find("input[type=checkbox]"),
+          pos = $this.data("pos"),
+          status = $this.data('status'),
+          options = grid.viewModel.getMeta( [pos.row, pos.col], "options" ),
+          indexes = [],
+          labels = [],
+          checked = $checkboxArr.map( function( index, dom ) {
+            return $(dom).prop("checked");
+          }),
+          values = _.chain(options).map( function( obj, idx ) {
+            if ( checked[idx] ) {
+              indexes.push(idx);
+              labels.push(obj.label);
+              return obj.value;
+            } else {
+              return "";
+            }
+
+          }).compact().value();
+
+      status = cellObjects['checkbox'].setOptions( status, status.index, status.value, status.label, false );
+      status = cellObjects['checkbox'].setOptions( status, indexes, values, labels, true );
+      grid.viewModel.setData( [pos.row, pos.col], values.join(" "), { noDraw: true, eventObj: e, status: status } );
+    });
+    return $checkbox;
+  },
+  fillOptions: function( options, values, result, flag ) {
+    var indexes = [],
+        labels = [];
+
+    _(options).each( function ( obj, idx ) {
+      if ( _(values).indexOf(obj.value) > -1 ) {
+        indexes.push(idx);
+        labels.push(obj.label);
+      }
+    } );
+    return this.setOptions( result, indexes, values, labels, flag );
+  },
+  completedOptions: function ( grid, result, rowIndex, colID, data, model ) {
+    var options = grid.viewModel.getMeta( [rowIndex, colID], 'options' );
+
+    result = this.fillOptions( options, grid.viewModel.checkNegativeValue( model._previousAttributes[colID] ) ? [] : model._previousAttributes[colID].split(" "), result, false );
+    result = this.fillOptions( options, grid.viewModel.checkNegativeValue( data ) ? [] : data.split(" "), result, true );
+
+    return result;
+  }
+}, cellProto);
+
+cellObjects["radio"] = _.defaults({
+  getContent : function ( grid, value, row, col ) {
+    var options = grid.viewModel.getMeta( [row, col], "options" ),
+        cid = grid.viewModel.getDataCID(row),
+        checked,
+        index = -1,
+        $radio = $( _(options).reduce( function ( memo, obj, idx ) {
+          if ( value === obj.value ) {
+            checked = " checked='true'";
+            index = idx;
+          } else {
+            checked = "";
+          }
+          return memo + "<input type='radio' name='" + cid + "' id='radio_" + row + "_" + col + "_" + idx + "'" + checked+ ">" +
+              "<label for='radio_" + row + "_" + col + "_" + idx + "'>" + obj.label + "</label>";
+        }, ""));
+
+    if ( index === -1 ) {
+      $radio.data( 'status', this.setOptions( {}, index, undefined, undefined, true ) );
+    } else {
+      $radio.data( 'status', this.setOptions( {}, index, options[index].value, options[index].label, true ) );
+    }
+    $radio.data( "pos", {
+      row : row,
+      col : col
+    });
+
+    $radio.on( "change", function (e) {
+      var $this = $(this),
+          $radioArr = $this.parent().find("input[type=radio]"),
+          pos = $this.data("pos"),
+          status = $this.data('status'),
+          options = grid.viewModel.getMeta( [pos.row, pos.col], "options" ),
+          checked = $radioArr.map( function ( index, dom ) {
+            return $(dom).prop("checked");
+          }),
+          index = _.indexOf( checked, true ),
+          value,
+          label;
+
+      if ( index !== -1 ) {
+        value = options[index].value;
+        label = options[index].label;
+      }
+
+      status = cellObjects['radio'].setOptions( status, status.index, status.value, status.label, false );
+      status = cellObjects['radio'].setOptions( status, index, value, label, true );
+      grid.viewModel.setData( [pos.row, pos.col], value, { noDraw: true, eventObj: e, status: status });
+    });
+    return $radio;
+  },
+  fillOptions: function( options, value, result, flag ) {
+    var index = -1,
+        label;
+
+    _(options).each( function ( obj, idx ) {
+      if ( value === obj.value ) {
+        index = idx;
+        label = obj.label;
+      }
+    });
+    return this.setOptions( result, index, value, label, flag );
+  },
+  completedOptions: function ( grid, result, rowIndex, colID, data, model ) {
+    var options = grid.viewModel.getMeta( [rowIndex, colID], 'options' );
+
+    result = this.fillOptions( options, model._previousAttributes[colID], result, false );
+    result = this.fillOptions( options, data, result, true );
+
+    return result;
+  }
+}, cellProto);
+
+cellObjects["link"] = _.defaults({
+  getContent : function ( grid, value ) {
+    var href = value,
+        label = value,
+        target, title;
+
+    if ( _.isObject(value) ){
+      href = value.href;
+      label = value.label;
+      target = value.target ? " target='" + value.target + "' " : "";
+      title = value.title ? " title='" + value.title + "' " : "";
+    }
+
+    return $("<a href='" + href + "'" + target + title + ">" + label + "</a>");
+  }
+}, cellProto);
+
+cellObjects["img"] = _.defaults({
+  getContent : function ( grid, value ) {
+    var src = value, alt;
+
+    if ( _.isObject(value) ){
+      src = value.value;
+      alt = value.alt ?  " alt='" + value.alt + "' " : "";
+    }
+
+    return $("<img src='" + src + "'" + alt + " tabindex=0 />");
+  }
+}, cellProto);
+
+cellObjects["button"] = _.defaults({
+  getContent : function ( grid, value ) {
+    return $("<button>" + value + "</button>");
+  }
+}, cellProto);
+
+cellObjects["toggleButton"] = _.defaults({
+  click: function ( e, grid, row ) {
+    var collapsed = !!grid.viewModel.getMeta([row, "*"], "collapsed");
+    grid.clearFocusedCell();
+    grid.viewModel.setMeta([row, "*"], "collapsed", !collapsed);
+  },
+  getContent : function ( grid, value, row ) {
+    var collapsed = !!grid.viewModel.getMeta([row, "*"], "collapsed"),
+        plusminus = collapsed ? "fold" : "unfold";
+
+    value = value || grid.viewModel.getMeta([row, "*"], "group").join("-");
+    return $("<i class='w5-grid-group "+ plusminus + "'>"+ plusminus +"</i><span class='w5-grid-group-text'>" + value + "</span>");
+  },
+  dblclick: function () {
+    return false;
+  }
+}, cellProto);
+
+cellObjects["custom"] = _.defaults( {
+  getContent: function ( grid, data, row, col ) {
+    var template = grid.viewModel.getMeta( [row, col], "template" ) || "<%=data%>",
+        format = grid.viewModel.getMeta( [row, col], "format" ) || "";
+    if ( _.isString( template ) ) {
+      template = _.template( template );
+    }
+    return template( { data: _.isFunction(format) ? format.call( this, data ) : data } );
+  }
+}, cellProto );
+
+var cellView = Backbone.View.extend( {
+      initialize: function() {
+      }
+    } ),
+    cellViews = {};
+
+cellViews['checkbox'] = cellView.extend( {
+  tagName: "input",
+  attributes: { type: 'checkbox', style: 'margin-left: 10px' },
+  initialize: function( $parentNode, grid, value, position, options ) {
+    options = options || {};
+    this.grid = grid;
+    this.render( $parentNode, grid, value, position, options );
+  },
+  render: function( $parentNode, grid, value, position ) {
+    this.$el.attr( 'id', 'header_checkbox_' + position[0] + '_' + position[1] );
+    $parentNode.append( this.el );
+    return this;
+  },
+  grid: null,
+  events: {
+    'click': 'toggleChoice'
+  },
+  toggleChoice: function(e) {
+    var value = '',
+        $th = $(e.target).closest("th"),
+        tdCol = $th.index(),
+        frozenColumn = this.grid.viewModel.getOption("frozenColumn"),
+        colIndex = tdCol < frozenColumn ? tdCol : tdCol + this.grid.startCol - frozenColumn;
+
+    if ( this.$el[0].checked ) {
+      value = this.grid.viewModel.getCheckValue( { col: colIndex } );
+    }
+    this.grid.col(colIndex).set( 'data', value );
+  }
+} );
+
+var headerContextMenu;
+
+var ContextMenuView = Backbone.View.extend( {
+  initialize: function( options ) {
+    options = options || {};
+    this.grid = options.grid;
+    this.render();
+  },
+  render: function() {
+    return this;
+  },
+  events: function() {
+    var handlers = {
+      'mouseleave': 'hide',
+      'click li .column-hide': 'hideCol',
+      'click li .frozen-column': 'frozenCol'
+    };
+
+    return handlers;
+  },
+  grid: null,
+  defaultMenus: _.template(
+    "<li id='buttonLi'>" +
+      "<a href='#' role='menuitem' class='w5-dropdown-menu-label column-hide'>Column Hide</a>" +
+    "</li>" +
+    "<li>" +
+      "<a href='#' role='menuitem' aria-disabled='false' " +
+      "class='w5-dropdown-menu-label frozen-column <%= disabled %>' <%= aria_disabled %>><%= setFrozenColumn %> Frozen Column</a>" +
+    "</li>"
+  ),
+  colIdx: -1,
+  colID: '',
+  renderList: function( colID ) {
+    var defaultTemplateVars = { disabled: '', aria_disabled: '', setFrozenColumn: 'Set' },
+        scrollLeft = this.grid.viewModel.getOption("scrollLeft"),
+        frozenCol = this.grid.viewModel.getOption("frozenColumn"),
+        listText;
+
+    if ( scrollLeft !== 0 ) {
+      defaultTemplateVars.disabled = 'disabled';
+      defaultTemplateVars.aria_disabled = 'true';
+    } else if ( colID === this.grid.viewModel.getColID(frozenCol - 1) ) {
+      defaultTemplateVars.setFrozenColumn = 'Release';
+    }
+    listText = this.defaultMenus(defaultTemplateVars);
+
+    this.$('ul').empty();
+    this.$('ul').append( listText );
+  },
+  hide: function(e) {
+    var cell,
+      activeEle = document.activeElement;
+
+    if ( activeEle.tagName !== 'SELECT' || this.$el[0] !== $(activeEle).closest('.w5-dropdown-menu')[0] ) {
+      this.$el.removeClass('open');
+      this.$('ul').empty();
+
+      if ( e && ( ( e.type && e.type === 'mouseleave' ) || ( e.target && e.target.id === 'w5FilterCancel' ) ) ) {
+        cell = this.grid.getHeaderCell( 0, this.grid.getTargetCol(this.colIdx) );
+        if ( cell ) {
+          $(cell).find(".w5-grid-colMenu-icon").removeClass('on');
+          $(cell).find('.display-right').addClass('hide');
+        }
+      }
+    }
+  },
+  show: function( left, top, colIdx, colID ) {
+    this.colIdx = colIdx;
+    this.colID = colID;
+
+    this.renderList( colID, true );
+
+    this.$el.css({
+      left: left,
+      top: top
+    }).addClass('open');
+
+    this.$('li').first().find('a').focus();
+  },
+  hideCol: function() {
+    var remainCol = this.grid.viewModel.getVisibleCol().length,
+        frozenCol = this.grid.viewModel.getOption("frozenColumn");
+
+    this.hide( { type: 'mouseleave'} );
+
+    if ( remainCol !== 1 ) {
+      if ( this.colIdx >= frozenCol ) {
+        this.grid.viewModel.setMeta(["*", this.colIdx + this.grid.startCol - frozenCol], "hidden", true);
+        this.grid.viewModel.updateVisibleCol();
+      } else {
+        throw new Error( "Section of the column to a frozen column can not be hidden." +
+        "\nFirst, turn off the frozen column." );
+      }
+    } else {
+      throw new Error( "W5 Grid is must have a column." );
+    }
+  },
+  frozenCol: function(e) {
+    if ( !$(e.target).hasClass('disabled') ) {
+      var frozenCol = this.grid.viewModel.getOption("frozenColumn");
+
+      if ( frozenCol === ( this.colIdx + 1 ) ) {
+        frozenCol = 0;
+      } else {
+        frozenCol = this.colIdx + 1;
+      }
+      this.hide( { type: 'mouseleave' } );
+      this.grid.viewModel.setOption( "frozenColumn", frozenCol );
+    }
+  }
+} );
+
+_(GridSelector.fn).extend(GridSelectorApis);
+
+var Grid = Backbone.View.extend(GridProto);
+var Model = Backbone.Model.extend( _.extend( {}, w5DataModelProto, w5DataModelProtoPro ) );
+var Collection = Backbone.Collection.extend( _.extend( {model : Model}, w5DataCollectionProto, w5DataCollectionProtoPro ) );
+
+w5.Model = Model;
+w5.Collection = Collection;
+w5.Grid = Grid;
+
+w5.dataType = {
+  "auto": function(value) { return value; },
+  "string": String,
+  "number": Number,
+  "boolean": Boolean,
+  "date": function(value) { return value; }
+};
+
+w5.formatter = function ( value ) {
+  return value;
+};
+return w5;
+
+}));

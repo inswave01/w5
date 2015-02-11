@@ -27,6 +27,7 @@ module.exports = function(grunt) {
           "src/grid.js",
           "src/api.js",
           "src/cell.js",
+          "src/menu.js",
           "src/export.js",
           "src/formatter.js",
           "src/outro.js"
